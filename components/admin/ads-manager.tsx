@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
-import { createAdAction, deleteAdAction, toggleAdStatusAction, toggleAdsGlobalAction } from "@/app/(admin)/admin/actions";
+import { createAdAction, deleteAdAction, toggleAdStatusAction } from "@/app/(admin)/admin/actions";
 import { AD_PLACEMENT_OPTIONS, AD_PLACEMENTS, type AdPlacement } from "@/lib/ads";
 import { 
   Plus, 
@@ -81,8 +82,21 @@ const placementConfigs: Record<string, {
 };
 
 export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
+  const router = useRouter();
+  const [isTogglingGlobal, startToggleTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<"overview" | "create" | "manage">("overview");
   const [selectedPlacement, setSelectedPlacement] = useState<string>("all");
+
+  const handleGlobalToggle = () => {
+    startToggleTransition(async () => {
+      try {
+        await fetch("/api/admin/toggle-ads", { method: "POST" });
+        router.refresh();
+      } catch {
+        // no-op
+      }
+    });
+  };
 
   // Statistics
   const totalAds = ads.length;
@@ -103,19 +117,11 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
   return (
     <div className="space-y-6">
       {/* Global Ads Toggle */}
-      <div className={`rounded-xl border p-6 ${
-        adsEnabled 
-          ? "border-emerald-200 bg-emerald-50" 
-          : "border-gray-200 bg-gray-50"
-      }`}>
+      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-full ${
-              adsEnabled ? "bg-emerald-100" : "bg-gray-200"
-            }`}>
-              <Megaphone className={`h-6 w-6 ${
-                adsEnabled ? "text-emerald-600" : "text-gray-500"
-              }`} />
+            <div className="rounded-full bg-[var(--ad-background)] p-3">
+              <Megaphone className={`h-6 w-6 ${adsEnabled ? "text-emerald-600" : "text-[var(--ad-text-secondary)]"}`} />
             </div>
             <div>
               <h3 className="font-semibold text-[var(--ad-text-primary)]">
@@ -129,23 +135,23 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
             </div>
           </div>
           
-          <form action={toggleAdsGlobalAction}>
-            <button
-              type="submit"
-              className="p-2 transition-transform hover:scale-105"
-            >
-              {adsEnabled ? (
-                <ToggleRight className="h-10 w-10 text-emerald-500" />
-              ) : (
-                <ToggleLeft className="h-10 w-10 text-gray-400" />
-              )}
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={handleGlobalToggle}
+            disabled={isTogglingGlobal}
+            className="p-2 transition-transform hover:scale-105 disabled:opacity-60"
+          >
+            {adsEnabled ? (
+              <ToggleRight className="h-10 w-10 text-emerald-500" />
+            ) : (
+              <ToggleLeft className="h-10 w-10 text-[var(--ad-text-secondary)]" />
+            )}
+          </button>
         </div>
         
         {!adsEnabled && (
-          <div className="mt-4 p-3 rounded-lg bg-amber-100 border border-amber-200">
-            <p className="text-sm text-amber-800">
+          <div className="mt-4 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] p-3">
+            <p className="text-sm text-[var(--ad-text-secondary)]">
               <strong>Note:</strong> All ad placeholders are currently hidden from the website. 
               Enable ads to show placeholders and active ads.
             </p>
@@ -229,21 +235,21 @@ function StatCard({ title, value, icon, color }: {
   icon: React.ReactNode;
   color: "blue" | "emerald" | "amber" | "rose";
 }) {
-  const colorClasses = {
-    blue: "bg-blue-50 border-blue-200 text-blue-700",
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-700",
-    amber: "bg-amber-50 border-amber-200 text-amber-700",
-    rose: "bg-rose-50 border-rose-200 text-rose-700",
+  const toneClasses = {
+    blue: "text-sky-600",
+    emerald: "text-emerald-600",
+    amber: "text-amber-600",
+    rose: "text-rose-600",
   };
 
   return (
-    <div className={`rounded-xl border p-5 ${colorClasses[color]}`}>
+    <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)]">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium opacity-80">{title}</p>
-          <p className="text-3xl font-bold mt-1">{value}</p>
+          <p className="text-sm font-medium text-[var(--ad-text-secondary)]">{title}</p>
+          <p className={`mt-1 text-3xl font-bold ${toneClasses[color]}`}>{value}</p>
         </div>
-        <div className="p-3 rounded-lg bg-white/50">
+        <div className={`rounded-lg p-3 ${toneClasses[color]} bg-[var(--ad-background)]`}>
           {icon}
         </div>
       </div>
