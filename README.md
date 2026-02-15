@@ -1,76 +1,143 @@
-# Muktir Kantho
 
-Production-ready regional newspaper web app built with Next.js App Router + TypeScript, optimized for free-tier MongoDB Atlas and Vercel.
+<div align="center">
 
-## Stack
+# 📰 Muktir Kantho | মুক্তির কণ্ঠ
+### The Voice of Freedom
 
-- Next.js 16 (App Router, fully compatible with 14+ requirements)
-- TypeScript + Tailwind CSS
-- Prisma with MongoDB connector
-- Cloudinary image hosting
-- JWT admin auth
-- SEO with Metadata API + JSON-LD + sitemap + robots
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-5.0-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 
-## Key Features
+<p align="center">
+  A production-ready, feature-rich regional newspaper platform built for speed, SEO, and scalability.
+  <br />
+  Designed to empower local journalism with modern web technologies.
+</p>
 
-- Public pages: home, article, category, district, upazila, tag, search
-- Admin pages: login, dashboard, post CRUD, category/district/upazila management
-- Cloudinary uploads with `f_auto`, `q_auto`, max width 1200
-- ISR (`revalidate = 60`) for public content
-- Slug URLs via `slugify`
-- Security hardening: input validation, route protection, upload file checks
+[View Demo](#) · [Report Bug](#) · [Request Feature](#)
 
-## Local Setup
+</div>
 
-1. Install dependencies:
+---
+
+## 🚀 Overview
+
+**Muktir Kantho** is a comprehensive news portal solution engineered for performance and ease of use. It bridges the gap between traditional journalism and modern digital consumption, offering a seamless experience for readers and a powerful management interface for editors.
+
+It fully supports **Bengali** content, precise **Location-based** news filtering (Division/District/Upazila), and dynamic **Ad Management**.
+
+## ✨ Key Features
+
+| Category | Features |
+| :--- | :--- |
+| **📖 Content Consumption** | • **Location Filtering:** Drill down news by Division, District, and Upazila.<br>• **Categorization:** Organized browsing by topic, tag, and region.<br>• **Search:** Fast, extensive search functionality.<br>• **SEO Optimized:** Server-side rendering with JSON-LD and dynamic metadata. |
+| **🛡️ Admin & Moderation** | • **Dashboard:** Comprehensive overview of site metrics.<br>• **Post Management:** Rich text editor, draft/publish workflows, and scheduling.<br>• **Taxonomy Manager:** Full control over Categories, Locations, and Tags.<br>• **Branding:** Customize Logo, Favicon, and contact details directly from the admin panel. |
+| **🎨 UI/UX** | • **Responsive Design:** Mobile-first approach using Tailwind CSS.<br>• **Dark Mode:** Built-in theme switching support.<br>• **Ad Spaces:** Dynamic ad slots (Banner, Sidebar, Feed) managed via admin. |
+| **🔧 Integrations** | • **Cloudinary:** Optimized image storage and delivery.<br>• **Social Sharing:** Built-in social media sharing capabilities.<br>• **Facebook Integration:** Auto-posting to Facebook Pages. |
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js 15 (App Router)](https://nextjs.org/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [Lucide Icons](https://lucide.dev/)
+- **Database:** [MongoDB Atlas](https://www.mongodb.com/atlas) (via Prisma ORM)
+- **Authentication:** Custom JWT-based Admin Auth
+- **Storage:** [Cloudinary](https://cloudinary.com/) (Images/Media)
+- **Deployment:** Vercel (Recommended)
+
+## 🏎️ Getting Started
+
+Follow these steps to set up the project locally.
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB Atlas Account
+- Cloudinary Account
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/morshedkoli/muktirkantho.git
+    cd muktirkantho
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Setup**
+    Copy `.env.example` to `.env` and configure your keys.
+    ```bash
+    cp .env.example .env
+    ```
+
+    | Variable | Description |
+    | :--- | :--- |
+    | `DATABASE_URL` | MongoDB Connection String |
+    | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Cloudinary Cloud Name |
+    | `CLOUDINARY_API_KEY` | Cloudinary API Key |
+    | `CLOUDINARY_API_SECRET` | Cloudinary API Secret |
+    | `ADMIN_EMAIL` | Default Admin Email |
+    | `ADMIN_PASSWORD` | Default Admin Password |
+    | `JWT_SECRET` | Secret for signing tokens |
+
+4.  **Database Setup**
+    ```bash
+    # Generate Prisma Client
+    npm run prisma:generate
+
+    # Push Schema to DB
+    npm run prisma:push
+
+    # (Optional) Seed Initial Data
+    npm run db:seed
+    ```
+
+5.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:3000](http://localhost:3000) to view the site.
+    <br>
+    Access Admin Panel at [http://localhost:3000/admin/login](http://localhost:3000/admin/login).
+
+## 📂 Project Structure
 
 ```bash
-npm install
+├── app
+│   ├── (admin)      # Protected Admin Routes & Layouts
+│   ├── (public)     # Public News Routes (Home, Category, Post)
+│   └── api          # API Route Handlers
+├── components
+│   ├── admin        # Admin UI Components
+│   └── public       # Public UI Components
+├── lib              # Utilities, Auth, Database, & Services
+├── prisma           # Database Schema & Seed Scripts
+└── public           # Static Assets
 ```
 
-2. Copy env file and fill values:
+## 🤝 Contributing
 
-```bash
-cp .env.example .env.local
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-3. Generate Prisma client and push schema:
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-```bash
-npm run prisma:generate
-npm run prisma:push
-```
+## 📄 License
 
-4. (Optional) Seed starter taxonomies:
+Distributed under the MIT License. See `LICENSE` for more information.
 
-```bash
-npm run db:seed
-```
+---
 
-5. Start development server:
-
-```bash
-npm run dev
-```
-
-## Deployment (Vercel Free)
-
-- Add all `.env.example` variables in Vercel project settings.
-- Ensure MongoDB Atlas IP access allows Vercel serverless functions.
-- Build command: `npm run build`
-- Output: Next.js default
-
-## Free-Tier Optimization Notes
-
-- No binary images in MongoDB; only Cloudinary URLs and public IDs
-- Indexed filter fields (slug/category/district/tags/publishedAt)
-- Paginated list pages and lightweight query patterns
-- Direct Cloudinary URLs (no expensive server image optimization)
-
-## Project Structure
-
-- `app/(public)` public news pages
-- `app/(admin)` protected admin panel
-- `app/api` route handlers for auth, posts, upload, taxonomies
-- `lib` shared services (`prisma`, `cloudinary`, `auth`, utilities)
-- `prisma/schema.prisma` database schema
+<div align="center">
+  Made with ❤️ by <a href="https://github.com/morshedkoli">Morshed Koli</a>
+</div>
