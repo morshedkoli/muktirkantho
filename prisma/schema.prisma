@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum PostStatus {
+  draft
+  published
+}
+
+model Post {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  slug            String     @unique
+  excerpt         String
+  content         String
+  imageUrl        String
+  imagePublicId   String
+  categoryId      String     @db.ObjectId
+  districtId      String     @db.ObjectId
+  upazilaId       String?    @db.ObjectId
+  tags            String[]
+  author          String
+  metaTitle       String
+  metaDescription String
+  featured        Boolean    @default(false)
+  status          PostStatus @default(draft)
+  publishedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id])
+  district District @relation(fields: [districtId], references: [id])
+  upazila  Upazila? @relation(fields: [upazilaId], references: [id])
+
+  @@index([categoryId])
+  @@index([districtId])
+  @@index([tags])
+  @@index([publishedAt])
+  @@index([status, publishedAt])
+}
+
+model Category {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+
+}
+
+model District {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  slug      String    @unique
+  divisionId String?   @db.ObjectId
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  posts     Post[]
+  upazilas  Upazila[]
+  
+  division Division? @relation(fields: [divisionId], references: [id])
+   
+   @@index([divisionId])
+}
+
+model Division {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  districts District[]
+}
+
+model Upazila {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  slug       String
+  districtId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  district District @relation(fields: [districtId], references: [id])
+  posts    Post[]
+
+  @@unique([districtId, slug])
+  @@index([districtId])
+  @@index([slug])
+}
+
+model SiteSetting {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  key             String   @unique @default("global")
+  logoUrl         String?
+  logoPublicId    String?
+  iconUrl         String?
+  iconPublicId    String?
+  faviconUrl      String?
+  faviconPublicId String?
+  contactAddress  String?
+  contactPhone    String?
+  contactEmail    String?
+  adminName       String?
+  adminEmail      String?
+  adminPhone      String?
+  adminPasswordHash String?
+  // Ads Global Setting
+  adsEnabled      Boolean  @default(true)
+  // Facebook App Credentials (can be set from admin)
+  facebookAppId         String?
+  facebookAppSecret     String?
+  // Facebook Integration Settings
+  facebookPageId        String?
+  facebookPageAccessToken String?
+  facebookPageName      String?
+  facebookAutoPost      Boolean  @default(false)
+  facebookConnected     Boolean  @default(false)
+  facebookConnectedAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Ad {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  placement     String
+  imageUrl      String
+  imagePublicId String
+  targetUrl     String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([placement, isActive, createdAt])
+}
