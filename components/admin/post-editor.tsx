@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
 import { ImagePlus, X, Save, Eye, Loader2, Check, AlertCircle } from "lucide-react";
+import { generatePostSeo } from "@/lib/seo";
 
 type Option = { id: string; name: string; slug: string; districtId?: string };
 type PostForm = {
@@ -17,6 +18,7 @@ type PostForm = {
   upazilaId?: string;
   tags: string;
   author: string;
+  youtubeUrl?: string;
   metaTitle: string;
   metaDescription: string;
   featured: boolean;
@@ -43,6 +45,7 @@ const empty: PostForm = {
   upazilaId: "",
   tags: "",
   author: "",
+  youtubeUrl: "",
   metaTitle: "",
   metaDescription: "",
   featured: false,
@@ -67,6 +70,11 @@ export function PostEditor({
   const filteredUpazilas = useMemo(
     () => upazilas.filter((item) => item.districtId === form.districtId),
     [form.districtId, upazilas],
+  );
+
+  const generatedSeo = useMemo(
+    () => generatePostSeo(form.title, form.content),
+    [form.title, form.content],
   );
 
   const onUploadImage = async (file: File) => {
@@ -136,9 +144,9 @@ export function PostEditor({
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Main Content Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6 order-2 lg:order-1">
           {/* Basic Info Card */}
           <div className="rounded-xl bg-[var(--ad-card)] shadow-[var(--ad-shadow)] border border-[var(--ad-border)] overflow-hidden">
             <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)] px-6 py-4">
@@ -167,12 +175,26 @@ export function PostEditor({
                 </label>
                 <textarea
                   name="content"
-                  rows={12}
-                  className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all font-mono placeholder:text-[var(--ad-text-secondary)]"
+                  rows={8}
+                  className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all font-mono placeholder:text-[var(--ad-text-secondary)] sm:min-h-[300px]"
                   placeholder="Write your content here... (Markdown supported)"
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--ad-text-secondary)] mb-2">
+                  YouTube Video Link <span className="text-[var(--ad-text-secondary)]/50">(Optional)</span>
+                </label>
+                <input
+                  name="youtubeUrl"
+                  type="url"
+                  className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all placeholder:text-[var(--ad-text-secondary)]"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={form.youtubeUrl ?? ""}
+                  onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })}
                 />
               </div>
             </div>
@@ -190,7 +212,7 @@ export function PostEditor({
                   <img
                     src={form.imageUrl}
                     alt="Preview"
-                    className="w-full h-64 object-cover rounded-lg border border-[var(--ad-border)]"
+                    className="w-full h-40 sm:h-64 object-cover rounded-lg border border-[var(--ad-border)]"
                   />
                   <button
                     type="button"
@@ -217,8 +239,8 @@ export function PostEditor({
                   <label
                     htmlFor="image-upload"
                     className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg transition-all bg-[var(--ad-background)]/50 ${isUploading
-                        ? "border-[var(--ad-primary)] cursor-wait"
-                        : "border-[var(--ad-border)] cursor-pointer hover:border-[var(--ad-primary)] hover:bg-[var(--ad-background)]"
+                      ? "border-[var(--ad-primary)] cursor-wait"
+                      : "border-[var(--ad-border)] cursor-pointer hover:border-[var(--ad-primary)] hover:bg-[var(--ad-background)]"
                       }`}
                   >
                     {isUploading ? (
@@ -260,31 +282,27 @@ export function PostEditor({
             <div className="p-6 space-y-5">
               <div>
                 <label className="block text-sm font-medium text-[var(--ad-text-secondary)] mb-2">
-                  Meta Title <span className="text-rose-500">*</span>
+                  Meta Title (Auto-generated)
                 </label>
                 <input
-                  name="metaTitle"
                   className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all placeholder:text-[var(--ad-text-secondary)]"
-                  placeholder="SEO title..."
-                  value={form.metaTitle}
-                  onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
-                  required
+                  value={generatedSeo.metaTitle}
+                  readOnly
                 />
+                <input type="hidden" name="metaTitle" value={generatedSeo.metaTitle} />
                 <p className="mt-1 text-xs text-[var(--ad-text-secondary)]">Recommended: 50-60 characters</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--ad-text-secondary)] mb-2">
-                  Meta Description <span className="text-rose-500">*</span>
+                  Meta Description (Auto-generated)
                 </label>
                 <textarea
-                  name="metaDescription"
                   rows={2}
                   className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all resize-none placeholder:text-[var(--ad-text-secondary)]"
-                  placeholder="SEO description..."
-                  value={form.metaDescription}
-                  onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
-                  required
+                  value={generatedSeo.metaDescription}
+                  readOnly
                 />
+                <input type="hidden" name="metaDescription" value={generatedSeo.metaDescription} />
                 <p className="mt-1 text-xs text-[var(--ad-text-secondary)]">Recommended: 150-160 characters</p>
               </div>
             </div>
@@ -292,7 +310,7 @@ export function PostEditor({
         </div>
 
         {/* Sidebar Column */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 order-1 lg:order-2">
           {/* Publish Card */}
           <div className="rounded-xl bg-[var(--ad-card)] shadow-[var(--ad-shadow)] border border-[var(--ad-border)] overflow-hidden">
             <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)] px-6 py-4">
@@ -331,20 +349,7 @@ export function PostEditor({
                 </label>
               </div>
 
-              {/* Author */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--ad-text-secondary)] mb-2">
-                  Author <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  name="author"
-                  className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all placeholder:text-[var(--ad-text-secondary)]"
-                  placeholder="Author name..."
-                  value={form.author}
-                  onChange={(e) => setForm({ ...form, author: e.target.value })}
-                  required
-                />
-              </div>
+              <input type="hidden" name="author" value={form.author} />
 
               {/* Action Buttons */}
               <div className="pt-4 border-t border-[var(--ad-border)] space-y-3">

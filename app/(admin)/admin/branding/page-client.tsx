@@ -35,7 +35,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
     faviconUrl: settings?.faviconUrl ?? "",
     faviconPublicId: settings?.faviconPublicId ?? "",
   });
-  
+
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>({
     logo: { uploading: false, error: null },
     icon: { uploading: false, error: null },
@@ -142,14 +142,14 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
     const inputRef = type === "logo" ? logoInputRef : type === "icon" ? iconInputRef : faviconInputRef;
 
     return (
-      <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
+      <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
         <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-2">
           {title}
         </h2>
         <p className="text-sm text-[var(--ad-text-secondary)] mb-4">
           {description}
         </p>
-        
+
         {/* Upload Area */}
         <div className="mb-4">
           <div className="border-2 border-dashed border-[var(--ad-border)] rounded-lg p-6 text-center hover:border-[var(--ad-primary)] transition-colors bg-[var(--ad-background)]">
@@ -164,7 +164,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
               className="hidden"
               id={`${type}-upload`}
             />
-            
+
             {status.uploading ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 text-[var(--ad-primary)] animate-spin" />
@@ -195,7 +195,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
         </div>
 
         {/* Preview Area */}
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           {currentUrl ? (
             <div className="relative p-4 rounded-lg bg-[var(--ad-background)] border border-[var(--ad-border)]">
               <button
@@ -216,7 +216,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
               />
             </div>
           ) : null}
-          
+
           <div className="p-4 rounded-lg bg-[var(--ad-background)] border border-[var(--ad-border)]">
             <p className="text-xs text-[var(--ad-text-secondary)] mb-2">Default:</p>
             {defaultComponent}
@@ -245,11 +245,11 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
         )}
 
         {/* Current Branding Preview */}
-        <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
+        <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
           <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
             Current Branding Preview
           </h2>
-          
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Light Mode Preview */}
             <div>
@@ -333,7 +333,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           <p className="text-sm text-[var(--ad-text-secondary)] mb-4">
             If no custom logo is uploaded, these default SVG logos will be used. They automatically adapt to both light and dark modes for maximum visibility.
           </p>
-          
+
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Light Mode</h3>

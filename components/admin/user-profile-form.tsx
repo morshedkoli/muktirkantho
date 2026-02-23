@@ -41,7 +41,7 @@ export function UserProfileForm({ initial }: UserProfileFormProps) {
         <p className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{state.message}</p>
       ) : null}
 
-      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)]">
+      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-5 shadow-[var(--ad-shadow)]">
         <h3 className="text-sm font-semibold text-[var(--ad-text-primary)]">Profile</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div>
@@ -80,10 +80,10 @@ export function UserProfileForm({ initial }: UserProfileFormProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)]">
+      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-5 shadow-[var(--ad-shadow)]">
         <h3 className="text-sm font-semibold text-[var(--ad-text-primary)]">Change Password</h3>
         <p className="mt-1 text-xs text-[var(--ad-text-secondary)]">Leave empty to keep current password.</p>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-[var(--ad-text-secondary)]">Current Password</label>
             <input

@@ -30,12 +30,12 @@ export default function AdminLoginPage() {
 
         {/* Login Card */}
         <div className="rounded-2xl bg-[var(--ad-card)] shadow-xl border border-[var(--ad-border)] overflow-hidden">
-          <div className="px-8 pt-8 pb-6">
+          <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
             <h2 className="text-xl font-semibold text-[var(--ad-text-primary)]">Welcome back</h2>
             <p className="text-sm text-[var(--ad-text-secondary)] mt-1">Sign in to access the admin dashboard</p>
           </div>
 
-          <div className="px-8 pb-8">
+          <div className="px-5 sm:px-8 pb-6 sm:pb-8">
             <form action={formAction} className="space-y-5">
               {/* Email Field */}
               <div>
@@ -112,8 +112,8 @@ export default function AdminLoginPage() {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="text-sm text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] transition-colors"
           >
             ← Back to website

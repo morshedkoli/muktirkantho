@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const [posts, categories, districts] = await Promise.all([
-    prisma.post.findMany({ select: { slug: true, updatedAt: true } }),
+    prisma.post.findMany({ where: { status: PostStatus.published }, select: { slug: true, updatedAt: true } }),
     prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
     prisma.district.findMany({ select: { slug: true, updatedAt: true } }),
   ]);

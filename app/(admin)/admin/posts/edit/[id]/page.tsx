@@ -45,6 +45,7 @@ export default async function AdminEditPostPage({ params }: Props) {
           upazilaId: post.upazilaId ?? "",
           tags: post.tags.join(", "),
           author: post.author,
+          youtubeUrl: post.youtubeUrl ?? "",
           metaTitle: post.metaTitle,
           metaDescription: post.metaDescription,
           featured: post.featured,

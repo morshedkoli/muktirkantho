@@ -86,7 +86,7 @@ function DeleteItemButton({
       type="button"
       onClick={handleDelete}
       disabled={isDeleting}
-      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-50"
       title={`Delete ${title}`}
     >
       {isDeleting ? (
@@ -123,7 +123,7 @@ export function TaxonomyManager({
   return (
     <div className="space-y-6">
       {/* Header with Add Button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[var(--ad-text-primary)]">
             {title} Management
@@ -135,7 +135,7 @@ export function TaxonomyManager({
         {!disableActions && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--ad-primary)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] transition-all shadow-sm hover:shadow-md"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 sm:px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] transition-all shadow-sm hover:shadow-md w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             Add {title}
@@ -160,7 +160,7 @@ export function TaxonomyManager({
 
       {/* Items List */}
       <div className="rounded-xl bg-[var(--ad-card)] shadow-[var(--ad-shadow)] border border-[var(--ad-border)] overflow-hidden">
-        <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)] px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)] px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-[var(--ad-text-primary)] uppercase tracking-wider">
             All {title}s
           </h3>
@@ -188,17 +188,17 @@ export function TaxonomyManager({
             {items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between px-6 py-4 hover:bg-[var(--ad-background)] transition-colors group"
+                className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-[var(--ad-background)] transition-colors group"
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--ad-background)] text-[var(--ad-text-secondary)] group-hover:bg-[var(--ad-card)] group-hover:text-[var(--ad-primary)] group-hover:shadow-sm transition-all border border-[var(--ad-border)]">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--ad-background)] text-[var(--ad-text-secondary)] group-hover:bg-[var(--ad-card)] group-hover:text-[var(--ad-primary)] group-hover:shadow-sm transition-all border border-[var(--ad-border)]">
                     {isCategory && <Tag className="h-5 w-5" />}
                     {isDistrict && <MapPin className="h-5 w-5" />}
                     {!isCategory && !isDistrict && <MapPinned className="h-5 w-5" />}
                   </div>
-                  <div>
-                    <p className="font-semibold text-[var(--ad-text-primary)]">{item.name}</p>
-                    <div className="flex items-center gap-3 mt-1">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[var(--ad-text-primary)] text-sm sm:text-base truncate">{item.name}</p>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
                       <span className="text-xs text-[var(--ad-text-secondary)] font-mono">/{item.slug}</span>
                       {isUpazila && item.district && (
                         <>

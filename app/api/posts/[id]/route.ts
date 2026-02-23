@@ -6,8 +6,23 @@ import { makeSlug } from "@/lib/utils";
 import { requireAdmin } from "@/lib/route-auth";
 import { deleteImage } from "@/lib/cloudinary";
 import { isObjectId } from "@/lib/object-id";
+import { generatePostSeo } from "@/lib/seo";
+import { getAuthUser } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/site-settings";
+import { env } from "@/lib/env";
 
 type Context = { params: Promise<{ id: string }> };
+
+async function resolveCurrentAuthor() {
+  const [authUser, settings] = await Promise.all([getAuthUser(), getSiteSettings()]);
+  return (
+    settings?.adminName?.trim() ||
+    settings?.adminEmail?.trim() ||
+    authUser?.email?.trim() ||
+    env.ADMIN_EMAIL ||
+    "Admin"
+  );
+}
 
 export async function GET(_: Request, { params }: Context) {
   const { id } = await params;
@@ -30,7 +45,15 @@ export async function PATCH(request: Request, { params }: Context) {
   }
 
   const body = await request.json();
-  const parsed = postSchema.safeParse(body);
+  const author = await resolveCurrentAuthor();
+  const seo = generatePostSeo(body?.title ?? "", body?.content ?? "");
+  const parsed = postSchema.safeParse({
+    ...body,
+    author: (body?.author ?? "").toString().trim() || author,
+    youtubeUrl: (body?.youtubeUrl ?? "").toString().trim() || undefined,
+    metaTitle: seo.metaTitle,
+    metaDescription: seo.metaDescription,
+  });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -42,6 +65,7 @@ export async function PATCH(request: Request, { params }: Context) {
       ...payload,
       slug: makeSlug(payload.title),
       upazilaId: payload.upazilaId || null,
+      youtubeUrl: payload.youtubeUrl || null,
       publishedAt: payload.status === PostStatus.published ? new Date() : null,
     },
   });

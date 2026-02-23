@@ -10,17 +10,17 @@ interface AdminShellProps {
 
 export function AdminShell({ title, description, children, actions }: AdminShellProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 admin-content-area">
       <Suspense fallback={null}>
         <AdminToast />
       </Suspense>
-      
+
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--ad-text-primary)]">{title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--ad-text-primary)]">{title}</h1>
           {description && (
-            <p className="mt-1 text-sm text-[var(--ad-text-secondary)]">{description}</p>
+            <p className="mt-1 text-xs sm:text-sm text-[var(--ad-text-secondary)]">{description}</p>
           )}
         </div>
         {actions && (

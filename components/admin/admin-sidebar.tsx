@@ -260,7 +260,7 @@ export function AdminSidebar({
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--ad-sidebar)] text-[var(--ad-text-primary)] lg:hidden border-t border-[var(--ad-border)] safe-area-pb">
-        <div className="flex items-center justify-around p-2">
+        <div className="grid grid-cols-5 gap-1 p-2">
           {mobileNavItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
@@ -270,7 +270,7 @@ export function AdminSidebar({
                 key={item.name}
                 href={item.href}
                 onClick={() => handleMobileNavClick(item.href, item.isMenu)}
-                className={`flex flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all min-w-[64px] ${isActive && !item.isMenu
+                className={`flex min-w-0 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-xs font-medium transition-all ${isActive && !item.isMenu
                   ? "text-[var(--ad-primary)]"
                   : "text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)]"
                   }`}
@@ -282,7 +282,7 @@ export function AdminSidebar({
                 ) : (
                   <Icon className="h-5 w-5" />
                 )}
-                <span className="text-[10px]">{item.name}</span>
+                <span className="truncate text-[10px]">{item.name}</span>
               </Link>
             );
           })}

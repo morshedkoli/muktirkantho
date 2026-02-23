@@ -4,6 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { postSchema } from "@/lib/validators";
 import { makeSlug } from "@/lib/utils";
 import { requireAdmin } from "@/lib/route-auth";
+import { generatePostSeo } from "@/lib/seo";
+import { getAuthUser } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/site-settings";
+import { env } from "@/lib/env";
+
+async function resolveCurrentAuthor() {
+  const [authUser, settings] = await Promise.all([getAuthUser(), getSiteSettings()]);
+  return (
+    settings?.adminName?.trim() ||
+    settings?.adminEmail?.trim() ||
+    authUser?.email?.trim() ||
+    env.ADMIN_EMAIL ||
+    "Admin"
+  );
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -40,7 +55,15 @@ export async function POST(request: Request) {
   if (unauthorized) return unauthorized;
 
   const body = await request.json();
-  const parsed = postSchema.safeParse(body);
+  const author = await resolveCurrentAuthor();
+  const seo = generatePostSeo(body?.title ?? "", body?.content ?? "");
+  const parsed = postSchema.safeParse({
+    ...body,
+    author: (body?.author ?? "").toString().trim() || author,
+    youtubeUrl: (body?.youtubeUrl ?? "").toString().trim() || undefined,
+    metaTitle: seo.metaTitle,
+    metaDescription: seo.metaDescription,
+  });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -53,6 +76,7 @@ export async function POST(request: Request) {
       ...payload,
       slug,
       upazilaId: payload.upazilaId || null,
+      youtubeUrl: payload.youtubeUrl || null,
       publishedAt: payload.status === PostStatus.published ? new Date() : null,
     },
   });

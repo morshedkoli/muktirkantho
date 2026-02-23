@@ -24,10 +24,10 @@ export default async function HomePage() {
       <BreakingTicker items={breaking.slice(0, 3)} />
 
       {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
         {/* Hero Section */}
         {mainStory && (
-          <section className="mb-12">
+          <section className="mb-8 sm:mb-12">
             <div className="border-b-2 border-[var(--primary)] pb-2 mb-6">
               <h2 className="inline-flex items-center gap-2 font-display text-xl font-bold text-[var(--primary)]">
                 <span className="flex h-3 w-3">
@@ -41,25 +41,25 @@ export default async function HomePage() {
           </section>
         )}
 
-        <AdSlot placement={AD_PLACEMENTS.HOMEPAGE_BANNER} className="mb-10" showPlaceholder={false} />
+        <AdSlot placement={AD_PLACEMENTS.HOMEPAGE_BANNER} className="mb-6 sm:mb-10" showPlaceholder={false} />
 
         {/* Main Grid Layout */}
         <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
           {/* Left Column - Main Content */}
-          <div className="space-y-12">
+          <div className="space-y-8 sm:space-y-12">
             {/* Featured Stories Section */}
             {featuredStories.length > 0 && (
               <section>
                 <div className="mb-6 flex items-center justify-between border-b border-[var(--border)] pb-3">
                   <h2 className="font-display text-2xl font-bold text-[var(--foreground)]">Featured Stories</h2>
-                  <Link 
-                    href="/category/featured" 
+                  <Link
+                    href="/category/featured"
                     className="flex items-center gap-1 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors"
                   >
                     View All <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {featuredStories.map((post) => (
                     <NewsCard key={post.id} post={post} />
                   ))}
@@ -72,8 +72,8 @@ export default async function HomePage() {
               <section>
                 <div className="mb-6 flex items-center justify-between border-b border-[var(--border)] pb-3">
                   <h2 className="font-display text-2xl font-bold text-[var(--foreground)]">Latest Updates</h2>
-                  <Link 
-                    href="/news" 
+                  <Link
+                    href="/news"
                     className="flex items-center gap-1 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors"
                   >
                     View All <ArrowRight className="h-4 w-4" />

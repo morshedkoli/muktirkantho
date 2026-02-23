@@ -16,9 +16,9 @@ export function BreakingTicker({ items }: BreakingTickerProps) {
       <div className="mx-auto max-w-7xl">
         <div className="flex items-stretch">
           {/* Breaking label */}
-          <div className="flex items-center gap-2 bg-[var(--np-breaking)] px-4 py-3 text-white shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-[var(--np-breaking)] px-2.5 sm:px-4 py-2.5 sm:py-3 text-white shrink-0">
             <AlertCircle className="h-4 w-4 animate-pulse" />
-            <span className="text-sm font-bold uppercase tracking-wider">Breaking</span>
+            <span className="hidden min-[400px]:inline text-xs sm:text-sm font-bold uppercase tracking-wider">Breaking</span>
           </div>
 
           {/* Ticker content */}

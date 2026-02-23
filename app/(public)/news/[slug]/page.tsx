@@ -8,6 +8,7 @@ import { renderContent } from "@/lib/content";
 import { isObjectId } from "@/lib/object-id";
 import { getPostPath } from "@/lib/post-url";
 import { AD_PLACEMENTS } from "@/lib/ads";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import { AdSlot } from "@/components/public/ad-slot";
 import { CopyLinkButton } from "@/components/public/copy-link-button";
 import { ImageWatermark } from "@/components/public/image-watermark";
@@ -15,6 +16,24 @@ import { ImageWatermark } from "@/components/public/image-watermark";
 export const revalidate = 60;
 
 type Props = { params: Promise<{ slug: string }> };
+
+function splitHtmlForMiddleEmbed(html: string) {
+  if (!html) {
+    return { before: "", after: "" };
+  }
+
+  const middle = Math.floor(html.length / 2);
+  const paragraphIndex = html.indexOf("</p>", middle);
+  if (paragraphIndex === -1) {
+    return { before: html, after: "" };
+  }
+
+  const splitIndex = paragraphIndex + 4;
+  return {
+    before: html.slice(0, splitIndex),
+    after: html.slice(splitIndex),
+  };
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -89,6 +108,8 @@ export default async function NewsDetailPage({ params }: Props) {
   });
 
   const html = await renderContent(post.content);
+  const embedUrl = getYouTubeEmbedUrl(post.youtubeUrl ?? "");
+  const { before: htmlBeforeVideo, after: htmlAfterVideo } = splitHtmlForMiddleEmbed(html);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const postUrl = `${siteUrl}${getPostPath(post)}`;
   const jsonLd = {
@@ -108,9 +129,9 @@ export default async function NewsDetailPage({ params }: Props) {
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <main className="mx-auto max-w-5xl px-3 sm:px-4 py-6 sm:py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <article className="rounded-2xl border border-[var(--np-border)] bg-[var(--np-card)] p-6 shadow-[var(--np-shadow)] md:p-8">
+      <article className="rounded-xl sm:rounded-2xl border border-[var(--np-border)] bg-[var(--np-card)] p-4 sm:p-6 md:p-8 shadow-[var(--np-shadow)]">
         <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--np-text-secondary)]">
           <Link href={`/category/${post.category.slug}`}>{post.category.name}</Link>
           <Link href={`/district/${post.district.slug}`}>{post.district.name}</Link>
@@ -118,7 +139,7 @@ export default async function NewsDetailPage({ params }: Props) {
             <Link href={`/district/${post.district.slug}/${post.upazila.slug}`}>{post.upazila.name}</Link>
           ) : null}
         </div>
-        <h1 className="text-3xl font-black text-[var(--np-text-primary)] md:text-5xl">{post.title}</h1>
+        <h1 className="text-2xl font-black text-[var(--np-text-primary)] sm:text-3xl md:text-4xl lg:text-5xl">{post.title}</h1>
         <p className="mt-3 text-sm text-[var(--np-text-secondary)]">By {post.author}</p>
         <div className="relative mt-6">
           <Image
@@ -134,17 +155,24 @@ export default async function NewsDetailPage({ params }: Props) {
             <ImageWatermark size="lg" showText={true} />
           </div>
         </div>
-        <div
-          className="prose-news mt-8 min-h-[100px] max-w-none border border-transparent text-[var(--np-text-primary)]"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono overflow-auto">
-            <p>Debug Info:</p>
-            <p>HTML Length: {html.length}</p>
-            <p>First 100 chars: {html.substring(0, 100)}</p>
-          </div>
-        )}
+        <div className="prose-news mt-8 min-h-[100px] max-w-none border border-transparent text-[var(--np-text-primary)]">
+          <div dangerouslySetInnerHTML={{ __html: embedUrl ? htmlBeforeVideo : html }} />
+          {embedUrl ? (
+            <div className="my-8 overflow-hidden rounded-xl border border-[var(--np-border)] bg-black shadow-[var(--np-shadow)]">
+              <div className="relative w-full pt-[56.25%]">
+                <iframe
+                  src={embedUrl}
+                  title={`Video for ${post.title}`}
+                  className="absolute left-0 top-0 h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          ) : null}
+          {embedUrl && htmlAfterVideo ? <div dangerouslySetInnerHTML={{ __html: htmlAfterVideo }} /> : null}
+        </div>
+
         <div className="mt-8 flex flex-wrap gap-2">
           {post.tags.map((tag) => (
             <Link
@@ -156,7 +184,7 @@ export default async function NewsDetailPage({ params }: Props) {
             </Link>
           ))}
         </div>
-        <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-[var(--np-text-secondary)]">
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 text-sm font-semibold text-[var(--np-text-secondary)]">
           <a
             href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`}
             target="_blank"
@@ -182,7 +210,7 @@ export default async function NewsDetailPage({ params }: Props) {
 
       <section className="mt-10">
         <h2 className="text-2xl font-bold text-[var(--np-text-primary)]">Related Articles</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2">
           {related.map((item) => (
             <Link
               key={item.id}

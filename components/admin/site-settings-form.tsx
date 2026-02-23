@@ -34,7 +34,7 @@ export function SiteSettingsForm({ initial }: SiteSettingsFormProps) {
         <p className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{state.message}</p>
       ) : null}
 
-      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
+      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
         <h3 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-2">
           Footer Contact Information
         </h3>

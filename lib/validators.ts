@@ -16,6 +16,7 @@ export const postSchema = z.object({
   upazilaId: z.string().optional(),
   tags: z.array(z.string().min(1).max(30)).max(10),
   author: z.string().min(2).max(80),
+  youtubeUrl: z.string().url().optional(),
   metaTitle: z.string().min(10).max(160),
   metaDescription: z.string().min(20).max(200),
   featured: z.boolean().default(false),

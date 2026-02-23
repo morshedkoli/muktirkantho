@@ -28,22 +28,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ToastProvider>
       <ConfirmProvider>
-        <div className="min-h-screen bg-[var(--ad-background)]">
+        <div className="min-h-screen bg-[var(--ad-background)] overflow-x-hidden">
           <div className="flex">
             {/* Sidebar */}
-            <AdminSidebar 
-              mobileMenuOpen={mobileMenuOpen} 
+            <AdminSidebar
+              mobileMenuOpen={mobileMenuOpen}
               onMobileMenuClose={() => setMobileMenuOpen(false)}
               collapsed={sidebarCollapsed}
               onCollapsedChange={setSidebarCollapsed}
             />
-            
+
             {/* Main content area - margin adjusts based on sidebar state */}
-            <div className={`flex-1 transition-all duration-300 ease-in-out pb-16 lg:pb-0 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
-              <AdminHeader 
-                onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} 
+            <div className={`flex-1 min-w-0 w-full max-w-full transition-all duration-300 ease-in-out pb-16 lg:pb-0 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+              <AdminHeader
+                onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
               />
-              <main className="p-4 sm:p-6">
+              <main className="w-full max-w-full overflow-x-hidden p-3 sm:p-4 lg:p-6">
                 {children}
               </main>
             </div>

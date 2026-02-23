@@ -25,6 +25,7 @@ model Post {
   upazilaId       String?    @db.ObjectId
   tags            String[]
   author          String
+  youtubeUrl      String?
   metaTitle       String
   metaDescription String
   featured        Boolean    @default(false)

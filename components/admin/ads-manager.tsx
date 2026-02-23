@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
 import { createAdAction, deleteAdAction, toggleAdStatusAction } from "@/app/(admin)/admin/actions";
 import { AD_PLACEMENT_OPTIONS, AD_PLACEMENTS, type AdPlacement } from "@/lib/ads";
-import { 
-  Plus, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
-  ExternalLink, 
-  ImageIcon, 
+import {
+  Plus,
+  Eye,
+  EyeOff,
+  Trash2,
+  ExternalLink,
+  ImageIcon,
   AlertCircle,
   CheckCircle2,
   XCircle,
@@ -44,9 +44,9 @@ type AdsManagerProps = {
 
 const initialState: AdminActionState = { status: "idle" };
 
-const placementConfigs: Record<string, { 
-  label: string; 
-  size: string; 
+const placementConfigs: Record<string, {
+  label: string;
+  size: string;
   aspectRatio: string;
   description: string;
   icon: React.ReactNode;
@@ -102,7 +102,7 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
   const totalAds = ads.length;
   const activeAds = ads.filter(ad => ad.isActive).length;
   const inactiveAds = totalAds - activeAds;
-  
+
   // Group ads by placement
   const adsByPlacement = AD_PLACEMENT_OPTIONS.map(option => ({
     ...option,
@@ -110,15 +110,15 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
     activeCount: ads.filter(ad => ad.placement === option.value && ad.isActive).length,
   }));
 
-  const filteredAds = selectedPlacement === "all" 
-    ? ads 
+  const filteredAds = selectedPlacement === "all"
+    ? ads
     : ads.filter(ad => ad.placement === selectedPlacement);
 
   return (
     <div className="space-y-6">
       {/* Global Ads Toggle */}
-      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
-        <div className="flex items-center justify-between">
+      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-[var(--ad-background)] p-3">
               <Megaphone className={`h-6 w-6 ${adsEnabled ? "text-emerald-600" : "text-[var(--ad-text-secondary)]"}`} />
@@ -128,13 +128,13 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
                 Ads System {adsEnabled ? "Enabled" : "Disabled"}
               </h3>
               <p className="text-sm text-[var(--ad-text-secondary)]">
-                {adsEnabled 
-                  ? "Ads are being displayed on the website" 
+                {adsEnabled
+                  ? "Ads are being displayed on the website"
                   : "All ads are hidden from the website"}
               </p>
             </div>
           </div>
-          
+
           <button
             type="button"
             onClick={handleGlobalToggle}
@@ -148,11 +148,11 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
             )}
           </button>
         </div>
-        
+
         {!adsEnabled && (
           <div className="mt-4 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] p-3">
             <p className="text-sm text-[var(--ad-text-secondary)]">
-              <strong>Note:</strong> All ad placeholders are currently hidden from the website. 
+              <strong>Note:</strong> All ad placeholders are currently hidden from the website.
               Enable ads to show placeholders and active ads.
             </p>
           </div>
@@ -161,21 +161,21 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
 
       {/* Stats Overview */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard 
-          title="Total Ads" 
-          value={totalAds} 
+        <StatCard
+          title="Total Ads"
+          value={totalAds}
           icon={<BarChart3 className="h-5 w-5" />}
           color="blue"
         />
-        <StatCard 
-          title="Active Ads" 
-          value={activeAds} 
+        <StatCard
+          title="Active Ads"
+          value={activeAds}
           icon={<CheckCircle2 className="h-5 w-5" />}
           color="emerald"
         />
-        <StatCard 
-          title="Inactive Ads" 
-          value={inactiveAds} 
+        <StatCard
+          title="Inactive Ads"
+          value={inactiveAds}
           icon={<XCircle className="h-5 w-5" />}
           color="amber"
         />
@@ -183,23 +183,23 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
 
       {/* Tabs */}
       <div className="border-b border-[var(--ad-border)]">
-        <div className="flex gap-1">
-          <TabButton 
-            active={activeTab === "overview"} 
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-3">
+          <TabButton
+            active={activeTab === "overview"}
             onClick={() => setActiveTab("overview")}
             icon={<BarChart3 className="h-4 w-4" />}
           >
             Overview
           </TabButton>
-          <TabButton 
-            active={activeTab === "create"} 
+          <TabButton
+            active={activeTab === "create"}
             onClick={() => setActiveTab("create")}
             icon={<Plus className="h-4 w-4" />}
           >
             Create New
           </TabButton>
-          <TabButton 
-            active={activeTab === "manage"} 
+          <TabButton
+            active={activeTab === "manage"}
             onClick={() => setActiveTab("manage")}
             icon={<Settings className="h-4 w-4" />}
           >
@@ -218,7 +218,7 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
       )}
 
       {activeTab === "manage" && (
-        <ManageAdsTab 
+        <ManageAdsTab
           ads={filteredAds}
           placements={adsByPlacement}
           selectedPlacement={selectedPlacement}
@@ -229,9 +229,9 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
   );
 }
 
-function StatCard({ title, value, icon, color }: { 
-  title: string; 
-  value: number; 
+function StatCard({ title, value, icon, color }: {
+  title: string;
+  value: number;
   icon: React.ReactNode;
   color: "blue" | "emerald" | "amber" | "rose";
 }) {
@@ -257,25 +257,24 @@ function StatCard({ title, value, icon, color }: {
   );
 }
 
-function TabButton({ 
-  children, 
-  active, 
-  onClick, 
-  icon 
-}: { 
-  children: React.ReactNode; 
-  active: boolean; 
+function TabButton({
+  children,
+  active,
+  onClick,
+  icon
+}: {
+  children: React.ReactNode;
+  active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-        active 
-          ? "border-[var(--ad-primary)] text-[var(--ad-primary)]" 
+      className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors border-b-2 ${active
+          ? "border-[var(--ad-primary)] text-[var(--ad-primary)]"
           : "border-transparent text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)]"
-      }`}
+        }`}
     >
       {icon}
       {children}
@@ -283,12 +282,14 @@ function TabButton({
   );
 }
 
-function OverviewTab({ adsByPlacement }: { adsByPlacement: Array<{
-  value: string;
-  label: string;
-  ads: AdItem[];
-  activeCount: number;
-}> }) {
+function OverviewTab({ adsByPlacement }: {
+  adsByPlacement: Array<{
+    value: string;
+    label: string;
+    ads: AdItem[];
+    activeCount: number;
+  }>
+}) {
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
@@ -300,9 +301,9 @@ function OverviewTab({ adsByPlacement }: { adsByPlacement: Array<{
             const config = placementConfigs[placement.value];
             const totalInPlacement = placement.ads.length;
             const activeInPlacement = placement.activeCount;
-            
+
             return (
-              <div 
+              <div
                 key={placement.value}
                 className="rounded-lg border border-[var(--ad-border)] p-4 hover:border-[var(--ad-primary)] transition-colors"
               >
@@ -321,11 +322,10 @@ function OverviewTab({ adsByPlacement }: { adsByPlacement: Array<{
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      activeInPlacement > 0 
-                        ? "bg-emerald-100 text-emerald-700" 
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${activeInPlacement > 0
+                        ? "bg-emerald-100 text-emerald-700"
                         : "bg-gray-100 text-gray-600"
-                    }`}>
+                      }`}>
                       {activeInPlacement} active
                     </span>
                   </div>
@@ -397,8 +397,8 @@ function CreateAdTab() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Form */}
-      <form action={formAction} className="space-y-5">
-        <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
+      <form action={formAction} className="space-y-5 order-1">
+        <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
           <h3 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-5">
             Create New Advertisement
           </h3>
@@ -411,11 +411,10 @@ function CreateAdTab() {
           )}
 
           {uploadNotice && (
-            <div className={`mb-4 rounded-lg border px-4 py-3 text-sm flex items-center gap-2 ${
-              uploadNotice.includes("success") 
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800" 
+            <div className={`mb-4 rounded-lg border px-4 py-3 text-sm flex items-center gap-2 ${uploadNotice.includes("success")
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                 : "border-amber-200 bg-amber-50 text-amber-800"
-            }`}>
+              }`}>
               {uploadNotice.includes("success") ? (
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
               ) : (
@@ -557,7 +556,7 @@ function CreateAdTab() {
           <h3 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
             Preview
           </h3>
-          
+
           {imageUrl ? (
             <div className="space-y-4">
               <div className={`relative overflow-hidden rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] ${config?.aspectRatio || "aspect-video"}`}>
@@ -614,12 +613,12 @@ function CreateAdTab() {
   );
 }
 
-function ManageAdsTab({ 
-  ads, 
-  placements, 
-  selectedPlacement, 
-  onPlacementChange 
-}: { 
+function ManageAdsTab({
+  ads,
+  placements,
+  selectedPlacement,
+  onPlacementChange
+}: {
   ads: AdItem[];
   placements: Array<{
     value: string;
@@ -638,11 +637,10 @@ function ManageAdsTab({
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => onPlacementChange("all")}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              selectedPlacement === "all"
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${selectedPlacement === "all"
                 ? "bg-[var(--ad-primary)] text-white"
                 : "bg-[var(--ad-background)] text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] border border-[var(--ad-border)]"
-            }`}
+              }`}
           >
             All ({ads.length})
           </button>
@@ -650,11 +648,10 @@ function ManageAdsTab({
             <button
               key={p.value}
               onClick={() => onPlacementChange(p.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                selectedPlacement === p.value
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${selectedPlacement === p.value
                   ? "bg-[var(--ad-primary)] text-white"
                   : "bg-[var(--ad-background)] text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] border border-[var(--ad-border)]"
-              }`}
+                }`}
             >
               {p.label.split(" ")[0]} ({p.ads.length})
             </button>
@@ -669,8 +666,8 @@ function ManageAdsTab({
             <ImageIcon className="h-12 w-12 mx-auto text-[var(--ad-text-secondary)] mb-3" />
             <h3 className="text-lg font-semibold text-[var(--ad-text-primary)]">No ads found</h3>
             <p className="text-sm text-[var(--ad-text-secondary)] mt-1">
-              {selectedPlacement === "all" 
-                ? "Create your first advertisement to get started." 
+              {selectedPlacement === "all"
+                ? "Create your first advertisement to get started."
                 : "No ads in this placement."}
             </p>
           </div>
@@ -688,7 +685,7 @@ function ManageAdsTab({
 
 function AdListItem({ ad }: { ad: AdItem }) {
   const config = placementConfigs[ad.placement];
-  
+
   return (
     <div className="p-5 hover:bg-[var(--ad-background)]/50 transition-colors">
       <div className="flex flex-col sm:flex-row gap-4">
@@ -721,7 +718,7 @@ function AdListItem({ ad }: { ad: AdItem }) {
                 </span>
               </div>
               {ad.targetUrl && (
-                <a 
+                <a
                   href={ad.targetUrl}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -734,11 +731,10 @@ function AdListItem({ ad }: { ad: AdItem }) {
             </div>
 
             {/* Status Badge */}
-            <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-              ad.isActive 
-                ? "bg-emerald-100 text-emerald-700" 
+            <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${ad.isActive
+                ? "bg-emerald-100 text-emerald-700"
                 : "bg-gray-100 text-gray-600"
-            }`}>
+              }`}>
               {ad.isActive ? (
                 <><Eye className="h-3 w-3" /> Active</>
               ) : (
@@ -753,11 +749,10 @@ function AdListItem({ ad }: { ad: AdItem }) {
           <form action={toggleAdStatusAction.bind(null, ad.id, !ad.isActive)}>
             <button
               type="submit"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                ad.isActive
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${ad.isActive
                   ? "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
                   : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-              }`}
+                }`}
             >
               {ad.isActive ? (
                 <><EyeOff className="h-3.5 w-3.5" /> Pause</>
@@ -767,7 +762,7 @@ function AdListItem({ ad }: { ad: AdItem }) {
             </button>
           </form>
           <form action={deleteAdAction.bind(null, ad.id)}>
-            <button 
+            <button
               type="submit"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors"
             >

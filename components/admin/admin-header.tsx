@@ -52,17 +52,17 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
   }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[var(--ad-border)] bg-[var(--ad-card)] px-6 shadow-[var(--ad-shadow)]">
+    <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-[var(--ad-border)] bg-[var(--ad-card)] px-3 sm:px-4 lg:px-6 shadow-[var(--ad-shadow)]">
       {/* Left side */}
-      <div className="flex items-center gap-4">
-        <button 
+      <div className="flex items-center gap-2 sm:gap-4">
+        <button
           onClick={onMobileMenuToggle}
           className="lg:hidden p-2 hover:bg-[var(--ad-background)] rounded-lg transition-colors"
           aria-label="Toggle menu"
         >
           <Menu className="h-5 w-5 text-[var(--ad-text-secondary)]" />
         </button>
-        
+
         {/* Breadcrumb - could be dynamic */}
         <nav className="hidden md:flex items-center gap-2 text-sm text-[var(--ad-text-secondary)]">
           <span className="text-[var(--ad-text-primary)] font-medium">Admin</span>
@@ -72,7 +72,7 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         {/* Search */}
         <div className="hidden sm:flex items-center gap-2 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2">
           <Search className="h-4 w-4 text-[var(--ad-text-secondary)]" />
@@ -93,7 +93,7 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
         </button>
 
         {/* User menu */}
-        <div ref={menuRef} className="relative border-l border-[var(--ad-border)] pl-3">
+        <div ref={menuRef} className="relative border-l border-[var(--ad-border)] pl-1.5 sm:pl-3">
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}

@@ -11,8 +11,11 @@ import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings, saveSiteSettings } from "@/lib/site-settings";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { generatePostSeo } from "@/lib/seo";
 import { makeSlug } from "@/lib/utils";
 import { loginSchema, postSchema, taxonomySchema } from "@/lib/validators";
+import { verifyCsrf } from "@/lib/csrf";
+import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 export type AdminActionState = {
   status: "idle" | "error" | "success";
@@ -20,10 +23,22 @@ export type AdminActionState = {
 };
 
 async function requireActionAdmin() {
+  await verifyCsrf();
   const user = await getAuthUser();
   if (!user) {
     redirect("/admin/login");
   }
+}
+
+async function resolveCurrentAuthor() {
+  const [authUser, settings] = await Promise.all([getAuthUser(), getSiteSettings()]);
+  const candidate =
+    settings?.adminName?.trim() ||
+    settings?.adminEmail?.trim() ||
+    authUser?.email?.trim() ||
+    env.ADMIN_EMAIL;
+
+  return candidate || "Admin";
 }
 
 function normalizePostPayload(formData: FormData) {
@@ -33,6 +48,8 @@ function normalizePostPayload(formData: FormData) {
     .filter(Boolean);
 
   const content = formData.get("content")?.toString() ?? "";
+  const title = formData.get("title")?.toString() ?? "";
+  const seo = generatePostSeo(title, content);
 
   // Generate excerpt from content: take first 160 chars or up to first period if shorter
   let excerpt = formData.get("excerpt")?.toString() ?? "";
@@ -46,7 +63,7 @@ function normalizePostPayload(formData: FormData) {
   }
 
   return {
-    title: formData.get("title")?.toString() ?? "",
+    title,
     excerpt,
     content,
     imageUrl: formData.get("imageUrl")?.toString() ?? "",
@@ -56,8 +73,9 @@ function normalizePostPayload(formData: FormData) {
     upazilaId: formData.get("upazilaId")?.toString() ?? undefined,
     tags,
     author: formData.get("author")?.toString() ?? "",
-    metaTitle: formData.get("metaTitle")?.toString() ?? "",
-    metaDescription: formData.get("metaDescription")?.toString() ?? "",
+    youtubeUrl: formData.get("youtubeUrl")?.toString().trim() || undefined,
+    metaTitle: seo.metaTitle,
+    metaDescription: seo.metaDescription,
     featured: formData.get("featured") === "on",
     status: (formData.get("status")?.toString() ?? "draft") as "draft" | "published",
   };
@@ -99,6 +117,11 @@ export async function loginAdminAction(_: AdminActionState, formData: FormData):
 
   const { email, password } = parsed.data;
 
+  const rl = checkRateLimit(email.toLowerCase());
+  if (!rl.allowed) {
+    return { status: "error", message: `Too many login attempts. Try again in ${rl.retryAfterSeconds}s.` };
+  }
+
   const settings = await getSiteSettings();
   const configuredEmail = settings?.adminEmail?.trim().toLowerCase();
   const configuredPasswordHash = settings?.adminPasswordHash?.trim();
@@ -112,8 +135,14 @@ export async function loginAdminAction(_: AdminActionState, formData: FormData):
     if (email !== env.ADMIN_EMAIL || password !== env.ADMIN_PASSWORD) {
       return { status: "error", message: "Invalid credentials." };
     }
+    // First login with env credentials  hash and store password so it is no longer plaintext
+    await saveSiteSettings({
+      adminEmail: env.ADMIN_EMAIL,
+      adminPasswordHash: hashPassword(password),
+    });
   }
 
+  resetRateLimit(email.toLowerCase());
   const token = await signAdminToken({ email, role: "admin" });
   await setAuthCookie(token);
   redirect("/admin/dashboard?notice=Signed%20in&type=success");
@@ -128,7 +157,9 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
   await requireActionAdmin();
 
   const payload = normalizePostPayload(formData);
-  const parsed = postSchema.safeParse(payload);
+  const author = await resolveCurrentAuthor();
+  const payloadWithAuthor = { ...payload, author };
+  const parsed = postSchema.safeParse(payloadWithAuthor);
   if (!parsed.success) {
     return { status: "error", message: "Please fix the post fields and try again." };
   }
@@ -140,6 +171,7 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
       ...safe,
       slug,
       upazilaId: safe.upazilaId || null,
+      youtubeUrl: safe.youtubeUrl || null,
       publishedAt: safe.status === PostStatus.published ? new Date() : null,
     },
     include: {
@@ -192,12 +224,18 @@ export async function updatePostAction(
   await requireActionAdmin();
 
   const payload = normalizePostPayload(formData);
-  const parsed = postSchema.safeParse(payload);
+  const author = await resolveCurrentAuthor();
+  const payloadWithAuthor = {
+    ...payload,
+    author: payload.author.trim() || author,
+  };
+  const parsed = postSchema.safeParse(payloadWithAuthor);
   if (!parsed.success) {
     return { status: "error", message: "Please fix the post fields and try again." };
   }
 
   const safe = parsed.data;
+  const existing = await prisma.post.findUnique({ where: { id: postId }, select: { publishedAt: true } });
   const slug = await resolveUniquePostSlug(safe.title, postId);
   await prisma.post.update({
     where: { id: postId },
@@ -205,7 +243,8 @@ export async function updatePostAction(
       ...safe,
       slug,
       upazilaId: safe.upazilaId || null,
-      publishedAt: safe.status === PostStatus.published ? new Date() : null,
+      youtubeUrl: safe.youtubeUrl || null,
+      publishedAt: safe.status === PostStatus.published ? (existing?.publishedAt ?? new Date()) : null,
     },
   });
 
@@ -253,6 +292,14 @@ export async function createCategoryAction(
 
 export async function deleteCategoryAction(id: string) {
   await requireActionAdmin();
+  const category = await prisma.category.findUnique({
+    where: { id },
+    include: { _count: { select: { posts: true } } }
+  });
+  if (category && category._count.posts > 0) {
+    redirect(`/admin/categories?notice=Cannot delete: Category has ${category._count.posts} posts&type=error`);
+  }
+
   await prisma.category.delete({ where: { id } });
   revalidatePath("/admin/categories");
   redirect("/admin/categories?notice=Category%20deleted&type=success");
