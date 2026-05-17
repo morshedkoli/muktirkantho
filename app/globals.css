@@ -33,27 +33,58 @@
   --ed-shadow: 0 1px 3px rgba(0,0,0,0.08);
   --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
 
-  /* Override admin colors for light mode */
-  --ad-primary: var(--ed-breaking);
-  --ad-primary-hover: #a93226;
-  --ad-secondary: var(--ed-gold);
-  --ad-background: var(--np-newsprint);
-  --ad-sidebar: #ffffff;
-  --ad-card: #ffffff;
-  --ad-border: var(--ed-border);
-  --ad-text-primary: #111111;
-  --ad-text-secondary: #666666;
-  --ad-paper: var(--ed-paper);
-  --ad-paper-2: var(--ed-paper-2);
-  --ad-muted: var(--ed-muted);
-  --ad-accent: var(--ed-blue);
-  --ad-success: var(--ed-success);
-  --ad-warning: var(--ed-alert);
-  --ad-error: var(--ed-breaking);
-  --ad-ink: #0d0d0d;
-  --ad-breaking: var(--ed-breaking);
-  --ad-shadow: var(--ed-shadow);
-  --ad-shadow-lg: var(--ed-shadow-lg);
+  /* ── Admin Design System (mockup palette) ── */
+  /* Surfaces */
+  --ad-background: #F5F6F8;
+  --ad-sidebar: #EDF7F0;
+  --ad-sidebar-border: #D1EDD9;
+  --ad-sidebar-divider: #C6E3CE;
+  --ad-card: #FFFFFF;
+
+  /* Borders */
+  --ad-border: #E5E7EB;
+  --ad-border-strong: #D1D5DB;
+
+  /* Text */
+  --ad-text-primary: #111827;
+  --ad-text-secondary: #6B7280;
+  --ad-text-muted: #9CA3AF;
+
+  /* Brand & primary action — green */
+  --ad-green: #1E7A45;
+  --ad-green-hover: #166A3A;
+  --ad-green-light: #D4EDDE;
+  --ad-green-mid: #3DAA6A;
+  --ad-primary: #1E7A45;
+  --ad-primary-hover: #166A3A;
+
+  /* Brand red (logo mark, badges, danger) */
+  --ad-brand: #D01C2A;
+  --ad-brand-light: #FDECED;
+  --ad-breaking: #D01C2A;
+  --ad-error: #D01C2A;
+
+  /* Accents */
+  --ad-amber: #F59E0B;
+  --ad-amber-light: #FEF3C7;
+  --ad-blue: #2563EB;
+  --ad-blue-light: #DBEAFE;
+  --ad-purple: #7C3AED;
+  --ad-purple-light: #EDE9FE;
+
+  /* Status — keep older aliases */
+  --ad-secondary: var(--ad-amber);
+  --ad-success: var(--ad-green);
+  --ad-warning: var(--ad-amber);
+  --ad-accent: var(--ad-blue);
+  --ad-paper: #F9FAFB;
+  --ad-paper-2: #F3F4F6;
+  --ad-muted: var(--ad-text-muted);
+  --ad-ink: var(--ad-text-primary);
+
+  /* Shadows */
+  --ad-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --ad-shadow-lg: 0 0 0 1px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06);
 }
 
 /* Editorial Admin Dark Mode */
@@ -76,26 +107,50 @@
   --ed-shadow: 0 1px 3px rgba(0,0,0,0.3);
   --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
 
-  --ad-primary: #e74c3c;
-  --ad-primary-hover: #c0392b;
-  --ad-secondary: #f1c40f;
-  --ad-background: #0d0d0d;
-  --ad-sidebar: #0a0a0a;
-  --ad-card: #1a1a1a;
-  --ad-border: #2a2a2a;
-  --ad-text-primary: #f5f0e8;
-  --ad-text-secondary: #9e9480;
-  --ad-paper: var(--ed-paper);
-  --ad-paper-2: var(--ed-paper-2);
-  --ad-muted: var(--ed-muted);
-  --ad-ink: #0a0a0a;
-  --ad-breaking: var(--ed-breaking);
-  --ad-accent: #3498db;
-  --ad-success: #2ecc71;
-  --ad-warning: #f39c12;
-  --ad-error: #e74c3c;
+  /* Admin Dark Mode */
+  --ad-background: #0F1115;
+  --ad-sidebar: #131820;
+  --ad-sidebar-border: #1E2530;
+  --ad-sidebar-divider: #1E2530;
+  --ad-card: #1A1F28;
+
+  --ad-border: #2A2F38;
+  --ad-border-strong: #3A404A;
+
+  --ad-text-primary: #E5E7EB;
+  --ad-text-secondary: #9CA3AF;
+  --ad-text-muted: #6B7280;
+
+  --ad-green: #3DAA6A;
+  --ad-green-hover: #4DBA7A;
+  --ad-green-light: rgba(61,170,106,0.15);
+  --ad-green-mid: #4DBA7A;
+  --ad-primary: #3DAA6A;
+  --ad-primary-hover: #4DBA7A;
+
+  --ad-brand: #E84C5A;
+  --ad-brand-light: rgba(232,76,90,0.15);
+  --ad-breaking: #E84C5A;
+  --ad-error: #E84C5A;
+
+  --ad-amber: #FBBF24;
+  --ad-amber-light: rgba(251,191,36,0.15);
+  --ad-blue: #60A5FA;
+  --ad-blue-light: rgba(96,165,250,0.15);
+  --ad-purple: #A78BFA;
+  --ad-purple-light: rgba(167,139,250,0.15);
+
+  --ad-secondary: var(--ad-amber);
+  --ad-success: var(--ad-green);
+  --ad-warning: var(--ad-amber);
+  --ad-accent: var(--ad-blue);
+  --ad-paper: #1A1F28;
+  --ad-paper-2: #2A2F38;
+  --ad-muted: var(--ad-text-muted);
+  --ad-ink: var(--ad-text-primary);
+
   --ad-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  --ad-shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
+  --ad-shadow-lg: 0 0 0 1px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.4);
 }
 
 :root {

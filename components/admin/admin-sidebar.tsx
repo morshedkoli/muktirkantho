@@ -7,13 +7,9 @@ import {
   FileText,
   Image,
   Tags,
-  Globe,
   MapPin,
   MapPinned,
-  ChevronLeft,
-  ChevronRight,
   LogOut,
-  Newspaper,
   Settings,
   Megaphone,
   X,
@@ -26,7 +22,6 @@ import {
   Twitter,
   Linkedin,
   Instagram,
-  ChevronDown,
   Zap,
   TrendingUp,
   Lightbulb,
@@ -37,9 +32,12 @@ import {
   Lock,
   BookOpen,
   FileText as FileTextIcon,
+  ChevronRight,
+  HelpCircle,
+  Globe,
 } from "lucide-react";
-import { useState, useCallback } from "react";
 import { logoutAdminAction } from "@/app/(admin)/admin/actions";
+import { useEffect, useState } from "react";
 
 type NavItem = {
   name: string;
@@ -56,29 +54,30 @@ type NavSection = {
 const navSections: NavSection[] = [
   {
     label: "Overview",
-    items: [
-      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    ],
+    items: [{ name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard }],
   },
   {
     label: "Content",
     items: [
-      { name: "Posts", href: "/admin/posts", icon: FileText },
-      { name: "Media Library", href: "/admin/media", icon: Image },
+      { name: "All Posts", href: "/admin/posts", icon: FileText },
+      { name: "New Post", href: "/admin/posts/create", icon: Layout },
       { name: "Categories", href: "/admin/categories", icon: Tags },
       { name: "Tags", href: "/admin/tags", icon: Hash },
-      { name: "Comments", href: "/admin/comments", icon: MessageSquare, badge: 12 },
+      { name: "Media", href: "/admin/media", icon: Image },
+      { name: "Comments", href: "/admin/comments", icon: MessageSquare },
       { name: "E-Paper", href: "/admin/e-paper", icon: BookOpen },
     ],
   },
   {
     label: "Modules",
     items: [
-      { name: "Opinion / Columns", href: "/admin/opinion", icon: Lightbulb },
+      { name: "Opinion", href: "/admin/opinion", icon: Lightbulb },
       { name: "Video", href: "/admin/video", icon: Video },
-      { name: "Photo Gallery", href: "/admin/gallery", icon: Images },
-      { name: "Breaking News", href: "/admin/breaking", icon: Radio },
-      { name: "Homepage Editor", href: "/admin/homepage", icon: Layout },
+      { name: "Gallery", href: "/admin/gallery", icon: Images },
+      { name: "Breaking", href: "/admin/breaking", icon: Radio },
+      { name: "Homepage", href: "/admin/homepage", icon: Layout },
+      { name: "Districts", href: "/admin/districts", icon: MapPin },
+      { name: "Upazilas", href: "/admin/upazilas", icon: MapPinned },
     ],
   },
   {
@@ -88,28 +87,26 @@ const navSections: NavSection[] = [
       { name: "Facebook", href: "/admin/facebook", icon: Facebook },
       { name: "Instagram", href: "/admin/social/instagram", icon: Instagram },
       { name: "LinkedIn", href: "/admin/social/linkedin", icon: Linkedin },
-      { name: "Social Queue", href: "/admin/social/queue", icon: Zap },
-      { name: "Social Templates", href: "/admin/social/templates", icon: FileTextIcon },
+      { name: "Queue", href: "/admin/social/queue", icon: Zap },
+      { name: "Templates", href: "/admin/social/templates", icon: FileTextIcon },
     ],
   },
   {
     label: "Analytics",
     items: [
-      { name: "Analytics Hub", href: "/admin/analytics", icon: TrendingUp },
-      { name: "SEO Manager", href: "/admin/seo", icon: Search },
+      { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
+      { name: "SEO", href: "/admin/seo", icon: Search },
       { name: "Ads", href: "/admin/ads", icon: Megaphone },
     ],
   },
   {
-    label: "Settings",
+    label: "System",
     items: [
       { name: "Branding", href: "/admin/branding", icon: Palette },
       { name: "Geo", href: "/admin/divisions", icon: Globe },
-      { name: "Districts", href: "/admin/districts", icon: MapPin },
-      { name: "Upazilas", href: "/admin/upazilas", icon: MapPinned },
+      { name: "Users", href: "/admin/users", icon: HelpCircle },
+      { name: "Subscribers", href: "/admin/subscribers", icon: Lock },
       { name: "Settings", href: "/admin/settings", icon: Settings },
-      { name: "Users", href: "/admin/users", icon: LogOut },
-      { name: "Subscriber Wall", href: "/admin/subscribers", icon: Lock },
     ],
   },
 ];
@@ -122,6 +119,19 @@ const mobileNavItems: NavItem[] = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
+type AdminUser = { name: string; email: string; role: string };
+
+function initials(name?: string) {
+  if (!name) return "AD";
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 interface AdminSidebarProps {
   mobileMenuOpen?: boolean;
   onMobileMenuClose?: () => void;
@@ -132,280 +142,159 @@ interface AdminSidebarProps {
 export function AdminSidebar({
   mobileMenuOpen = false,
   onMobileMenuClose,
-  collapsed: externalCollapsed,
-  onCollapsedChange,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
-    const active: Record<string, boolean> = {};
-    for (const section of navSections) {
-      for (const item of section.items) {
-        if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
-          active[section.label] = true;
-        }
-      }
-    }
-    return active;
-  });
+  const [user, setUser] = useState<AdminUser | null>(null);
 
-  const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
-  const setCollapsed = useCallback(
-    (value: boolean) => {
-      if (onCollapsedChange) {
-        onCollapsedChange(value);
-      } else {
-        setInternalCollapsed(value);
-      }
-    },
-    [onCollapsedChange]
-  );
-
-  const toggleSection = (label: string) => {
-    setExpandedSections((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
+  useEffect(() => {
+    fetch("/api/admin/me", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: AdminUser | null) => data && setUser(data))
+      .catch(() => {});
+  }, []);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
+  const navTree = (
+    <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-3 scrollbar-thin">
+      {navSections.map((section) => (
+        <div key={section.label}>
+          <div className="px-3 pt-1 pb-1.5 text-[9.5px] font-semibold tracking-[0.1em] uppercase text-[var(--ad-text-muted)]">
+            {section.label}
+          </div>
+          <ul className="space-y-0.5">
+            {section.items.map((item) => {
+              const active = isActive(item.href);
+              const Icon = item.icon;
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    onClick={onMobileMenuClose}
+                    className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-all ${
+                      active
+                        ? "bg-[var(--ad-green)] text-white shadow-sm"
+                        : "text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)]/60 hover:text-[var(--ad-text-primary)]"
+                    }`}
+                  >
+                    <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-white" : "opacity-80"}`} />
+                    <span className="flex-1 truncate">{item.name}</span>
+                    {item.badge && (
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+                          active ? "bg-white/20 text-white" : "bg-[var(--ad-brand)] text-white"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+
+  const userCard = (
+    <div className="border-t border-[var(--ad-sidebar-divider)] p-3 shrink-0">
+      <div className="flex items-center gap-2.5 rounded-lg bg-[var(--ad-card)] p-2.5 shadow-[var(--ad-shadow)]">
+        <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-white text-[13px] font-bold shrink-0 bg-gradient-to-br from-[var(--ad-green)] to-[var(--ad-green-mid)]">
+          {initials(user?.name)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-semibold text-[var(--ad-text-primary)] truncate">
+            {user?.name || "Admin"}
+          </div>
+          <div className="text-[10.5px] text-[var(--ad-text-muted)] truncate">
+            {user?.role || "Super Admin"}
+          </div>
+        </div>
+        <Link
+          href="/admin/user"
+          aria-label="Profile"
+          className="ml-auto flex h-6 w-6 items-center justify-center rounded-md bg-[var(--ad-green)] text-white shrink-0 hover:bg-[var(--ad-green-hover)] transition-colors"
+        >
+          <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+      <Link
+        href="/"
+        className="mt-2 flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)]/60 hover:text-[var(--ad-text-primary)] transition-all"
+      >
+        <Home className="h-4 w-4" />
+        View Site
+      </Link>
+      <form action={logoutAdminAction}>
+        <button
+          type="submit"
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-brand-light)] hover:text-[var(--ad-brand)] transition-all"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </button>
+      </form>
+    </div>
+  );
+
+  const logo = (
+    <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-3 py-4 border-b border-[var(--ad-sidebar-divider)]">
+      <div className="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-[var(--ad-brand)] text-white text-[16px] font-bold font-bangla shrink-0">
+        ম
+      </div>
+      <div className="min-w-0">
+        <div className="text-[13.5px] font-bold leading-tight text-[var(--ad-text-primary)] truncate">
+          Muktir Kantho
+        </div>
+        <div className="text-[10px] font-mono tracking-[0.05em] text-[var(--ad-text-muted)] uppercase">
+          Admin Panel
+        </div>
+      </div>
+    </Link>
+  );
+
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Mobile backdrop */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={onMobileMenuClose}
         />
       )}
 
-      {/* Desktop Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 z-50 h-screen bg-[var(--ad-sidebar)] text-[var(--ad-text-primary)] transition-all duration-300 ease-in-out border-r border-[var(--ad-border)] ${
-          collapsed ? "w-16" : "w-64"
-        } hidden lg:flex lg:flex-col`}
-      >
-        {/* Logo area */}
-        <div className="flex h-16 items-center border-b border-[var(--ad-border)] px-4 shrink-0">
-          <Link
-            href="/admin/dashboard"
-            className={`flex items-center gap-3 ${collapsed ? "justify-center w-full" : ""}`}
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--ad-primary)]">
-              <Newspaper className="h-5 w-5 text-white" />
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-bold leading-tight font-editorial-display text-[var(--ad-text-primary)]">
-                  Muktir Kantho
-                </span>
-                <span className="text-[10px] font-editorial-mono text-[var(--ad-text-secondary)] tracking-wider uppercase">
-                  Admin Panel
-                </span>
-              </div>
-            )}
-          </Link>
-          {!collapsed && (
-            <button
-              onClick={() => setCollapsed(true)}
-              className="ml-auto rounded-md p-1.5 text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper-2)] hover:text-[var(--ad-text-primary)] transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Navigation — scrollable */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
-          {navSections.map((section) => {
-            const isExpanded = expandedSections[section.label] ?? section.items.some((i) => isActive(i.href));
-            const hasActive = section.items.some((i) => isActive(i.href));
-
-            return (
-              <div key={section.label}>
-                {!collapsed && (
-                  <button
-                    onClick={() => toggleSection(section.label)}
-                    className="flex w-full items-center justify-between px-2 mb-2 group"
-                  >
-                    <span className={`text-[10px] font-editorial-mono tracking-widest uppercase ${
-                      hasActive ? "text-[var(--ad-text-primary)]" : "text-[var(--ad-text-secondary)]"
-                    }`}>
-                      {section.label}
-                    </span>
-                    <ChevronDown
-                      className={`h-3 w-3 text-[var(--ad-text-secondary)] transition-transform ${
-                        isExpanded ? "rotate-0" : "-rotate-90"
-                      }`}
-                    />
-                  </button>
-                )}
-                {collapsed && (
-                  <div className="flex justify-center mb-3">
-                    <div className="h-px w-6 bg-[var(--ad-border)]" />
-                  </div>
-                )}
-                {(isExpanded || collapsed) && (
-                  <ul className="space-y-0.5">
-                    {section.items.map((item) => {
-                      const active = isActive(item.href);
-                      const Icon = item.icon;
-
-                      return (
-                        <li key={item.name}>
-                          <Link
-                            href={item.href}
-                            className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-                              collapsed ? "justify-center" : ""
-                            } ${
-                              active
-                                ? "bg-[var(--ad-primary)] text-white shadow-lg shadow-red-900/30"
-                                : "text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper)] hover:text-[var(--ad-text-primary)]"
-                            }`}
-                            title={collapsed ? item.name : undefined}
-                          >
-                            <Icon
-                              className={`h-4 w-4 shrink-0 ${
-                                active ? "text-white" : "text-[var(--ad-text-secondary)] group-hover:text-[var(--ad-text-primary)]"
-                              }`}
-                            />
-                            {!collapsed && (
-                              <>
-                                <span className="flex-1 truncate">{item.name}</span>
-                                {item.badge && (
-                                  <span className="font-editorial-mono text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--ad-paper-2)] text-[var(--ad-text-secondary)]">
-                                    {item.badge}
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Bottom section */}
-        <div className="border-t border-[var(--ad-border)] p-3 shrink-0">
-          <Link
-            href="/"
-            className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper)] hover:text-[var(--ad-text-primary)] transition-all ${
-              collapsed ? "justify-center" : ""
-            }`}
-            title={collapsed ? "View Site" : undefined}
-          >
-            <Home className="h-4 w-4 shrink-0 text-[var(--ad-text-secondary)] group-hover:text-[var(--ad-text-primary)]" />
-            {!collapsed && <span>View Site</span>}
-          </Link>
-          <form action={logoutAdminAction} className="mt-1">
-            <button
-              type="submit"
-              className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--ad-text-secondary)] hover:bg-red-50 hover:text-[var(--ad-error)] transition-all ${
-                collapsed ? "justify-center" : ""
-              }`}
-              title={collapsed ? "Logout" : undefined}
-            >
-              <LogOut className="h-4 w-4 shrink-0 text-[var(--ad-text-secondary)] group-hover:text-[var(--ad-error)]" />
-              {!collapsed && <span>Logout</span>}
-            </button>
-          </form>
-          {/* Expand toggle when collapsed */}
-          {collapsed && (
-            <button
-              onClick={() => setCollapsed(false)}
-              className="mt-2 flex w-full items-center justify-center rounded-lg px-3 py-2 text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper)] hover:text-[var(--ad-text-primary)] transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+      {/* Desktop sidebar — fixed 220px mint-green */}
+      <aside className="fixed inset-y-0 left-0 z-50 w-[220px] hidden lg:flex lg:flex-col border-r border-[var(--ad-sidebar-border)] bg-[var(--ad-sidebar)]">
+        {logo}
+        {navTree}
+        {userCard}
       </aside>
 
-      {/* Mobile Sidebar Drawer */}
+      {/* Mobile drawer */}
       <aside
-        className={`fixed left-0 top-0 z-50 h-screen w-72 bg-[var(--ad-sidebar)] text-[var(--ad-text-primary)] lg:hidden transform transition-transform duration-300 ease-in-out border-r border-[var(--ad-border)] ${
+        className={`fixed inset-y-0 left-0 z-50 w-[260px] flex flex-col border-r border-[var(--ad-sidebar-border)] bg-[var(--ad-sidebar)] lg:hidden transform transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Mobile Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-[var(--ad-border)] px-4">
-          <Link href="/admin/dashboard" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--ad-primary)]">
-              <Newspaper className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold leading-tight font-editorial-display text-[var(--ad-text-primary)]">Muktir Kantho</span>
-              <span className="text-[10px] font-editorial-mono text-[var(--ad-text-secondary)] tracking-wider uppercase">Admin Panel</span>
-            </div>
-          </Link>
+        <div className="flex items-center justify-between border-b border-[var(--ad-sidebar-divider)]">
+          {logo}
           <button
             onClick={onMobileMenuClose}
-            className="rounded-md p-2 text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper-2)] hover:text-[var(--ad-text-primary)] transition-colors"
+            aria-label="Close menu"
+            className="mr-2 rounded-md p-2 text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)] transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        {/* Mobile Nav */}
-        <nav className="overflow-y-auto h-[calc(100vh-4rem)] py-4 px-3 space-y-4">
-          {navSections.map((section) => {
-            const isExpanded = expandedSections[section.label] ?? section.items.some((i) => isActive(i.href));
-            return (
-              <div key={section.label}>
-                <button
-                  onClick={() => toggleSection(section.label)}
-                  className="flex w-full items-center justify-between px-2 mb-2"
-                >
-                  <span className="text-[10px] font-editorial-mono tracking-widest uppercase text-[var(--ad-text-secondary)]">
-                    {section.label}
-                  </span>
-                  <ChevronDown
-                    className={`h-3 w-3 text-[var(--ad-text-secondary)] transition-transform ${
-                      isExpanded ? "rotate-0" : "-rotate-90"
-                    }`}
-                  />
-                </button>
-                {isExpanded && (
-                  <ul className="space-y-0.5">
-                    {section.items.map((item) => {
-                      const active = isActive(item.href);
-                      const Icon = item.icon;
-                      return (
-                        <li key={item.name}>
-                          <Link
-                            href={item.href}
-                            onClick={onMobileMenuClose}
-                            className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
-                              active
-                                ? "bg-[var(--ad-primary)] text-white"
-                                : "text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper)] hover:text-[var(--ad-text-primary)]"
-                            }`}
-                          >
-                            <Icon className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-[var(--ad-text-secondary)]"}`} />
-                            <span className="flex-1 truncate">{item.name}</span>
-                            {item.badge && (
-                              <span className="font-editorial-mono text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--ad-paper-2)] text-[var(--ad-text-secondary)]">
-                                {item.badge}
-                              </span>
-                            )}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-        </nav>
+        {navTree}
+        {userCard}
       </aside>
 
-      {/* Mobile Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--ad-card)] text-[var(--ad-text-primary)] lg:hidden border-t border-[var(--ad-border)] safe-area-pb">
-        <div className="grid grid-cols-5 gap-1 p-2">
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--ad-card)] border-t border-[var(--ad-border)] lg:hidden safe-area-pb">
+        <div className="grid grid-cols-5 gap-1 p-1.5">
           {mobileNavItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
@@ -413,19 +302,21 @@ export function AdminSidebar({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex min-w-0 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-xs font-medium transition-all ${
-                  active ? "text-[var(--ad-primary)]" : "text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)]"
+                className={`flex flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 transition-all ${
+                  active
+                    ? "text-[var(--ad-green)]"
+                    : "text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)]"
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span className="truncate text-[10px]">{item.name}</span>
+                <span className="text-[10px] font-medium truncate">{item.name}</span>
               </Link>
             );
           })}
         </div>
       </nav>
 
-      {/* Mobile bottom padding spacer */}
+      {/* Spacer */}
       <div className="h-16 lg:hidden" />
     </>
   );
