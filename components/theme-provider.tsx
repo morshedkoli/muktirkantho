@@ -19,44 +19,30 @@ export function useTheme() {
   return context;
 }
 
-// Get initial theme from localStorage or system preference
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
-  
   const savedTheme = localStorage.getItem("theme") as Theme | null;
   if (savedTheme) return savedTheme;
-  
-  if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    return "dark";
-  }
-  
   return "light";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => getInitialTheme());
 
-  // Listen for system theme changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e: MediaQueryListEvent) => {
-      // Only auto-switch if user hasn't manually set a preference
-      if (!localStorage.getItem("theme")) {
-        const newTheme = e.matches ? "dark" : "light";
-        setThemeState(newTheme);
-        document.documentElement.setAttribute("data-theme", newTheme);
-      }
-    };
-    
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
-  // Apply theme to document when it changes
   const setTheme = useCallback((newTheme: Theme) => {
+    document.documentElement.classList.add("disable-transitions");
     setThemeState(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.documentElement.classList.remove("disable-transitions");
+      });
+    });
   }, []);
 
   const toggleTheme = useCallback(() => {

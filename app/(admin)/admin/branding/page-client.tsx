@@ -187,7 +187,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           </div>
 
           {status.error && (
-            <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 flex items-center gap-2">
+            <div className="mt-2 rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-3 py-2 text-sm text-[var(--ad-error)] flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {status.error}
             </div>
@@ -201,7 +201,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
               <button
                 type="button"
                 onClick={() => handleRemoveImage(type)}
-                className="absolute -top-2 -right-2 p-1 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-colors shadow-md"
+                className="absolute -top-2 -right-2 p-1 rounded-full bg-[var(--ad-error)] text-white hover:bg-[var(--ad-error)]/80 transition-colors shadow-md"
                 title="Remove image"
               >
                 <X className="h-3 w-3" />
@@ -238,7 +238,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
       <form action={formAction} className="space-y-8">
         {/* Status Messages */}
         {state.status === "error" && state.message && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 flex items-center gap-2">
+          <div className="rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-4 py-3 text-sm text-[var(--ad-error)] flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {state.message}
           </div>
@@ -254,7 +254,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
             {/* Light Mode Preview */}
             <div>
               <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Light Mode</h3>
-              <div className="bg-white rounded-lg p-6 border border-gray-200">
+              <div className="bg-[var(--ad-card)] rounded-lg p-6 border border-[var(--ad-border)]">
                 {form.logoUrl ? (
                   <Image
                     src={form.logoUrl}
@@ -272,7 +272,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
             {/* Dark Mode Preview */}
             <div>
               <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Dark Mode</h3>
-              <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+              <div className="bg-[var(--ad-ink)] rounded-lg p-6 border border-[var(--ad-border)]">
                 {form.logoUrl ? (
                   <Image
                     src={form.logoUrl}
@@ -337,13 +337,13 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Light Mode</h3>
-              <div className="bg-white rounded-lg p-4 border border-gray-200 inline-block">
+              <div className="bg-[var(--ad-card)] rounded-lg p-4 border border-[var(--ad-border)] inline-block">
                 <SiteLogo width={160} height={44} />
               </div>
             </div>
             <div>
               <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Dark Mode</h3>
-              <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 inline-block">
+              <div className="bg-[var(--ad-ink)] rounded-lg p-4 border border-[var(--ad-border)] inline-block">
                 <SiteLogoDark width={160} height={44} />
               </div>
             </div>

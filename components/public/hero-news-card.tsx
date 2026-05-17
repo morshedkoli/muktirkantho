@@ -53,7 +53,7 @@ export function HeroNewsCard({ post }: HeroNewsCardProps) {
       {/* Content */}
       <div className="flex flex-col justify-center">
         {/* Meta info */}
-        <div className="mb-3 flex flex-wrap items-center gap-4 text-sm text-[var(--np-text-secondary)]">
+        <div className="np-timestamp mb-3 flex flex-wrap items-center gap-4">
           {post.publishedAt && (
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
@@ -72,7 +72,7 @@ export function HeroNewsCard({ post }: HeroNewsCardProps) {
         </div>
 
         {/* Title */}
-        <h1 className="font-display text-2xl font-bold leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)] sm:text-3xl lg:text-4xl">
+        <h1 className="np-headline-lg text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)]">
           <Link href={postPath}>
             {post.title}
           </Link>

@@ -107,7 +107,7 @@ export function AddItemModal({
               htmlFor="name"
               className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2"
             >
-              {itemName} Name <span className="text-rose-500">*</span>
+              {itemName} Name <span className="text-[var(--ad-error)]">*</span>
             </label>
             <input
               id="name"
@@ -147,7 +147,7 @@ export function AddItemModal({
                 htmlFor="districtId"
                 className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2"
               >
-                District <span className="text-rose-500">*</span>
+                District <span className="text-[var(--ad-error)]">*</span>
               </label>
               <select
                 id="districtId"
@@ -191,9 +191,9 @@ export function AddItemModal({
 
           {/* Error Message */}
           {state.status === "error" && (
-            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-rose-800">{state.message}</p>
+            <div className="rounded-lg bg-[var(--ad-error)]/10 border border-[var(--ad-error)]/20 p-3 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-[var(--ad-error)] shrink-0 mt-0.5" />
+              <p className="text-sm text-[var(--ad-error)]">{state.message}</p>
             </div>
           )}
 

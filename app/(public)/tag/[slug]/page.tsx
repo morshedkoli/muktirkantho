@@ -20,7 +20,7 @@ export default async function TagPage({ params, searchParams }: Props) {
     <main className="mx-auto max-w-7xl px-4 py-8">
       <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
         <section>
-          <h1 className="font-display text-3xl font-black text-[var(--np-text-primary)]">Tag: #{data.tag}</h1>
+          <h1 className="np-headline-lg text-[var(--np-text-primary)]">Tag: #{data.tag}</h1>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {data.items.map((post) => (
               <NewsCard key={post.id} post={post} />

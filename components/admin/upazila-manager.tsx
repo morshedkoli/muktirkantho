@@ -82,7 +82,7 @@ function DeleteUpazilaButton({
       type="button"
       onClick={handleDelete}
       disabled={isDeleting}
-      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+      className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
       title="Delete Upazila"
     >
       {isDeleting ? (
@@ -120,20 +120,20 @@ function DistrictSection({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-mono">/{district.slug}</span>
+          <span className="text-xs text-[var(--ad-text-secondary)] font-mono">/{district.slug}</span>
           {isExpanded ? (
-            <ChevronDown className="h-5 w-5 text-slate-400" />
+            <ChevronDown className="h-5 w-5 text-[var(--ad-text-secondary)]" />
           ) : (
-            <ChevronRight className="h-5 w-5 text-slate-400" />
+            <ChevronRight className="h-5 w-5 text-[var(--ad-text-secondary)]" />
           )}
         </div>
       </button>
 
       {/* Upazilas List */}
       {isExpanded && (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-[var(--ad-border)]">
           {district.upazilas.length === 0 ? (
-            <div className="px-6 py-4 text-sm text-slate-500 italic">
+            <div className="px-6 py-4 text-sm text-[var(--ad-text-secondary)] italic">
               No upazilas in this district yet
             </div>
           ) : (

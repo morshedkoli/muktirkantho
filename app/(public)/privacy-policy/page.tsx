@@ -9,13 +9,13 @@ export default function PrivacyPolicyPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <article className="prose-news">
-        <h1 className="font-display text-3xl font-bold text-[var(--np-text-primary)] mb-8">
+        <h1 className="np-headline-lg text-[var(--np-text-primary)] mb-8">
           Privacy Policy
         </h1>
 
         <div className="space-y-8 text-[var(--np-text-secondary)]">
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Introduction</h2>
+            <h2 className="mb-4">Introduction</h2>
             <p>
               Muktir Kantho (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
             </p>
@@ -25,9 +25,9 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Information We Collect</h2>
+            <h2 className="mb-4">Information We Collect</h2>
             
-            <h3 className="text-lg font-semibold text-[var(--np-text-primary)] mb-2">Personal Information</h3>
+            <h3 className="mb-2">Personal Information</h3>
             <p>We may collect personal information that you voluntarily provide to us when you:</p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
               <li>Subscribe to our newsletter</li>
@@ -51,7 +51,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">How We Use Your Information</h2>
+            <h2 className="mb-4">How We Use Your Information</h2>
             <p>We use the information we collect for various purposes, including:</p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
               <li>To provide and maintain our services</li>
@@ -66,7 +66,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Cookies and Tracking Technologies</h2>
+            <h2 className="mb-4">Cookies and Tracking Technologies</h2>
             <p>
               We use cookies and similar tracking technologies to track activity on our website and hold certain information. Cookies are files with a small amount of data that may include an anonymous unique identifier.
             </p>
@@ -76,21 +76,21 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Third-Party Services</h2>
+            <h2 className="mb-4">Third-Party Services</h2>
             <p>
               We may employ third-party companies and individuals to facilitate our service, provide the service on our behalf, perform service-related services, or assist us in analyzing how our service is used. These third parties have access to your personal information only to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Data Security</h2>
+            <h2 className="mb-4">Data Security</h2>
             <p>
               The security of your data is important to us, but remember that no method of transmission over the Internet or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to protect your personal information, we cannot guarantee its absolute security.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Your Data Protection Rights</h2>
+            <h2 className="mb-4">Your Data Protection Rights</h2>
             <p>Depending on your location, you may have the following data protection rights:</p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
               <li>The right to access, update, or delete your personal information</li>
@@ -103,14 +103,14 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Children&apos;s Privacy</h2>
+            <h2 className="mb-4">Children&apos;s Privacy</h2>
             <p>
               Our service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from children under 13. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Changes to This Privacy Policy</h2>
+            <h2 className="mb-4">Changes to This Privacy Policy</h2>
             <p>
               We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date.
             </p>
@@ -120,7 +120,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Contact Us</h2>
+            <h2 className="mb-4">Contact Us</h2>
             <p>
               If you have any questions about this Privacy Policy, please contact us at:
             </p>

@@ -31,7 +31,7 @@ export function SiteSettingsForm({ initial }: SiteSettingsFormProps) {
   return (
     <form action={formAction} className="space-y-6">
       {state.status === "error" && state.message ? (
-        <p className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{state.message}</p>
+        <p className="rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-4 py-3 text-sm text-[var(--ad-error)]">{state.message}</p>
       ) : null}
 
       <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">

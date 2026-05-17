@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
+import { GeoManager } from "@/components/admin/geo-manager";
 import {
     createDivisionAction,
     deleteDivisionAction,
@@ -9,26 +9,59 @@ import { prisma } from "@/lib/prisma";
 const initialState = { status: "idle" as const };
 
 export default async function AdminDivisionsPage() {
-    const divisions = await prisma.division.findMany({
-        orderBy: { name: "asc" },
-        include: { _count: { select: { districts: true } } }
-    });
+    const [divisions, districts] = await Promise.all([
+        prisma.division.findMany({
+            orderBy: { name: "asc" },
+            include: { _count: { select: { districts: true } } }
+        }),
+        prisma.district.findMany({
+            orderBy: { name: "asc" },
+            include: { division: true }
+        }),
+    ]);
 
-    // Map to match the expected Item type (using mapped count to posts property for display consistently)
-    const items = divisions.map(d => ({
+    const totalDistricts = districts.length;
+    const districtsByDivision = divisions.map(d => ({
         ...d,
-        _count: { posts: d._count.districts } // Reusing the posts count display for districts count
+        districtCount: d._count.districts,
+        districts: districts.filter(ds => ds.divisionId === d.id)
     }));
 
     return (
-        <AdminShell title="Divisions">
-            <TaxonomyManager
-                title="Division"
-                items={items}
+        <AdminShell
+            title="Divisions"
+            description="Manage Bangladesh's administrative divisions and their districts"
+            actions={
+                <a
+                    href="/admin/districts"
+                    className="inline-flex items-center gap-2 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] px-4 py-2.5 text-sm font-medium text-[var(--ad-text-primary)] hover:bg-[var(--ad-paper)] transition-all"
+                >
+                    Manage Districts →
+                </a>
+            }
+        >
+            <GeoManager
+                type="division"
+                items={divisions.map(d => ({
+                    id: d.id,
+                    name: d.name,
+                    slug: d.slug,
+                    count: d._count.districts,
+                    countLabel: "districts",
+                    children: districts.filter(ds => ds.divisionId === d.id).map(ds => ({
+                        id: ds.id,
+                        name: ds.name,
+                        slug: ds.slug,
+                    })),
+                }))}
                 createAction={createDivisionAction}
                 deleteAction={deleteDivisionAction}
                 initialState={initialState}
-                disableActions={true}
+                stats={[
+                    { label: "Total Divisions", value: divisions.length },
+                    { label: "Total Districts", value: totalDistricts },
+                    { label: "Avg Districts/Division", value: divisions.length > 0 ? Math.round(totalDistricts / divisions.length) : 0 },
+                ]}
             />
         </AdminShell>
     );

@@ -69,28 +69,28 @@ function ToastContainer({
 
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const iconMap = {
-    success: <CheckCircle className="h-5 w-5 text-emerald-500" />,
-    error: <AlertCircle className="h-5 w-5 text-rose-500" />,
-    info: <Info className="h-5 w-5 text-blue-500" />,
-    warning: <AlertCircle className="h-5 w-5 text-amber-500" />,
+    success: <CheckCircle className="h-5 w-5 text-[var(--ad-success)]" />,
+    error: <AlertCircle className="h-5 w-5 text-[var(--ad-error)]" />,
+    info: <Info className="h-5 w-5 text-[var(--ad-primary)]" />,
+    warning: <AlertCircle className="h-5 w-5 text-[var(--ad-warning)]" />,
   };
 
   const bgMap = {
-    success: "bg-emerald-50 border-emerald-200",
-    error: "bg-rose-50 border-rose-200",
-    info: "bg-blue-50 border-blue-200",
-    warning: "bg-amber-50 border-amber-200",
+    success: "bg-[var(--ad-success)]/10 border-[var(--ad-success)]/20",
+    error: "bg-[var(--ad-error)]/10 border-[var(--ad-error)]/20",
+    info: "bg-[var(--ad-primary)]/10 border-[var(--ad-primary)]/20",
+    warning: "bg-[var(--ad-warning)]/10 border-[var(--ad-warning)]/20",
   };
 
   return (
     <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg animate-in slide-in-from-right ${bgMap[toast.type]}`}>
       {iconMap[toast.type]}
-      <p className="text-sm font-medium text-slate-700">{toast.message}</p>
+      <p className="text-sm font-medium text-[var(--ad-text-primary)]">{toast.message}</p>
       <button
         onClick={onClose}
         className="ml-2 rounded p-1 hover:bg-black/5 transition-colors"
       >
-        <X className="h-4 w-4 text-slate-400" />
+        <X className="h-4 w-4 text-[var(--ad-text-secondary)]" />
       </button>
     </div>
   );

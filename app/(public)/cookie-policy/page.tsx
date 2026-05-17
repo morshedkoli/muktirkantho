@@ -9,13 +9,13 @@ export default function CookiePolicyPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <article className="prose-news">
-        <h1 className="font-display text-3xl font-bold text-[var(--np-text-primary)] mb-8">
+        <h1 className="np-headline-lg text-[var(--np-text-primary)] mb-8">
           Cookie Policy
         </h1>
 
         <div className="space-y-8 text-[var(--np-text-secondary)]">
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">What Are Cookies</h2>
+            <h2 className="mb-4">What Are Cookies</h2>
             <p>
               Cookies are small text files that are placed on your computer or mobile device when you visit a website. They are widely used to make websites work more efficiently and provide information to the website owners.
             </p>
@@ -25,7 +25,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">How We Use Cookies</h2>
+            <h2 className="mb-4">How We Use Cookies</h2>
             <p>Muktir Kantho uses cookies for various purposes, including:</p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
               <li><strong>Essential Cookies:</strong> These cookies are necessary for the website to function properly. They enable basic functions like page navigation and access to secure areas of the website.</li>
@@ -36,31 +36,31 @@ export default function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Types of Cookies We Use</h2>
+            <h2 className="mb-4">Types of Cookies We Use</h2>
             
-            <h3 className="text-lg font-semibold text-[var(--np-text-primary)] mb-2">Session Cookies</h3>
+            <h3 className="mb-2">Session Cookies</h3>
             <p>
               These are temporary cookies that are stored in your browser during a browsing session and are deleted when you close your browser. They help the website remember your activities on the previous page.
             </p>
 
-            <h3 className="text-lg font-semibold text-[var(--np-text-primary)] mb-2 mt-4">Persistent Cookies</h3>
+            <h3 className="mb-2 mt-4">Persistent Cookies</h3>
             <p>
               These cookies remain on your device for a set period specified in the cookie. They are activated each time you visit the website that created that particular cookie.
             </p>
 
-            <h3 className="text-lg font-semibold text-[var(--np-text-primary)] mb-2 mt-4">First-Party Cookies</h3>
+            <h3 className="mb-2 mt-4">First-Party Cookies</h3>
             <p>
               These are cookies that are set by the website you are visiting and can only be read by that website.
             </p>
 
-            <h3 className="text-lg font-semibold text-[var(--np-text-primary)] mb-2 mt-4">Third-Party Cookies</h3>
+            <h3 className="mb-2 mt-4">Third-Party Cookies</h3>
             <p>
               These are cookies set by parties other than the website owner. We may use third-party cookies for analytics, advertising, and social media integration.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Specific Cookies We Use</h2>
+            <h2 className="mb-4">Specific Cookies We Use</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse border border-[var(--np-border)]">
                 <thead>
@@ -102,7 +102,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Managing Cookies</h2>
+            <h2 className="mb-4">Managing Cookies</h2>
             <p>
               Most web browsers allow you to control cookies through their settings preferences. You can usually find these settings in the &quot;Options&quot; or &quot;Preferences&quot; menu of your browser.
             </p>
@@ -116,7 +116,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Browser-Specific Instructions</h2>
+            <h2 className="mb-4">Browser-Specific Instructions</h2>
             <p>Here are links to instructions for managing cookies in popular browsers:</p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
               <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer" className="text-[var(--np-primary)] hover:underline">Google Chrome</a></li>
@@ -130,7 +130,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Third-Party Analytics</h2>
+            <h2 className="mb-4">Third-Party Analytics</h2>
             <p>
               We use Google Analytics to help us understand how our visitors use the website. Google Analytics uses cookies to collect information about your use of the website, including your IP address. This information is transmitted to and stored by Google on servers in the United States.
             </p>
@@ -143,7 +143,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Changes to This Cookie Policy</h2>
+            <h2 className="mb-4">Changes to This Cookie Policy</h2>
             <p>
               We may update our Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the &quot;Last Updated&quot; date.
             </p>
@@ -153,7 +153,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-[var(--np-text-primary)] mb-4">Contact Us</h2>
+            <h2 className="mb-4">Contact Us</h2>
             <p>
               If you have any questions about this Cookie Policy, please contact us at:
             </p>

@@ -85,15 +85,15 @@ function ConfirmDialog({ options, onConfirm, onCancel }: ConfirmDialogProps) {
   } = options;
 
   const buttonStyles = {
-    danger: "bg-rose-600 hover:bg-rose-700 text-white",
-    warning: "bg-amber-600 hover:bg-amber-700 text-white",
-    info: "bg-blue-600 hover:bg-blue-700 text-white",
+    danger: "bg-[var(--ad-error)] hover:bg-[var(--ad-error)]/80 text-white",
+    warning: "bg-[var(--ad-warning)] hover:bg-[var(--ad-warning)]/80 text-white",
+    info: "bg-[var(--ad-primary)] hover:bg-[var(--ad-primary-hover)] text-white",
   };
 
   const iconColors = {
-    danger: "text-rose-600",
-    warning: "text-amber-600",
-    info: "text-blue-600",
+    danger: "text-[var(--ad-error)]",
+    warning: "text-[var(--ad-warning)]",
+    info: "text-[var(--ad-primary)]",
   };
 
   return (
@@ -105,28 +105,28 @@ function ConfirmDialog({ options, onConfirm, onCancel }: ConfirmDialogProps) {
       />
       
       {/* Dialog */}
-      <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95">
+      <div className="relative bg-[var(--ad-card)] rounded-xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95">
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-full bg-slate-100 ${iconColors[type]}`}>
+            <div className={`p-3 rounded-full bg-[var(--ad-paper-2)] ${iconColors[type]}`}>
               <AlertTriangle className="h-6 w-6" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-              <p className="mt-2 text-sm text-slate-600">{message}</p>
+              <h3 className="text-lg font-semibold text-[var(--ad-text-primary)]">{title}</h3>
+              <p className="mt-2 text-sm text-[var(--ad-text-secondary)]">{message}</p>
             </div>
             <button
               onClick={onCancel}
-              className="p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-1 rounded-lg hover:bg-[var(--ad-paper-2)] transition-colors"
             >
-              <X className="h-5 w-5 text-slate-400" />
+              <X className="h-5 w-5 text-[var(--ad-muted)]" />
             </button>
           </div>
           
           <div className="mt-6 flex justify-end gap-3">
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-[var(--ad-text-secondary)] bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-lg hover:bg-[var(--ad-background)] transition-colors"
             >
               {cancelText}
             </button>

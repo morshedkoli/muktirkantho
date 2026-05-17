@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
-import { Lora, Work_Sans } from "next/font/google";
+import { Libre_Baskerville, Source_Sans_3, JetBrains_Mono, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 
-const workSans = Work_Sans({
-  variable: "--font-work-sans",
+const sourceSans = Source_Sans_3({
+  variable: "--font-source-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "600", "700"],
 });
 
-const lora = Lora({
-  variable: "--font-lora",
+const libreBaskerville = Libre_Baskerville({
+  variable: "--font-libre-baskerville",
   subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+});
+
+const notoSansBengali = Noto_Sans_Bengali({
+  variable: "--font-noto-bengali",
+  subsets: ["bengali", "latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 
@@ -60,24 +74,23 @@ export default function RootLayout({
   return (
     <html lang="bn" suppressHydrationWarning>
       <head>
-        {/* BenSen Bangla font */}
+        {/* Preconnect for external font domains */}
+        <link rel="preconnect" href="https://fonts.maateen.me" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.maateen.me" />
+        {/* BenSen Bangla font — fallback for Noto Sans Bengali */}
         <link rel="stylesheet" href="https://fonts.maateen.me/bensen/font.css" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 const theme = localStorage.getItem('theme');
-                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.setAttribute('data-theme', 'dark');
-                } else {
-                  document.documentElement.setAttribute('data-theme', 'light');
-                }
+                document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
               })();
             `,
           }}
         />
       </head>
-      <body className={`${workSans.variable} ${lora.variable} antialiased`}>
+      <body className={`${sourceSans.variable} ${libreBaskerville.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} antialiased`}>
         <ThemeProvider>
           {children}
         </ThemeProvider>

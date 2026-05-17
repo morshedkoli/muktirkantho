@@ -4,78 +4,147 @@
    THEME VARIABLES - NEWSPAPER
    ============================================ */
 
-:root {
-  /* Newspaper Light Mode (Default) */
-  --np-primary: #1E3A8A;
-  --np-primary-hover: #1E40AF;
-  --np-secondary: #DC2626;
-  --np-secondary-hover: #B91C1C;
-  --np-background: #F9FAFB;
-  --np-card: #FFFFFF;
-  --np-border: #E5E7EB;
-  --np-text-primary: #111827;
-  --np-text-secondary: #6B7280;
-  --np-breaking: #B91C1C;
-  --np-accent: #F59E0B;
-  --np-success: #059669;
-  --np-warning: #D97706;
-  --np-error: #DC2626;
-  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --np-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+/* ============================================
+   EDITORIAL DESIGN SYSTEM — Admin Dashboard
+   ============================================ */
 
-  /* Admin Light Mode (Default) */
-  --ad-primary: #2563EB;
-  --ad-primary-hover: #1D4ED8;
-  --ad-secondary: #1E40AF;
-  --ad-background: #F8FAFC;
-  --ad-sidebar: #FFFFFF;
-  --ad-card: #FFFFFF;
-  --ad-border: #E2E8F0;
-  --ad-text-primary: #0F172A;
-  --ad-text-secondary: #64748B;
-  --ad-accent: #8B5CF6;
-  --ad-success: #10B981;
-  --ad-warning: #F59E0B;
-  --ad-error: #EF4444;
-  --ad-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --ad-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+:root {
+  /* Editorial Admin Dark (Default for admin) */
+  --ed-ink: #0d0d0d;
+  --ed-deep: #1a1a1a;
+  --ed-paper: #f5f0e8;
+  --ed-paper-2: #ede7d9;
+  --ed-breaking: #c0392b;
+  --ed-alert: #e67e22;
+  --ed-gold: #b8982a;
+  --ed-muted: #7a7060;
+  --ed-border: #c8bfaa;
+  --ed-success: #27ae60;
+  --ed-facebook: #1877f2;
+  --ed-twitter: #000;
+  --ed-instagram: #e4405f;
+  --ed-linkedin: #0a66c2;
+  --ed-blue: #2980b9;
+  --ed-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+
+  /* Override admin colors for light mode */
+  --ad-primary: var(--ed-breaking);
+  --ad-primary-hover: #a93226;
+  --ad-secondary: var(--ed-gold);
+  --ad-background: var(--np-newsprint);
+  --ad-sidebar: #ffffff;
+  --ad-card: #ffffff;
+  --ad-border: var(--ed-border);
+  --ad-text-primary: #111111;
+  --ad-text-secondary: #666666;
+  --ad-paper: var(--ed-paper);
+  --ad-paper-2: var(--ed-paper-2);
+  --ad-muted: var(--ed-muted);
+  --ad-accent: var(--ed-blue);
+  --ad-success: var(--ed-success);
+  --ad-warning: var(--ed-alert);
+  --ad-error: var(--ed-breaking);
+  --ad-ink: #0d0d0d;
+  --ad-breaking: var(--ed-breaking);
+  --ad-shadow: var(--ed-shadow);
+  --ad-shadow-lg: var(--ed-shadow-lg);
+}
+
+/* Editorial Admin Dark Mode */
+[data-theme="dark"] {
+  --ed-ink: #f5f0e8;
+  --ed-deep: #e0d8c8;
+  --ed-paper: #0d0d0d;
+  --ed-paper-2: #1a1a1a;
+  --ed-breaking: #e74c3c;
+  --ed-alert: #f39c12;
+  --ed-gold: #f1c40f;
+  --ed-muted: #9e9480;
+  --ed-border: #2a2a2a;
+  --ed-success: #2ecc71;
+  --ed-facebook: #1877f2;
+  --ed-twitter: #000;
+  --ed-instagram: #e4405f;
+  --ed-linkedin: #0a66c2;
+  --ed-blue: #3498db;
+  --ed-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
+
+  --ad-primary: #e74c3c;
+  --ad-primary-hover: #c0392b;
+  --ad-secondary: #f1c40f;
+  --ad-background: #0d0d0d;
+  --ad-sidebar: #0a0a0a;
+  --ad-card: #1a1a1a;
+  --ad-border: #2a2a2a;
+  --ad-text-primary: #f5f0e8;
+  --ad-text-secondary: #9e9480;
+  --ad-paper: var(--ed-paper);
+  --ad-paper-2: var(--ed-paper-2);
+  --ad-muted: var(--ed-muted);
+  --ad-ink: #0a0a0a;
+  --ad-breaking: var(--ed-breaking);
+  --ad-accent: #3498db;
+  --ad-success: #2ecc71;
+  --ad-warning: #f39c12;
+  --ad-error: #e74c3c;
+  --ad-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --ad-shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+:root {
+  /* Newspaper Light Mode — Prothomalo-Inspired Palette */
+  --np-primary: #d0021b;
+  --np-primary-hover: #9b0014;
+  --np-secondary: #c9951a;
+  --np-secondary-hover: #a67a14;
+  --np-background: #f8f7f5;
+  --np-card: #ffffff;
+  --np-border: #dddddd;
+  --np-text-primary: #111111;
+  --np-text-secondary: #666666;
+  --np-text-soft: #333333;
+  --np-breaking: #d0021b;
+  --np-accent: #c9951a;
+  --np-success: #1a7a3c;
+  --np-warning: #c9951a;
+  --np-error: #d0021b;
+  --np-blue: #0a4fa0;
+  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
+  --np-shadow-lg: 0 10px 30px -6px rgb(0 0 0 / 0.12);
+  --np-ink: #111111;
+  --np-ink-soft: #333333;
+  --np-muted: #666666;
+  --np-newsprint: #f8f7f5;
+  --np-newsprint-2: #eeece8;
 }
 
 /* Newspaper Dark Mode */
 [data-theme="dark"] {
-  --np-primary: #3B82F6;
-  --np-primary-hover: #60A5FA;
-  --np-secondary: #F87171;
-  --np-secondary-hover: #FCA5A5;
-  --np-background: #0F172A;
-  --np-card: #1E293B;
-  --np-border: #334155;
-  --np-text-primary: #F1F5F9;
-  --np-text-secondary: #94A3B8;
-  --np-breaking: #EF4444;
-  --np-accent: #FBBF24;
-  --np-success: #34D399;
-  --np-warning: #FBBF24;
-  --np-error: #F87171;
-  --np-shadow: 0 0 20px rgb(59 130 246 / 0.1);
-  --np-shadow-lg: 0 0 30px rgb(59 130 246 / 0.15);
-
-  /* Admin Dark Mode */
-  --ad-primary: #3B82F6;
-  --ad-primary-hover: #60A5FA;
-  --ad-secondary: #6366F1;
-  --ad-background: #0B1120;
-  --ad-sidebar: #111827;
-  --ad-card: #1F2937;
-  --ad-border: #374151;
-  --ad-text-primary: #F9FAFB;
-  --ad-text-secondary: #9CA3AF;
-  --ad-accent: #A78BFA;
-  --ad-success: #34D399;
-  --ad-warning: #FBBF24;
-  --ad-error: #F87171;
-  --ad-shadow: 0 0 20px rgb(59 130 246 / 0.1);
-  --ad-shadow-lg: 0 0 30px rgb(99 102 241 / 0.15);
+  --np-primary: #e03030;
+  --np-primary-hover: #ff4444;
+  --np-secondary: #d4a020;
+  --np-secondary-hover: #e0b030;
+  --np-background: #1a1a1a;
+  --np-card: #222222;
+  --np-border: #333333;
+  --np-text-primary: #e8e0d0;
+  --np-text-secondary: #888880;
+  --np-text-soft: #b0a898;
+  --np-breaking: #e03030;
+  --np-accent: #d4a020;
+  --np-success: #30a050;
+  --np-warning: #d4a020;
+  --np-error: #e03030;
+  --np-blue: #5090d0;
+  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --np-shadow-lg: 0 10px 30px -6px rgb(0 0 0 / 0.4);
+  --np-ink: #e8e0d0;
+  --np-ink-soft: #b0a898;
+  --np-muted: #888880;
+  --np-newsprint: #1a1a1a;
+  --np-newsprint-2: #252525;
 }
 
 /* Theme Transition - Disable for instant theme switch */
@@ -84,14 +153,21 @@
   transition: none !important;
 }
 
-/* Smooth theme transitions */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
 @theme inline {
+  /* Editorial Design System Colors */
+  --color-ed-ink: var(--ed-ink);
+  --color-ed-deep: var(--ed-deep);
+  --color-ed-paper: var(--ed-paper);
+  --color-ed-paper-2: var(--ed-paper-2);
+  --color-ed-breaking: var(--ed-breaking);
+  --color-ed-alert: var(--ed-alert);
+  --color-ed-gold: var(--ed-gold);
+  --color-ed-muted: var(--ed-muted);
+  --color-ed-border: var(--ed-border);
+  --color-ed-success: var(--ed-success);
+  --color-ed-facebook: var(--ed-facebook);
+  --color-ed-twitter: var(--ed-twitter);
+
   /* Newspaper Theme Colors */
   --color-np-primary: var(--np-primary);
   --color-np-primary-hover: var(--np-primary-hover);
@@ -102,11 +178,17 @@
   --color-np-border: var(--np-border);
   --color-np-text-primary: var(--np-text-primary);
   --color-np-text-secondary: var(--np-text-secondary);
+  --color-np-text-soft: var(--np-text-soft);
   --color-np-breaking: var(--np-breaking);
   --color-np-accent: var(--np-accent);
   --color-np-success: var(--np-success);
   --color-np-warning: var(--np-warning);
   --color-np-error: var(--np-error);
+  --color-np-blue: var(--np-blue);
+  --color-np-ink: var(--np-ink);
+  --color-np-muted: var(--np-muted);
+  --color-np-newsprint: var(--np-newsprint);
+  --color-np-newsprint-2: var(--np-newsprint-2);
   --shadow-np: var(--np-shadow);
   --shadow-np-lg: var(--np-shadow-lg);
 
@@ -120,6 +202,11 @@
   --color-ad-border: var(--ad-border);
   --color-ad-text-primary: var(--ad-text-primary);
   --color-ad-text-secondary: var(--ad-text-secondary);
+  --color-ad-paper: var(--ad-paper);
+  --color-ad-paper-2: var(--ad-paper-2);
+  --color-ad-muted: var(--ad-muted);
+  --color-ad-ink: var(--ad-ink);
+  --color-ad-breaking: var(--ad-breaking);
   --color-ad-accent: var(--ad-accent);
   --color-ad-success: var(--ad-success);
   --color-ad-warning: var(--ad-warning);
@@ -128,8 +215,12 @@
   --shadow-ad-lg: var(--ad-shadow-lg);
 
   /* Typography */
-  --font-sans: var(--font-work-sans);
-  --font-serif: var(--font-lora);
+  --font-sans: var(--font-source-sans);
+  --font-serif: var(--font-libre-baskerville);
+  --font-bangla: var(--font-noto-bengali);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-libre-baskerville);
+  --font-label: var(--font-jetbrains-mono);
 }
 
 /* Base Styles */
@@ -143,47 +234,40 @@ html {
 
 body {
   min-height: 100vh;
-  background: var(--np-background);
+  background: var(--np-newsprint);
   color: var(--np-text-primary);
-  font-family: "BenSen", var(--font-work-sans), system-ui, -apple-system, sans-serif;
-  line-height: 1.6;
+  font-family: var(--font-noto-bengali), var(--font-source-sans), "BenSen", system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Typography */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-lora), Georgia, serif;
-  font-weight: 700;
-  line-height: 1.2;
+/* ============================================
+   TYPOGRAPHY — Prothomalo-Inspired
+   Headlines: Libre Baskerville (serif, for Latin/Bangla)
+   Body/UI: Source Sans 3 (sans, for Bangla/Latin)
+   Labels/Timestamps: JetBrains Mono (mono)
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  line-height: 1.15;
   letter-spacing: -0.01em;
   color: var(--np-text-primary);
 }
 
-h1 {
-  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
-}
-
-h2 {
-  font-size: clamp(1.375rem, 1rem + 1.5vw, 2rem);
-}
-
-h3 {
-  font-size: clamp(1.125rem, 0.9rem + 1vw, 1.5rem);
-}
-
-h4 {
-  font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.25rem);
-}
+h1 { font-size: clamp(1.75rem, 1.5rem + 1vw, 2.25rem); font-weight: 700; }
+h2 { font-size: clamp(1.25rem, 1.125rem + 0.5vw, 1.625rem); font-weight: 700; }
+h3 { font-size: clamp(1rem, 0.9375rem + 0.25vw, 1.25rem); font-weight: 700; }
+h4 { font-size: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem); font-weight: 600; }
+h5 { font-size: 0.9375rem; font-weight: 600; }
+h6 { font-size: 0.875rem; font-weight: 600; }
 
 p {
+  font-size: 1rem;
+  line-height: 1.75;
   margin-bottom: 1rem;
-  color: var(--np-text-secondary);
+  color: var(--np-text-soft);
 }
 
 a {
@@ -250,15 +334,19 @@ img {
 
 /* Utility Classes */
 .font-display {
-  font-family: var(--font-lora), Georgia, serif;
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
 }
 
 .font-body {
-  font-family: var(--font-work-sans), system-ui, sans-serif;
+  font-family: var(--font-source-sans), system-ui, sans-serif;
 }
 
 .font-bangla {
-  font-family: "BenSen", var(--font-work-sans), sans-serif;
+  font-family: var(--font-noto-bengali), "BenSen", var(--font-source-sans), sans-serif;
+}
+
+.font-label {
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .text-balance {
@@ -410,11 +498,11 @@ img {
 /* Prose for Article Content */
 .prose-news {
   max-width: none;
-  font-family: "BenSen", var(--font-work-sans), sans-serif;
+  font-family: var(--font-noto-bengali), var(--font-source-sans), "BenSen", sans-serif;
 }
 
 .prose-news h2 {
-  font-family: var(--font-lora), Georgia, serif;
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
   font-size: clamp(1.25rem, 1rem + 1.5vw, 1.75rem);
   font-weight: 700;
   margin-top: 2rem;
@@ -424,7 +512,7 @@ img {
 }
 
 .prose-news h3 {
-  font-family: var(--font-lora), Georgia, serif;
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
   font-size: clamp(1.125rem, 0.9rem + 1vw, 1.375rem);
   font-weight: 600;
   margin-top: 1.5rem;
@@ -456,6 +544,206 @@ img {
   margin: 1.5rem 0;
   font-style: italic;
   color: var(--np-text-secondary);
+}
+
+/* ============================================
+   NEWSPAPER TYPOGRAPHY SYSTEM — Prothomalo-Inspired
+   Headlines: Libre Baskerville (serif)
+   Body/UI:   Source Sans 3 (sans)
+   Labels:    JetBrains Mono (mono)
+   Headline classes defer font-size to element
+   ============================================ */
+
+/* Headline — large hero/front-page */
+.np-headline-lg {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--np-text-primary);
+}
+
+/* Headline — default (section) */
+.np-headline {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--np-text-primary);
+}
+
+/* Headline — small / cards */
+.np-headline-sm {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--np-text-primary);
+}
+
+/* Breaking news headline */
+.np-headline-breaking {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--np-breaking);
+}
+
+/* Section header — 3px red top border like Prothomalo */
+.np-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  border-top: 3px solid var(--np-primary);
+  padding-top: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.np-section-header .np-section-label {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--np-muted);
+}
+.np-section-header .np-headline {
+  margin: 0;
+}
+.np-section-header .np-section-more {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--np-muted);
+  margin-left: auto;
+}
+
+/* Subheading — sans-serif */
+.np-subhead {
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--np-text-primary);
+}
+
+/* Article body copy */
+.np-body {
+  font-family: var(--font-noto-bengali), var(--font-source-sans), "BenSen", sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--np-text-soft);
+}
+
+/* Byline / author */
+.np-byline {
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--np-text-secondary);
+}
+
+/* Category label — JetBrains Mono, uppercase, tracking */
+.np-category {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--np-primary);
+}
+
+/* Timestamp / metadata — JetBrains Mono */
+.np-timestamp {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--np-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* Image caption */
+.np-caption {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.6875rem;
+  color: var(--np-text-secondary);
+  line-height: 1.4;
+}
+
+/* Pull quote */
+.np-pullquote {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  font-size: clamp(1rem, 0.9375rem + 0.25vw, 1.125rem);
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--np-text-primary);
+  border-left: 4px solid var(--np-accent);
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+}
+
+/* Drop cap for lead paragraph */
+.np-dropcap::first-letter {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  font-size: 3.5em;
+  font-weight: 700;
+  float: left;
+  line-height: 0.8;
+  margin-right: 0.5rem;
+  margin-top: 0.15rem;
+  color: var(--np-primary);
+}
+
+/* Numbers / data — tabular figures */
+.np-num {
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Latest rail item (Prothomalo left sidebar style) */
+.np-latest-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--np-border);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--np-text-primary);
+  transition: background 0.15s;
+}
+.np-latest-item:hover {
+  background: var(--np-newsprint-2);
+}
+.np-latest-time {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.625rem;
+  color: var(--np-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Columist / Opinion card */
+.np-columnist {
+  text-align: center;
+  padding: 1rem 0.5rem;
+}
+.np-columnist-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--np-newsprint-2);
+  margin: 0 auto 0.5rem;
+  overflow: hidden;
+}
+.np-columnist-name {
+  font-family: var(--font-source-sans), sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--np-text-primary);
+}
+.np-columnist-title {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.625rem;
+  color: var(--np-muted);
+  margin-top: 2px;
 }
 
 /* Safe Area Insets for Mobile Devices */
@@ -518,4 +806,206 @@ img {
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* ============================================
+   EDITORIAL DESIGN SYSTEM UTILITY CLASSES
+   ============================================ */
+
+/* Monospace for data (timestamps, counts, codes) */
+.font-editorial-mono {
+  font-family: 'DM Mono', 'Courier New', monospace;
+}
+
+/* Serif for display / headlines */
+.font-editorial-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Sans for body / UI */
+.font-editorial-sans {
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* Editorial card with 1.5px border (no shadows) */
+.ed-card {
+  border: 1.5px solid var(--ad-border);
+  background: var(--ad-card);
+}
+
+.ed-card-accent {
+  border: 1.5px solid var(--ad-border);
+  background: var(--ad-card);
+  border-top: 3px solid var(--ad-breaking);
+}
+
+/* Status badges */
+.ed-badge {
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+.ed-badge-draft {
+  background: var(--ed-paper-2);
+  color: var(--ed-muted);
+}
+.ed-badge-published {
+  background: var(--ed-success);
+  color: white;
+}
+.ed-badge-breaking {
+  background: var(--ed-breaking);
+  color: white;
+}
+.ed-badge-review {
+  background: var(--ed-alert);
+  color: white;
+}
+
+/* Section labels (mono, uppercase, muted) */
+.ed-label {
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ad-text-secondary);
+}
+
+/* KPI number style */
+.ed-kpi {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  color: var(--ad-text-primary);
+}
+
+/* Divider */
+.ed-divider {
+  height: 1px;
+  background: var(--ad-border);
+}
+
+/* Small colored dot */
+.ed-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.ed-dot-success { background: var(--ad-success); }
+.ed-dot-breaking { background: var(--ad-breaking); }
+.ed-dot-alert { background: var(--ad-warning); }
+.ed-dot-muted { background: var(--ad-text-secondary); }
+
+/* Progress bar */
+.ed-progress {
+  height: 2px;
+  background: var(--ad-border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.ed-progress-fill {
+  height: 100%;
+  background: var(--ad-breaking);
+  border-radius: 1px;
+  transition: width 0.6s ease;
+}
+
+/* Toggle switch (editorial style) */
+.ed-toggle {
+  position: relative;
+  width: 36px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--ad-border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ed-toggle.active {
+  background: var(--ad-ink);
+}
+.ed-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  transition: left 0.2s, right 0.2s;
+}
+.ed-toggle.active .ed-toggle-thumb {
+  right: 3px;
+  left: auto;
+}
+.ed-toggle:not(.active) .ed-toggle-thumb {
+  left: 3px;
+  right: auto;
+}
+
+/* Feature list with arrows */
+.ed-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ed-feature-list li {
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--ad-text-secondary);
+}
+.ed-feature-list li::before {
+  content: '→';
+  color: var(--ad-breaking);
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* Wireframe / skeleton placeholder */
+.ed-skeleton {
+  background: var(--ad-border);
+  border-radius: 2px;
+  opacity: 0.4;
+}
+.ed-skeleton-text {
+  height: 10px;
+  background: var(--ad-border);
+  border-radius: 2px;
+  margin-bottom: 8px;
+}
+
+/* Editor toolbar button */
+.ed-tb-btn {
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--ad-paper-2);
+  border-radius: 4px;
+  color: var(--ad-text-secondary);
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.ed-tb-btn:hover {
+  background: var(--ad-border);
+  color: var(--ad-text-primary);
+}
+.ed-tb-btn.active {
+  background: var(--ad-ink);
+  color: var(--ad-paper);
+}
+
+/* Monospace label for timestamps, counts */
+.ed-mono-label {
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ad-text-secondary);
 }

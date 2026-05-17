@@ -26,7 +26,7 @@ export default async function LatestNewsPage({ searchParams }: Props) {
       <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
         <section>
           <div className="mb-6 border-b border-[var(--np-border)] pb-3">
-            <h1 className="font-display text-3xl font-black text-[var(--np-text-primary)]">Latest News</h1>
+            <h1 className="np-headline-lg text-[var(--np-text-primary)]">Latest News</h1>
             <p className="mt-2 text-sm text-[var(--np-text-secondary)]">{data.total} published articles</p>
           </div>
 

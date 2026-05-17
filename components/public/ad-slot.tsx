@@ -35,8 +35,8 @@ export async function AdSlot({
       },
       [AD_PLACEMENTS.HOMEPAGE_BANNER]: { 
         label: "Homepage Banner", 
-        size: "1200x220",
-        aspectRatio: "aspect-[40/7]"
+        size: "728x90",
+        aspectRatio: "aspect-[8/1]"
       },
       [AD_PLACEMENTS.ARTICLE_INLINE]: { 
         label: "Article Inline Ad", 
@@ -45,8 +45,28 @@ export async function AdSlot({
       },
       [AD_PLACEMENTS.FOOTER_STRIP]: { 
         label: "Footer Strip Ad", 
-        size: "1200x160",
-        aspectRatio: "aspect-[15/2]"
+        size: "728x90",
+        aspectRatio: "aspect-[8/1]"
+      },
+      [AD_PLACEMENTS.BILLBOARD]: { 
+        label: "Billboard Ad", 
+        size: "970x250",
+        aspectRatio: "aspect-[4/1]"
+      },
+      [AD_PLACEMENTS.SIDEBAR_STICKY]: { 
+        label: "Sticky Sidebar Ad", 
+        size: "300x600",
+        aspectRatio: "aspect-[1/2]"
+      },
+      [AD_PLACEMENTS.INFEED_NATIVE]: { 
+        label: "In-feed Ad", 
+        size: "Native",
+        aspectRatio: "aspect-[3/1]"
+      },
+      [AD_PLACEMENTS.MOBILE_ANCHOR]: { 
+        label: "Mobile Ad", 
+        size: "320x50",
+        aspectRatio: "aspect-[6/1]"
       },
     };
 

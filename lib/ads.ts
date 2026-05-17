@@ -5,15 +5,23 @@ export const AD_PLACEMENTS = {
   HOMEPAGE_BANNER: "homepage_banner",
   ARTICLE_INLINE: "article_inline",
   FOOTER_STRIP: "footer_strip",
+  BILLBOARD: "billboard",
+  SIDEBAR_STICKY: "sidebar_sticky",
+  INFEED_NATIVE: "infeed_native",
+  MOBILE_ANCHOR: "mobile_anchor",
 } as const;
 
 export type AdPlacement = (typeof AD_PLACEMENTS)[keyof typeof AD_PLACEMENTS];
 
 export const AD_PLACEMENT_OPTIONS: Array<{ value: AdPlacement; label: string }> = [
   { value: AD_PLACEMENTS.SIDEBAR_PRIMARY, label: "Sidebar (300x250)" },
-  { value: AD_PLACEMENTS.HOMEPAGE_BANNER, label: "Homepage Banner" },
-  { value: AD_PLACEMENTS.ARTICLE_INLINE, label: "Article Inline" },
-  { value: AD_PLACEMENTS.FOOTER_STRIP, label: "Footer Strip" },
+  { value: AD_PLACEMENTS.HOMEPAGE_BANNER, label: "Homepage Banner (728x90)" },
+  { value: AD_PLACEMENTS.ARTICLE_INLINE, label: "Article Inline (970x250)" },
+  { value: AD_PLACEMENTS.FOOTER_STRIP, label: "Footer Strip (728x90)" },
+  { value: AD_PLACEMENTS.BILLBOARD, label: "Billboard (970x250)" },
+  { value: AD_PLACEMENTS.SIDEBAR_STICKY, label: "Sticky Sidebar (300x600)" },
+  { value: AD_PLACEMENTS.INFEED_NATIVE, label: "In-feed Native" },
+  { value: AD_PLACEMENTS.MOBILE_ANCHOR, label: "Mobile Anchor (320x50)" },
 ];
 
 export function getAdPlacementLabel(placement: string) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Grid3X3 } from "lucide-react";
+import { Grid3X3, TrendingUp } from "lucide-react";
 import { LocationFilter } from "@/components/public/location-filter";
 import { AdSlot } from "@/components/public/ad-slot";
 import { AD_PLACEMENTS } from "@/lib/ads";
@@ -9,21 +9,20 @@ export async function CommonSidebar() {
   const { categories, divisions } = await getSidebarData();
 
   return (
-    <aside className="space-y-8">
-      <LocationFilter divisions={divisions} />
-
+    <aside className="space-y-6">
+      {/* Categories */}
       <section>
-        <div className="rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-6 shadow-[var(--np-shadow)]">
+        <div className="border border-[var(--np-border)] bg-white p-5">
           <div className="mb-4 flex items-center gap-2">
-            <Grid3X3 className="h-5 w-5 text-[var(--np-primary)]" />
-            <h3 className="font-display text-lg font-bold text-[var(--np-text-primary)]">Categories</h3>
+            <Grid3X3 className="h-4 w-4 text-[var(--np-primary)]" />
+            <h3 className="font-label text-xs uppercase tracking-wider text-[var(--np-muted)]">বিভাগসমূহ</h3>
           </div>
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/category/${category.slug}`}
-                className="rounded-full border border-[var(--np-border)] bg-[var(--np-background)] px-4 py-2 text-sm font-medium text-[var(--np-text-secondary)] hover:border-[var(--np-primary)] hover:text-[var(--np-primary)] transition-all"
+                className="rounded-sm border border-[var(--np-border)] bg-[var(--np-newsprint)] px-3 py-1.5 text-xs text-[var(--np-text-soft)] hover:border-[var(--np-primary)] hover:text-[var(--np-primary)] transition-all"
               >
                 {category.name}
               </Link>
@@ -32,7 +31,11 @@ export async function CommonSidebar() {
         </div>
       </section>
 
-      <AdSlot placement={AD_PLACEMENTS.SIDEBAR_PRIMARY} />
+      {/* Location Filter */}
+      <LocationFilter divisions={divisions} />
+
+      {/* Ad Sidebar */}
+      <AdSlot placement={AD_PLACEMENTS.SIDEBAR_PRIMARY} showPlaceholder={false} />
     </aside>
   );
 }

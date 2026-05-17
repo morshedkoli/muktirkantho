@@ -14,6 +14,9 @@ import {
   Eye,
   BarChart3,
   Calendar,
+  Twitter,
+  Facebook,
+  Zap,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -34,18 +37,18 @@ export default async function AdminDashboardPage() {
     prisma.district.count(),
     prisma.upazila.count(),
     prisma.post.findMany({
-      take: 5,
+      take: 8,
       orderBy: { updatedAt: "desc" },
       include: { category: true, district: true },
     }),
   ]);
 
-  const stats = [
+  const primaryStats = [
     {
       label: "Total Posts",
       value: totalPosts,
       icon: FileText,
-      color: "bg-[var(--ad-primary)]",
+      color: "bg-[var(--ad-ink)]",
       trend: "+12%",
       href: "/admin/posts",
     },
@@ -53,7 +56,7 @@ export default async function AdminDashboardPage() {
       label: "Published",
       value: publishedPosts,
       icon: CheckCircle,
-      color: "bg-emerald-500",
+      color: "bg-[var(--ad-success)]",
       trend: "+8%",
       href: "/admin/posts",
     },
@@ -61,7 +64,7 @@ export default async function AdminDashboardPage() {
       label: "Drafts",
       value: draftPosts,
       icon: Clock,
-      color: "bg-amber-500",
+      color: "bg-[var(--ad-alert)]",
       trend: "+3",
       href: "/admin/posts",
     },
@@ -69,7 +72,7 @@ export default async function AdminDashboardPage() {
       label: "Categories",
       value: categories,
       icon: Tags,
-      color: "bg-purple-500",
+      color: "bg-[var(--ad-blue)]",
       trend: null,
       href: "/admin/categories",
     },
@@ -77,7 +80,7 @@ export default async function AdminDashboardPage() {
       label: "Districts",
       value: districts,
       icon: MapPin,
-      color: "bg-indigo-500",
+      color: "bg-[var(--ad-primary)]",
       trend: null,
       href: "/admin/districts",
     },
@@ -85,84 +88,86 @@ export default async function AdminDashboardPage() {
       label: "Upazilas",
       value: upazilas,
       icon: MapPinned,
-      color: "bg-rose-500",
+      color: "bg-[var(--ad-accent)]",
       trend: null,
       href: "/admin/upazilas",
     },
   ];
 
-  const quickActions = [
-    {
-      name: "Create Post",
-      href: "/admin/posts/create",
-      icon: Plus,
-      color: "bg-[var(--ad-primary)]",
-    },
-    {
-      name: "Add Category",
-      href: "/admin/categories",
-      icon: Tags,
-      color: "bg-purple-500",
-    },
-    {
-      name: "Add District",
-      href: "/admin/districts",
-      icon: MapPin,
-      color: "bg-indigo-500",
-    },
-    { name: "View Site", href: "/", icon: Eye, color: "bg-emerald-500" },
+  const socialStatus = [
+    { platform: "X / Twitter", status: "Connected", posts: 23, icon: Twitter, color: "bg-black" },
+    { platform: "Facebook", status: "Connected", posts: 18, icon: Facebook, color: "bg-[#1877f2]" },
+    { platform: "Instagram", status: "Connected", posts: 7, icon: CameraIcon, color: "bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888]" },
+    { platform: "LinkedIn", status: "Connected", posts: 12, icon: LinkedinIcon, color: "bg-[#0a66c2]" },
   ];
 
   return (
-    <div className="w-full min-w-0 space-y-5 sm:space-y-6">
-      {/* Page header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold text-[var(--ad-text-primary)] sm:text-2xl">
-            Dashboard
-          </h1>
-          <p className="mt-1 text-xs text-[var(--ad-text-secondary)] sm:text-sm">
-            Welcome back! Here&apos;s what&apos;s happening with your news
-            portal.
-          </p>
+    <div className="w-full min-w-0 space-y-6">
+
+      {/* Hero — Editorial Dashboard Header */}
+      <div className="relative overflow-hidden rounded-xl bg-[var(--ad-sidebar)] text-white p-6 sm:p-8">
+        <div className="absolute right-0 top-0 text-[140px] sm:text-[200px] font-black font-editorial-display leading-none text-white/[0.03] pointer-events-none select-none">
+          MK
         </div>
-        <Link
-          href="/admin/posts/create"
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[var(--ad-primary-hover)]"
-        >
-          <Plus className="h-4 w-4" />
-          Create New Post
-        </Link>
+        <div className="relative z-10">
+          <div className="font-editorial-mono text-[11px] tracking-[3px] uppercase text-[var(--ad-breaking)] mb-3">
+            Dashboard · {format(new Date(), "MMMM d, yyyy")}
+          </div>
+          <h1 className="font-editorial-display text-3xl sm:text-4xl font-black leading-tight max-w-xl">
+            Welcome to the Newsroom
+          </h1>
+          <p className="mt-3 text-sm text-white/60 max-w-lg leading-relaxed">
+            Your editorial command centre. Monitor content, manage social distribution, and track performance — all from one place.
+          </p>
+          <div className="flex flex-wrap gap-6 mt-6 pt-5 border-t border-white/10">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Today&apos;s Publishes</span>
+              <span className="font-editorial-display text-2xl font-black text-white">{publishedPosts}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Pending</span>
+              <span className="font-editorial-display text-2xl font-black text-white">{draftPosts}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Social Queue</span>
+              <span className="font-editorial-display text-2xl font-black text-white">47</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Active Readers</span>
+              <span className="font-editorial-display text-2xl font-black text-[var(--ad-success)]">1,284</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Stats Grid — 2 cols on xs, 3 cols on sm+ */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        {stats.map((stat) => {
+      {/* Stats Grid — 3 cols desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        {primaryStats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Link
               key={stat.label}
               href={stat.href}
-              className="group overflow-hidden rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 shadow-[var(--ad-shadow)] transition-all hover:border-[var(--ad-primary)]/20 hover:shadow-[var(--ad-shadow-lg)] sm:p-5"
+              className="group border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-5 transition-all hover:border-[var(--ad-text-primary)]"
             >
               <div className="flex items-start justify-between gap-2">
                 <div
-                  className={`${stat.color} shrink-0 rounded-lg p-2 text-white shadow-md sm:p-2.5`}
+                  className={`${stat.color} shrink-0 rounded-lg p-2.5 text-white`}
                 >
                   <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 {stat.trend && (
-                  <div className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-600">
+                  <div className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--ad-success)]/10 px-2 py-0.5 font-editorial-mono text-[10px] font-medium text-[var(--ad-success)] tracking-wider">
                     <TrendingUp className="h-3 w-3" />
-                    <span className="hidden xs:inline">{stat.trend}</span>
+                    {stat.trend}
                   </div>
                 )}
               </div>
-              <div className="mt-3">
-                <p className="text-xs font-medium text-[var(--ad-text-secondary)] sm:text-sm">
+              <div className="mt-4">
+                <p className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">
                   {stat.label}
                 </p>
-                <p className="mt-0.5 text-2xl font-bold text-[var(--ad-text-primary)] transition-colors group-hover:text-[var(--ad-primary)] sm:text-3xl">
+                <p className="mt-1 font-editorial-display text-3xl sm:text-4xl font-black text-[var(--ad-text-primary)] transition-colors group-hover:text-[var(--ad-breaking)]">
                   {stat.value}
                 </p>
               </div>
@@ -171,86 +176,81 @@ export default async function AdminDashboardPage() {
         })}
       </div>
 
-      {/* Bottom section — stacked on mobile, 2-col on md, 3-col on lg */}
-      <div className="grid w-full min-w-0 grid-cols-1 gap-4 md:grid-cols-5 sm:gap-5">
-        {/* Recent Posts — takes 3/5 on md, 2/3 on lg */}
-        <div className="min-w-0 overflow-hidden rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-[var(--ad-shadow)] md:col-span-3">
-          {/* Card header */}
-          <div className="flex items-center justify-between gap-2 border-b border-[var(--ad-border)] px-4 py-3 sm:px-5 sm:py-4">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 shrink-0 text-[var(--ad-primary)]" />
-              <h2 className="text-base font-semibold text-[var(--ad-text-primary)] sm:text-lg">
-                Recent Posts
+      {/* Main Grid — Recent Posts + Right Panel */}
+      <div className="grid w-full min-w-0 grid-cols-1 gap-5 md:grid-cols-5">
+
+        {/* Recent Posts — wider column (3/5) */}
+        <div className="min-w-0 overflow-hidden border border-[var(--ad-border)] bg-[var(--ad-card)] md:col-span-3">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--ad-border)] px-5 py-4">
+            <div className="flex items-center gap-2.5">
+              <BarChart3 className="h-4 w-4 text-[var(--ad-ink)]" />
+              <h2 className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)]">
+                Recent Articles
               </h2>
             </div>
             <Link
               href="/admin/posts"
-              className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-[var(--ad-primary)] transition-colors hover:text-[var(--ad-primary-hover)]"
+              className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] transition-colors flex items-center gap-1"
             >
               View All
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
           {/* Post rows */}
           <div className="divide-y divide-[var(--ad-border)]">
             {recentPosts.length === 0 ? (
-              <div className="px-6 py-10 text-center">
-                <p className="text-sm text-[var(--ad-text-secondary)]">
-                  No posts yet. Create your first post!
+              <div className="px-6 py-12 text-center">
+                <p className="font-editorial-mono text-xs tracking-wider text-[var(--ad-text-secondary)]">
+                  No posts yet. Create your first post to get started.
                 </p>
               </div>
             ) : (
               recentPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="group flex min-w-0 flex-col gap-2.5 px-4 py-3 transition-colors hover:bg-[var(--ad-background)] sm:px-5 sm:py-3.5"
+                  className="flex min-w-0 flex-col gap-2.5 px-5 py-3.5 transition-colors hover:bg-[var(--ad-paper)]"
                 >
-                  {/* Title */}
-                  <h3 className="min-w-0 truncate text-sm font-semibold text-[var(--ad-text-primary)]">
-                    <Link
-                      href={`/admin/posts/edit/${post.id}`}
-                      className="hover:text-[var(--ad-primary)] transition-colors"
-                    >
-                      {post.title}
-                    </Link>
-                  </h3>
-
-                  {/* Meta row — status badge + tags + actions */}
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    {/* Status badge */}
+                  {/* Title + status row */}
+                  <div className="flex items-start gap-3">
                     <span
-                      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${post.status === "published"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-amber-100 text-amber-800"
-                        }`}
+                      className={`mt-0.5 shrink-0 font-editorial-mono text-[9px] tracking-wider uppercase px-1.5 py-0.5 ${
+                        post.status === "published"
+                          ? "bg-[var(--ad-success)] text-white"
+                          : "bg-[var(--ad-paper-2)] text-[var(--ad-muted)]"
+                      }`}
                     >
-                      {post.status === "published" ? "Published" : "Draft"}
+                      {post.status === "published" ? "Live" : "Draft"}
                     </span>
+                    <h3 className="min-w-0 flex-1 text-sm font-semibold text-[var(--ad-text-primary)] leading-snug">
+                      <Link
+                        href={`/admin/posts/edit/${post.id}`}
+                        className="hover:text-[var(--ad-breaking)] transition-colors"
+                      >
+                        {post.title}
+                      </Link>
+                    </h3>
+                  </div>
 
-                    {/* Category */}
-                    <span className="inline-flex min-w-0 max-w-[120px] items-center gap-1 text-xs text-[var(--ad-text-secondary)]">
-                      <Tags className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{post.category.name}</span>
+                  {/* Meta row */}
+                  <div className="flex min-w-0 flex-wrap items-center gap-3 pl-8">
+                    <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
+                      {post.category.name}
                     </span>
-
-                    {/* District */}
-                    <span className="inline-flex min-w-0 max-w-[120px] items-center gap-1 text-xs text-[var(--ad-text-secondary)]">
-                      <MapPin className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{post.district.name}</span>
+                    <span className="text-[var(--ad-border)]">|</span>
+                    <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
+                      {post.district.name}
                     </span>
-
-                    {/* Date */}
-                    <span className="ml-auto shrink-0 text-xs text-[var(--ad-text-secondary)]">
-                      {format(post.updatedAt, "MMM d, yyyy")}
+                    <span className="text-[var(--ad-border)]">|</span>
+                    <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
+                      {format(post.updatedAt, "MMM d, yyyy · HH:mm")}
                     </span>
-
-                    {/* Edit link */}
                     <Link
                       href={`/admin/posts/edit/${post.id}`}
-                      className="shrink-0 text-xs font-medium text-[var(--ad-primary)] transition-colors hover:underline"
+                      className="ml-auto font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] hover:text-[var(--ad-breaking)] transition-colors"
                     >
-                      Edit
+                      Edit →
                     </Link>
                   </div>
                 </div>
@@ -259,29 +259,34 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Right sidebar — 2/5 on md */}
-        <div className="flex min-w-0 flex-col gap-4 md:col-span-2 sm:gap-5">
+        {/* Right sidebar — 2/5 */}
+        <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
+
           {/* Quick Actions */}
-          <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 shadow-[var(--ad-shadow)] sm:p-5">
-            <h2 className="mb-3 text-base font-semibold text-[var(--ad-text-primary)] sm:mb-4 sm:text-lg">
+          <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
+            <h3 className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] mb-3">
               Quick Actions
-            </h2>
-            {/* 4 actions: 2×2 on all sizes */}
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-              {quickActions.map((action) => {
+            </h3>
+            <div className="grid grid-cols-2 gap-2.5">
+              {[
+                { name: "New Post", href: "/admin/posts/create", icon: Plus, color: "bg-[var(--ad-ink)]" },
+                { name: "Media", href: "/admin/media", icon: ImageIcon, color: "bg-[var(--ad-blue)]" },
+                { name: "Categories", href: "/admin/categories", icon: Tags,       color: "bg-[var(--ad-accent)]" },
+                { name: "View Site", href: "/", icon: Eye, color: "bg-[var(--ad-success)]" },
+              ].map((action) => {
                 const Icon = action.icon;
                 return (
                   <Link
                     key={action.name}
                     href={action.href}
-                    className="group flex flex-col items-center gap-2 rounded-lg border border-[var(--ad-border)] p-3 text-center transition-all hover:border-[var(--ad-primary)]/30 hover:bg-[var(--ad-background)] sm:p-3.5"
+                    className="group flex flex-col items-center gap-2 border border-[var(--ad-border)] p-3.5 transition-all hover:border-[var(--ad-text-primary)]"
                   >
                     <div
-                      className={`${action.color} rounded-lg p-2 text-white shadow-md transition-transform group-hover:scale-110`}
+                      className={`${action.color} rounded-lg p-2.5 text-white transition-transform group-hover:scale-110`}
                     >
-                      <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <span className="line-clamp-2 text-xs font-medium leading-tight text-[var(--ad-text-secondary)]">
+                    <span className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">
                       {action.name}
                     </span>
                   </Link>
@@ -290,46 +295,72 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
 
+          {/* Social Automation Status */}
+          <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">
+                Social Distribution
+              </h3>
+              <span className="font-editorial-mono text-[10px] text-[var(--ad-success)] tracking-wider">● All Active</span>
+            </div>
+            <div className="space-y-3">
+              {socialStatus.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <div key={s.platform} className="flex items-center gap-3">
+                    <div className={`${s.color} flex h-8 w-8 items-center justify-center rounded-lg text-white`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-[var(--ad-text-primary)]">{s.platform}</p>
+                      <p className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
+                        {s.posts} posts today
+                      </p>
+                    </div>
+                    <div className="h-2 w-2 rounded-full bg-[var(--ad-success)]" />
+                  </div>
+                );
+              })}
+            </div>
+            <Link
+              href="/admin/social/queue"
+              className="mt-3 flex items-center justify-center gap-2 border border-[var(--ad-border)] py-2.5 text-xs font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper)] transition-colors font-editorial-mono tracking-wider uppercase"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Manage Social Queue
+            </Link>
+          </div>
+
           {/* Publishing Overview */}
-          <div className="rounded-xl bg-gradient-to-br from-[var(--ad-text-primary)] to-slate-800 p-4 text-white shadow-[var(--ad-shadow)] sm:p-5">
-            <h3 className="text-sm font-semibold text-slate-300">
+          <div className="border border-[var(--ad-border)] bg-[var(--ad-sidebar)] p-5 text-white">
+            <h3 className="font-editorial-mono text-[10px] tracking-widest uppercase text-white/40 mb-4">
               Publishing Overview
             </h3>
-            <div className="mt-4 space-y-4">
-              {/* Published bar */}
+            <div className="space-y-4">
               <div>
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="text-slate-300">Published</span>
-                  <span className="tabular-nums font-semibold text-white">
-                    {publishedPosts}
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="font-editorial-mono text-[10px] tracking-wider uppercase text-white/50">Published</span>
+                  <span className="font-editorial-display font-black text-white text-lg">{publishedPosts}</span>
                 </div>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-700">
+                <div className="h-1.5 bg-[var(--ad-card)]/10">
                   <div
-                    className="h-full rounded-full bg-emerald-500 transition-all"
+                    className="h-full bg-[var(--ad-success)] transition-all"
                     style={{
-                      width: `${totalPosts > 0
-                          ? (publishedPosts / totalPosts) * 100
-                          : 0
-                        }%`,
+                      width: `${totalPosts > 0 ? (publishedPosts / totalPosts) * 100 : 0}%`,
                     }}
                   />
                 </div>
               </div>
-              {/* Draft bar */}
               <div>
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="text-slate-300">Drafts</span>
-                  <span className="tabular-nums font-semibold text-white">
-                    {draftPosts}
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="font-editorial-mono text-[10px] tracking-wider uppercase text-white/50">Drafts</span>
+                  <span className="font-editorial-display font-black text-white text-lg">{draftPosts}</span>
                 </div>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-700">
+                <div className="h-1.5 bg-[var(--ad-card)]/10">
                   <div
-                    className="h-full rounded-full bg-amber-500 transition-all"
+                    className="h-full bg-[var(--ad-alert)] transition-all"
                     style={{
-                      width: `${totalPosts > 0 ? (draftPosts / totalPosts) * 100 : 0
-                        }%`,
+                      width: `${totalPosts > 0 ? (draftPosts / totalPosts) * 100 : 0}%`,
                     }}
                   />
                 </div>
@@ -337,15 +368,15 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Date Card */}
-          <div className="rounded-xl border border-[var(--ad-primary)]/20 bg-[var(--ad-primary)]/10 p-4 sm:p-5">
-            <div className="flex min-w-0 items-center gap-3">
-              <Calendar className="h-7 w-7 shrink-0 text-[var(--ad-primary)] sm:h-8 sm:w-8" />
-              <div className="min-w-0">
-                <p className="text-xs text-[var(--ad-text-secondary)] sm:text-sm">
-                  Today
-                </p>
-                <p className="truncate text-base font-semibold text-[var(--ad-text-primary)] sm:text-lg">
+          {/* Today's date */}
+          <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center border border-[var(--ad-border)] bg-[var(--ad-paper)]">
+                <Calendar className="h-5 w-5 text-[var(--ad-text-secondary)]" />
+              </div>
+              <div>
+                <p className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">Today</p>
+                <p className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)]">
                   {format(new Date(), "MMMM d, yyyy")}
                 </p>
               </div>
@@ -354,5 +385,55 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function CameraIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+function LinkedinIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+    >
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+    </svg>
+  );
+}
+
+function ImageIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </svg>
   );
 }

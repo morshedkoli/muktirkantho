@@ -99,14 +99,14 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
         </div>
 
         {!showCredentialsForm && isConfigured && (
-          <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-sm text-[var(--ad-success)] bg-[var(--ad-success)]/10 rounded-lg p-3">
             <CheckCircle2 className="h-4 w-4" />
             <span>Credentials configured successfully</span>
           </div>
         )}
 
         {!showCredentialsForm && !isConfigured && (
-          <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-sm text-[var(--ad-warning)] bg-[var(--ad-warning)]/10 rounded-lg p-3">
             <AlertCircle className="h-4 w-4" />
             <span>Please configure your Facebook App credentials to enable integration</span>
           </div>
@@ -115,7 +115,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
         {showCredentialsForm && (
           <form onSubmit={handleSaveCredentials} className="space-y-4 mt-4">
             {credentialsMessage.status === "error" && credentialsMessage.message && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+              <div className="rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-4 py-3 text-sm text-[var(--ad-error)]">
                 {credentialsMessage.message}
               </div>
             )}
@@ -175,7 +175,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
               </button>
             </div>
 
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+            <div className="rounded-lg border border-[var(--ad-primary)]/20 bg-[var(--ad-primary)]/10 p-4 text-sm text-[var(--ad-primary)]">
               <p className="font-medium mb-1">How to get these credentials:</p>
               <ol className="list-decimal list-inside space-y-1 text-xs">
                 <li>Go to <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="underline">Facebook Developers</a></li>
@@ -194,16 +194,16 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
         <>
           <div className={`rounded-xl border p-6 ${
             settings.connected 
-              ? "border-emerald-200 bg-emerald-50" 
-              : "border-gray-200 bg-gray-50"
+              ? "border-[var(--ad-success)]/20 bg-[var(--ad-success)]/10" 
+              : "border-[var(--ad-border)] bg-[var(--ad-paper)]"
           }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-full ${
-                  settings.connected ? "bg-emerald-100" : "bg-gray-200"
+                  settings.connected ? "bg-[var(--ad-success)]/10" : "bg-[var(--ad-border)]"
                 }`}>
                   <Facebook className={`h-6 w-6 ${
-                    settings.connected ? "text-emerald-600" : "text-gray-500"
+                    settings.connected ? "text-[var(--ad-success)]" : "text-[var(--ad-text-secondary)]"
                   }`} />
                 </div>
                 <div>
@@ -220,7 +220,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
               
               {settings.connected ? (
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                  <CheckCircle2 className="h-6 w-6 text-[var(--ad-success)]" />
                 </div>
               ) : (
                 <button
@@ -280,9 +280,9 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
                       className="p-2 transition-transform hover:scale-105"
                     >
                       {settings.autoPost ? (
-                        <ToggleRight className="h-10 w-10 text-emerald-500" />
+                        <ToggleRight className="h-10 w-10 text-[var(--ad-success)]" />
                       ) : (
-                        <ToggleLeft className="h-10 w-10 text-gray-400" />
+                        <ToggleLeft className="h-10 w-10 text-[var(--ad-muted)]" />
                       )}
                     </button>
                   </form>
@@ -290,11 +290,11 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
               </div>
 
               {/* Disconnect Button */}
-              <div className="rounded-xl border border-rose-200 bg-rose-50 p-6">
+              <div className="rounded-xl border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold text-rose-900">Disconnect Facebook</h3>
-                    <p className="text-sm text-rose-700 mt-1">
+                    <h3 className="font-semibold text-[var(--ad-error)]">Disconnect Facebook</h3>
+                    <p className="text-sm text-[var(--ad-error)] mt-1">
                       This will remove the connection to your Facebook page
                     </p>
                   </div>
@@ -302,7 +302,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
                   <form action={disconnectFacebookAction}>
                     <button
                       type="submit"
-                      className="flex items-center gap-2 rounded-lg border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+                      className="flex items-center gap-2 rounded-lg border border-[var(--ad-error)]/30 bg-[var(--ad-card)] px-4 py-2 text-sm font-semibold text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 transition-colors"
                     >
                       <Unlink className="h-4 w-4" />
                       Disconnect

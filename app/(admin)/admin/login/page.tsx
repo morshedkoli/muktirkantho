@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
         {/* Logo Section */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex flex-col items-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--ad-primary)] shadow-xl shadow-blue-900/20 mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--ad-primary)] shadow-xl shadow-[var(--ad-primary)]/20 mb-4">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-[var(--ad-text-primary)]">
@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
                     type="email"
                     name="email"
                     placeholder="admin@muktirkantho.com"
-                    className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] pl-10 pr-4 py-2.5 text-sm outline-none text-[var(--ad-text-primary)] placeholder:text-[var(--ad-text-secondary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] pl-10 pr-4 py-2.5 text-sm outline-none text-[var(--ad-text-primary)] placeholder:text-[var(--ad-text-secondary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all"
                     required
                   />
                 </div>
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
                     type={showPassword ? "text" : "password"}
                     name="password"
                     placeholder="••••••••"
-                    className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] pl-10 pr-10 py-2.5 text-sm outline-none text-[var(--ad-text-primary)] placeholder:text-[var(--ad-text-secondary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] pl-10 pr-10 py-2.5 text-sm outline-none text-[var(--ad-text-primary)] placeholder:text-[var(--ad-text-secondary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all"
                     required
                   />
                   <button
@@ -80,11 +80,11 @@ export default function AdminLoginPage() {
 
               {/* Error Message */}
               {state.status === "error" && (
-                <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 flex items-start gap-2">
-                  <div className="h-5 w-5 rounded-full bg-rose-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-rose-600 text-xs">!</span>
+                <div className="rounded-lg bg-[var(--ad-error)]/10 border border-[var(--ad-error)]/20 p-3 flex items-start gap-2">
+                  <div className="h-5 w-5 rounded-full bg-[var(--ad-error)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[var(--ad-error)] text-xs">!</span>
                   </div>
-                  <p className="text-sm text-rose-800">{state.message}</p>
+                  <p className="text-sm text-[var(--ad-error)]">{state.message}</p>
                 </div>
               )}
 
@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
               <button
                 disabled={pending}
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-900/20"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--ad-primary)]/20"
               >
                 {pending ? (
                   <>

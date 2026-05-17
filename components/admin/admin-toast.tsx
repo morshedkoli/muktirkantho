@@ -11,8 +11,8 @@ export function AdminToast() {
   const type = searchParams.get("type");
 
   const toneClass = useMemo(() => {
-    if (type === "error") return "border-rose-200 bg-rose-50 text-rose-900";
-    return "border-emerald-200 bg-emerald-50 text-emerald-900";
+    if (type === "error") return "border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 text-[var(--ad-error)]";
+    return "border-[var(--ad-success)]/20 bg-[var(--ad-success)]/10 text-[var(--ad-success)]";
   }, [type]);
 
   useEffect(() => {

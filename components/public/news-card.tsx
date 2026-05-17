@@ -42,16 +42,16 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           {post.category && (
             <Link 
               href={`/category/${post.category.slug}`}
-              className="text-xs font-semibold uppercase tracking-wider text-[var(--np-primary)] hover:underline"
+              className="np-category hover:underline"
             >
               {post.category.name}
             </Link>
           )}
-          <h3 className="mt-1 font-display text-sm font-bold leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)] line-clamp-2">
+          <h3 className="mt-1 np-headline-sm leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)] line-clamp-2">
             <Link href={postPath}>{post.title}</Link>
           </h3>
           {post.publishedAt && (
-            <p className="mt-1 text-xs text-[var(--np-text-secondary)]">
+            <p className="mt-1 np-timestamp">
               {format(post.publishedAt, "MMM d, yyyy")}
             </p>
           )}
@@ -84,7 +84,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           </div>
         </Link>
         <div className="flex flex-col justify-center sm:w-2/3">
-          <div className="mb-2 flex flex-wrap items-center gap-3 text-xs text-[var(--np-text-secondary)]">
+          <div className="np-timestamp mb-2 flex flex-wrap items-center gap-3">
             {post.publishedAt && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -98,7 +98,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
               </Link>
             )}
           </div>
-          <h3 className="font-display text-lg font-bold leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)]">
+          <h3 className="np-headline-sm leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)]">
             <Link href={postPath}>{post.title}</Link>
           </h3>
           <p className="mt-2 line-clamp-2 text-sm text-[var(--np-text-secondary)]">
@@ -133,7 +133,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
         </div>
       </Link>
       <div className="flex flex-1 flex-col p-4">
-        <div className="mb-2 flex flex-wrap items-center gap-3 text-xs text-[var(--np-text-secondary)]">
+        <div className="np-timestamp mb-2 flex flex-wrap items-center gap-3">
           {post.publishedAt && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -147,7 +147,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
             </Link>
           )}
         </div>
-        <h3 className="font-display text-lg font-bold leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)] line-clamp-2">
+        <h3 className="np-headline-sm leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)] line-clamp-2">
           <Link href={postPath}>{post.title}</Link>
         </h3>
         <p className="mt-2 line-clamp-2 text-sm text-[var(--np-text-secondary)]">

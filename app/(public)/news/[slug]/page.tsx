@@ -12,41 +12,42 @@ import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import { AdSlot } from "@/components/public/ad-slot";
 import { CopyLinkButton } from "@/components/public/copy-link-button";
 import { ImageWatermark } from "@/components/public/image-watermark";
+import { Facebook, Twitter, MessageCircle } from "lucide-react";
 
 export const revalidate = 60;
 
 type Props = { params: Promise<{ slug: string }> };
 
 function splitHtmlForMiddleEmbed(html: string) {
-  if (!html) {
-    return { before: "", after: "" };
-  }
-
+  if (!html) return { before: "", after: "" };
   const middle = Math.floor(html.length / 2);
   const paragraphIndex = html.indexOf("</p>", middle);
-  if (paragraphIndex === -1) {
-    return { before: html, after: "" };
-  }
-
+  if (paragraphIndex === -1) return { before: html, after: "" };
   const splitIndex = paragraphIndex + 4;
-  return {
-    before: html.slice(0, splitIndex),
-    after: html.slice(splitIndex),
-  };
+  return { before: html.slice(0, splitIndex), after: html.slice(splitIndex) };
+}
+
+function getBanglaRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffMin < 1) return "এখনই";
+  if (diffMin < 60) return `${diffMin} মিনিট আগে`;
+  if (diffHr < 24) return `${diffHr} ঘণ্টা আগে`;
+  if (diffDay < 7) return `${diffDay} দিন আগে`;
+  return new Intl.DateTimeFormat("bn-BD", { month: "long", day: "numeric" }).format(date);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const filters: Prisma.PostWhereInput[] = [{ slug }];
-  if (isObjectId(slug)) {
-    filters.push({ id: slug });
-  }
+  if (isObjectId(slug)) filters.push({ id: slug });
 
   const post = await prisma.post.findFirst({
-    where: {
-      status: PostStatus.published,
-      OR: filters,
-    },
+    where: { status: PostStatus.published, OR: filters },
     include: { category: true },
   });
   if (!post || post.status !== PostStatus.published) return {};
@@ -59,52 +60,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: post.metaTitle || post.title,
       description: post.metaDescription || post.excerpt,
-      url: canonical,
-      type: "article",
-      images: [post.imageUrl],
-      section: post.category.name,
+      url: canonical, type: "article",
+      images: [post.imageUrl], section: post.category.name,
       publishedTime: post.publishedAt?.toISOString(),
     },
-    twitter: {
-      card: "summary_large_image",
-      title: post.metaTitle || post.title,
-      description: post.metaDescription || post.excerpt,
-      images: [post.imageUrl],
-    },
+    twitter: { card: "summary_large_image", title: post.metaTitle || post.title, description: post.metaDescription || post.excerpt, images: [post.imageUrl] },
   };
 }
 
 export default async function NewsDetailPage({ params }: Props) {
   const { slug } = await params;
   const filters: Prisma.PostWhereInput[] = [{ slug }];
-  if (isObjectId(slug)) {
-    filters.push({ id: slug });
-  }
+  if (isObjectId(slug)) filters.push({ id: slug });
 
   const post = await prisma.post.findFirst({
-    where: {
-      status: PostStatus.published,
-      OR: filters,
-    },
-    include: {
-      category: true,
-      district: true,
-      upazila: true,
-    },
+    where: { status: PostStatus.published, OR: filters },
+    include: { category: true, district: true, upazila: true },
   });
-
-  if (!post) {
-    notFound();
-  }
+  if (!post) notFound();
 
   const related = await prisma.post.findMany({
-    where: {
-      id: { not: post.id },
-      status: PostStatus.published,
-      OR: [{ categoryId: post.categoryId }, { tags: { hasSome: post.tags } }],
-    },
-    take: 4,
-    orderBy: { publishedAt: "desc" },
+    where: { id: { not: post.id }, status: PostStatus.published, OR: [{ categoryId: post.categoryId }, { tags: { hasSome: post.tags } }] },
+    take: 4, orderBy: { publishedAt: "desc" },
   });
 
   const html = await renderContent(post.content);
@@ -112,117 +89,210 @@ export default async function NewsDetailPage({ params }: Props) {
   const { before: htmlBeforeVideo, after: htmlAfterVideo } = splitHtmlForMiddleEmbed(html);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const postUrl = `${siteUrl}${getPostPath(post)}`;
+
+  // Insert in-article ad after ~4th paragraph for desktop (Zone 7)
+  const bodyParts = html.split("</p>");
+  const adInsertIndex = Math.min(4, Math.floor(bodyParts.length / 3));
+  const bodyBeforeAd = bodyParts.slice(0, adInsertIndex).join("</p>") + (bodyParts[adInsertIndex - 1] ? "</p>" : "");
+  const bodyAfterAd = bodyParts.slice(adInsertIndex).join("</p>");
+
   const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: post.title,
-    image: [post.imageUrl],
-    datePublished: post.publishedAt?.toISOString(),
-    dateModified: post.updatedAt.toISOString(),
+    "@context": "https://schema.org", "@type": "NewsArticle",
+    headline: post.title, image: [post.imageUrl],
+    datePublished: post.publishedAt?.toISOString(), dateModified: post.updatedAt.toISOString(),
     author: [{ "@type": "Person", name: post.author }],
-    publisher: {
-      "@type": "Organization",
-      name: "Muktir Kantho",
-    },
-    description: post.metaDescription || post.excerpt,
-    mainEntityOfPage: postUrl,
+    publisher: { "@type": "Organization", name: "Muktir Kantho" },
+    description: post.metaDescription || post.excerpt, mainEntityOfPage: postUrl,
   };
 
+  const relativeTime = post.publishedAt ? getBanglaRelativeTime(post.publishedAt) : "";
+
   return (
-    <main className="mx-auto max-w-5xl px-3 sm:px-4 py-6 sm:py-8">
+    <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <article className="rounded-xl sm:rounded-2xl border border-[var(--np-border)] bg-[var(--np-card)] p-4 sm:p-6 md:p-8 shadow-[var(--np-shadow)]">
-        <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--np-text-secondary)]">
-          <Link href={`/category/${post.category.slug}`}>{post.category.name}</Link>
-          <Link href={`/district/${post.district.slug}`}>{post.district.name}</Link>
-          {post.upazila ? (
-            <Link href={`/district/${post.district.slug}/${post.upazila.slug}`}>{post.upazila.name}</Link>
-          ) : null}
-        </div>
-        <h1 className="text-2xl font-black text-[var(--np-text-primary)] sm:text-3xl md:text-4xl lg:text-5xl">{post.title}</h1>
-        <p className="mt-3 text-sm text-[var(--np-text-secondary)]">By {post.author}</p>
-        <div className="relative mt-6">
-          <Image
-            src={post.imageUrl}
-            alt={post.title}
-            width={1200}
-            height={675}
-            className="h-auto w-full rounded-xl object-cover"
-            priority
-          />
-          {/* Logo watermark - bottom right with name */}
-          <div className="absolute right-4 bottom-4 z-10">
-            <ImageWatermark size="lg" showText={true} />
-          </div>
-        </div>
-        <div className="prose-news mt-8 min-h-[100px] max-w-none border border-transparent text-[var(--np-text-primary)]">
-          <div dangerouslySetInnerHTML={{ __html: embedUrl ? htmlBeforeVideo : html }} />
-          {embedUrl ? (
-            <div className="my-8 overflow-hidden rounded-xl border border-[var(--np-border)] bg-black shadow-[var(--np-shadow)]">
-              <div className="relative w-full pt-[56.25%]">
-                <iframe
-                  src={embedUrl}
-                  title={`Video for ${post.title}`}
-                  className="absolute left-0 top-0 h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
+
+      <div className="flex gap-0 lg:gap-8">
+        {/* ── ARTICLE CONTENT ── */}
+        <div className="flex-1 min-w-0 max-w-[760px] mx-auto lg:mx-0">
+          <article className="border border-[var(--np-border)] bg-white">
+            {/* Breadcrumb */}
+            <div className="flex flex-wrap items-center gap-1 px-5 sm:px-8 pt-5 sm:pt-8 np-category text-[var(--np-text-secondary)]">
+              <Link href={`/category/${post.category.slug}`} className="hover:text-[var(--np-primary)]">{post.category.name}</Link>
+              {post.district && (
+                <><span className="text-[var(--np-border)]">→</span>
+                <Link href={`/district/${post.district.slug}`} className="hover:text-[var(--np-primary)]">{post.district.name}</Link></>
+              )}
+              {post.upazila && (
+                <><span className="text-[var(--np-border)]">→</span>
+                <Link href={`/district/${post.district.slug}/${post.upazila.slug}`} className="hover:text-[var(--np-primary)]">{post.upazila.name}</Link></>
+              )}
+            </div>
+
+            {/* Headline */}
+            <h1 className="np-headline-lg px-5 sm:px-8 mt-3 text-2xl sm:text-[28px] md:text-[32px] leading-tight">{post.title}</h1>
+
+            {/* Byline + Timestamp + Share */}
+            <div className="flex flex-wrap items-center gap-4 px-5 sm:px-8 mt-4 pb-4 border-b border-[var(--np-border)]">
+              {/* Avatar + Author */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-[var(--np-newsprint-2)] flex items-center justify-center text-xs font-bold text-[var(--np-muted)]">
+                  {post.author?.charAt(0)?.toUpperCase() || "M"}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-[var(--np-text-primary)]">{post.author || "Muktir Kantho"}</div>
+                  <div className="np-timestamp">{relativeTime}</div>
+                </div>
+              </div>
+
+              {/* Share buttons - right side */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`} target="_blank" rel="noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1877f2] text-white hover:opacity-90 transition-opacity">
+                  <Facebook className="h-4 w-4" />
+                </a>
+                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(post.title)}`} target="_blank" rel="noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:opacity-90 transition-opacity">
+                  <Twitter className="h-4 w-4" />
+                </a>
+                <a href={`https://wa.me/?text=${encodeURIComponent(post.title + " " + postUrl)}`} target="_blank" rel="noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-[#25D366] text-white hover:opacity-90 transition-opacity">
+                  <MessageCircle className="h-4 w-4" />
+                </a>
+                <CopyLinkButton url={postUrl} />
               </div>
             </div>
-          ) : null}
-          {embedUrl && htmlAfterVideo ? <div dangerouslySetInnerHTML={{ __html: htmlAfterVideo }} /> : null}
+
+            {/* Featured Image */}
+            <div className="relative mt-0">
+              <div className="relative w-full">
+                <Image
+                  src={post.imageUrl} alt={post.title}
+                  width={1200} height={675}
+                  className="h-auto w-full object-cover"
+                  priority
+                />
+                <div className="absolute right-3 bottom-3 z-10">
+                  <ImageWatermark size="md" showText={true} />
+                </div>
+              </div>
+            </div>
+
+            {/* Article Body */}
+            <div className="prose-news px-5 sm:px-8 mt-6 min-h-[100px] max-w-none">
+              {embedUrl ? (
+                <>
+                  <div dangerouslySetInnerHTML={{ __html: htmlBeforeVideo }} />
+                  <div className="my-8 overflow-hidden rounded-lg border border-[var(--np-border)] bg-black">
+                    <div className="relative w-full pt-[56.25%]">
+                      <iframe src={embedUrl} title={`Video for ${post.title}`}
+                        className="absolute left-0 top-0 h-full w-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+                    </div>
+                  </div>
+                  {htmlAfterVideo && <div dangerouslySetInnerHTML={{ __html: htmlAfterVideo }} />}
+                </>
+              ) : (
+                <>
+                  <div dangerouslySetInnerHTML={{ __html: bodyBeforeAd }} />
+                  {/* In-article Ad (Zone 7) */}
+                  <div className="my-6 py-4 border-t border-b border-[var(--np-border)]">
+                    <AdSlot placement={AD_PLACEMENTS.ARTICLE_INLINE} className="w-full" showPlaceholder={false} />
+                  </div>
+                  <div dangerouslySetInnerHTML={{ __html: bodyAfterAd }} />
+                </>
+              )}
+            </div>
+
+            {/* Tags */}
+            {post.tags.length > 0 && (
+              <div className="px-5 sm:px-8 mt-6 pb-6 border-b border-[var(--np-border)]">
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag) => (
+                    <Link key={tag} href={`/tag/${tag}`}
+                      className="font-label text-xs text-[var(--np-muted)] border border-[var(--np-border)] bg-[var(--np-newsprint)] px-3 py-1.5 hover:border-[var(--np-primary)] hover:text-[var(--np-primary)] transition-all">
+                      #{tag}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Comments Section Placeholder */}
+            <div className="px-5 sm:px-8 py-6 border-b border-[var(--np-border)]">
+              <div className="rounded-sm bg-[var(--np-newsprint-2)] p-5 text-center">
+                <p className="text-sm text-[var(--np-muted)]">মতামত দিন — লগইন করে মন্তব্য করুন</p>
+                <Link href="/admin/login" className="inline-block mt-2 rounded-sm bg-[var(--np-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--np-primary-hover)] transition-colors">
+                  লগইন
+                </Link>
+              </div>
+            </div>
+
+            {/* Related Articles */}
+            {related.length > 0 && (
+              <div className="px-5 sm:px-8 py-6">
+                <div className="np-section-header border-t-0 pt-0 mb-4">
+                  <h2 className="np-headline text-lg">আরও পড়ুন</h2>
+                </div>
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {related.map((item) => (
+                    <Link key={item.id} href={getPostPath(item)}
+                      className="group border border-[var(--np-border)] bg-white hover:border-[var(--np-primary)] transition-colors">
+                      {item.imageUrl && (
+                        <div className="relative aspect-[16/10] overflow-hidden bg-[var(--np-newsprint)]">
+                          <Image src={item.imageUrl} alt={item.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <h3 className="np-headline-sm text-sm leading-snug group-hover:text-[var(--np-primary)] transition-colors line-clamp-2">{item.title}</h3>
+                        {item.publishedAt && (
+                          <p className="np-timestamp mt-1">{getBanglaRelativeTime(item.publishedAt)}</p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </article>
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-2">
-          {post.tags.map((tag) => (
-            <Link
-              key={tag}
-              href={`/tag/${tag}`}
-              className="rounded-full border border-[var(--np-border)] bg-[var(--np-background)] px-3 py-1 text-sm text-[var(--np-text-secondary)]"
-            >
-              #{tag}
-            </Link>
-          ))}
-        </div>
-        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 text-sm font-semibold text-[var(--np-text-secondary)]">
-          <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded border border-[var(--np-border)] bg-[var(--np-background)] px-3 py-2 hover:border-[var(--np-primary)] hover:text-[var(--np-primary)]"
-          >
-            Share on Facebook
-          </a>
-          <a
-            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(post.title)}`}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded border border-[var(--np-border)] bg-[var(--np-background)] px-3 py-2 hover:border-[var(--np-primary)] hover:text-[var(--np-primary)]"
-          >
-            Share on X
-          </a>
-          <CopyLinkButton url={postUrl} />
-        </div>
-        <p className="mt-3 break-all text-xs text-[var(--np-text-secondary)]">{postUrl}</p>
-      </article>
+        {/* ── RIGHT SIDEBAR ── */}
+        <aside className="hidden lg:block w-[300px] shrink-0 space-y-4">
+          {/* Ad Zone 2 */}
+          <div className="border border-[var(--np-border)] bg-white p-4">
+            <AdSlot placement={AD_PLACEMENTS.SIDEBAR_PRIMARY} showPlaceholder={false} />
+          </div>
 
-      <AdSlot placement={AD_PLACEMENTS.ARTICLE_INLINE} className="mt-8" showPlaceholder={false} />
+          {/* আরও পড়ুন — compact sidebar list */}
+          {related.length > 0 && (
+            <div className="border border-[var(--np-border)] bg-white p-5">
+              <h3 className="font-label text-xs uppercase tracking-wider text-[var(--np-primary)] mb-4">আরও পড়ুন</h3>
+              <div className="space-y-4">
+                {related.slice(0, 4).map((item) => (
+                  <Link key={item.id} href={getPostPath(item)} className="flex gap-3 group">
+                    {item.imageUrl && (
+                      <div className="relative w-[72px] h-[54px] shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
+                        <Image src={item.imageUrl} alt="" fill sizes="72px" className="object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-semibold leading-snug text-[var(--np-text-primary)] group-hover:text-[var(--np-primary)] transition-colors line-clamp-2">{item.title}</h4>
+                      {item.publishedAt && <p className="np-timestamp mt-0.5">{getBanglaRelativeTime(item.publishedAt)}</p>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
-      <section className="mt-10">
-        <h2 className="text-2xl font-bold text-[var(--np-text-primary)]">Related Articles</h2>
-        <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2">
-          {related.map((item) => (
-            <Link
-              key={item.id}
-              href={getPostPath(item)}
-              className="rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-4 shadow-[var(--np-shadow)]"
-            >
-              <p className="font-bold text-[var(--np-text-primary)]">{item.title}</p>
-              <p className="mt-1 text-sm text-[var(--np-text-secondary)]">{item.excerpt}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+          {/* Sticky Ad (Zone 5) */}
+          <div className="sticky top-14 border border-[var(--np-border)] bg-white">
+            <div className="p-4 text-center font-label text-xs text-[var(--np-muted)] uppercase tracking-wider">
+              — বিজ্ঞাপন —
+            </div>
+          </div>
+        </aside>
+      </div>
     </main>
   );
 }

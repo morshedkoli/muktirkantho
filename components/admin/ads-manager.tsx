@@ -121,7 +121,7 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-[var(--ad-background)] p-3">
-              <Megaphone className={`h-6 w-6 ${adsEnabled ? "text-emerald-600" : "text-[var(--ad-text-secondary)]"}`} />
+              <Megaphone className={`h-6 w-6 ${adsEnabled ? "text-[var(--ad-success)]" : "text-[var(--ad-text-secondary)]"}`} />
             </div>
             <div>
               <h3 className="font-semibold text-[var(--ad-text-primary)]">
@@ -142,7 +142,7 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
             className="p-2 transition-transform hover:scale-105 disabled:opacity-60"
           >
             {adsEnabled ? (
-              <ToggleRight className="h-10 w-10 text-emerald-500" />
+              <ToggleRight className="h-10 w-10 text-[var(--ad-success)]" />
             ) : (
               <ToggleLeft className="h-10 w-10 text-[var(--ad-text-secondary)]" />
             )}
@@ -237,9 +237,9 @@ function StatCard({ title, value, icon, color }: {
 }) {
   const toneClasses = {
     blue: "text-sky-600",
-    emerald: "text-emerald-600",
-    amber: "text-amber-600",
-    rose: "text-rose-600",
+    emerald: "text-[var(--ad-success)]",
+    amber: "text-[var(--ad-warning)]",
+    rose: "text-[var(--ad-error)]",
   };
 
   return (
@@ -323,8 +323,8 @@ function OverviewTab({ adsByPlacement }: {
                   </div>
                   <div className="text-right">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${activeInPlacement > 0
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-gray-100 text-gray-600"
+                        ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
+                        : "bg-[var(--ad-paper-2)] text-[var(--ad-muted)]"
                       }`}>
                       {activeInPlacement} active
                     </span>
@@ -345,12 +345,12 @@ function OverviewTab({ adsByPlacement }: {
       </div>
 
       {/* Quick Tips */}
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-        <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+      <div className="rounded-xl border border-[var(--ad-primary)]/20 bg-[var(--ad-primary)]/10 p-5">
+        <h4 className="font-semibold text-[var(--ad-text-primary)] flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
           Ad Management Tips
         </h4>
-        <ul className="mt-3 space-y-2 text-sm text-blue-800">
+        <ul className="mt-3 space-y-2 text-sm text-[var(--ad-text-primary)]">
           <li>• Each placement can have multiple ads, but only one will be shown at a time</li>
           <li>• Active ads are rotated randomly when multiple exist in the same placement</li>
           <li>• Use high-quality images for better engagement</li>
@@ -404,7 +404,7 @@ function CreateAdTab() {
           </h3>
 
           {state.status === "error" && state.message && (
-            <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 flex items-center gap-2">
+            <div className="mb-4 rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-4 py-3 text-sm text-[var(--ad-error)] flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {state.message}
             </div>
@@ -412,8 +412,8 @@ function CreateAdTab() {
 
           {uploadNotice && (
             <div className={`mb-4 rounded-lg border px-4 py-3 text-sm flex items-center gap-2 ${uploadNotice.includes("success")
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-amber-200 bg-amber-50 text-amber-800"
+                ? "border-[var(--ad-success)]/20 bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
+                : "border-[var(--ad-warning)]/20 bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]"
               }`}>
               {uploadNotice.includes("success") ? (
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -428,7 +428,7 @@ function CreateAdTab() {
             {/* Ad Title */}
             <div>
               <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-1.5">
-                Ad Title <span className="text-rose-500">*</span>
+                Ad Title <span className="text-[var(--ad-error)]">*</span>
               </label>
               <input
                 name="title"
@@ -445,7 +445,7 @@ function CreateAdTab() {
             {/* Placement Selection */}
             <div>
               <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-1.5">
-                Ad Placement <span className="text-rose-500">*</span>
+                Ad Placement <span className="text-[var(--ad-error)]">*</span>
               </label>
               <select
                 name="placement"
@@ -492,7 +492,7 @@ function CreateAdTab() {
             {/* Image Upload */}
             <div>
               <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-1.5">
-                Ad Image <span className="text-rose-500">*</span>
+                Ad Image <span className="text-[var(--ad-error)]">*</span>
               </label>
               <div className="border-2 border-dashed border-[var(--ad-border)] rounded-lg p-6 text-center hover:border-[var(--ad-primary)] transition-colors">
                 <ImageIcon className="h-8 w-8 mx-auto text-[var(--ad-text-secondary)] mb-2" />
@@ -589,13 +589,13 @@ function CreateAdTab() {
           <h4 className="font-semibold text-[var(--ad-text-primary)] mb-3">
             Placement Preview
           </h4>
-          <div className={`relative overflow-hidden rounded-lg border border-[var(--ad-border)] bg-gray-100 ${config?.aspectRatio || "aspect-video"}`}>
+          <div className={`relative overflow-hidden rounded-lg border border-[var(--ad-border)] bg-[var(--ad-paper-2)] ${config?.aspectRatio || "aspect-video"}`}>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--ad-text-secondary)]">
                   {config?.label}
                 </span>
-                <p className="text-xs text-gray-400 mt-1">{config?.size}</p>
+                <p className="text-xs text-[var(--ad-text-secondary)] mt-1">{config?.size}</p>
               </div>
             </div>
             {imageUrl && (
@@ -732,8 +732,8 @@ function AdListItem({ ad }: { ad: AdItem }) {
 
             {/* Status Badge */}
             <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${ad.isActive
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-gray-100 text-gray-600"
+                ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
+                : "bg-[var(--ad-paper-2)] text-[var(--ad-muted)]"
               }`}>
               {ad.isActive ? (
                 <><Eye className="h-3 w-3" /> Active</>
@@ -750,8 +750,8 @@ function AdListItem({ ad }: { ad: AdItem }) {
             <button
               type="submit"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${ad.isActive
-                  ? "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-                  : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                  ? "bg-[var(--ad-warning)]/10 text-[var(--ad-warning)] hover:bg-[var(--ad-warning)]/20 border border-[var(--ad-warning)]/20"
+                  : "bg-[var(--ad-success)]/10 text-[var(--ad-success)] hover:bg-[var(--ad-success)]/20 border border-[var(--ad-success)]/20"
                 }`}
             >
               {ad.isActive ? (
@@ -764,7 +764,7 @@ function AdListItem({ ad }: { ad: AdItem }) {
           <form action={deleteAdAction.bind(null, ad.id)}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--ad-error)]/10 text-[var(--ad-error)] hover:bg-[var(--ad-error)]/20 border border-[var(--ad-error)]/20 transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Delete

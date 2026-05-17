@@ -43,7 +43,7 @@ export default async function AdminPostsPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)] border border-[var(--ad-border)]">
           <div className="flex items-center gap-3">
-            <div className="bg-blue-500 rounded-lg p-2.5 text-white">
+            <div className="bg-[var(--ad-primary)] rounded-lg p-2.5 text-white">
               <FileText className="h-5 w-5" />
             </div>
             <div>
@@ -54,7 +54,7 @@ export default async function AdminPostsPage() {
         </div>
         <div className="rounded-xl bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)] border border-[var(--ad-border)]">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-500 rounded-lg p-2.5 text-white">
+            <div className="bg-[var(--ad-success)] rounded-lg p-2.5 text-white">
               <CheckCircle className="h-5 w-5" />
             </div>
             <div>
@@ -65,7 +65,7 @@ export default async function AdminPostsPage() {
         </div>
         <div className="rounded-xl bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)] border border-[var(--ad-border)]">
           <div className="flex items-center gap-3">
-            <div className="bg-amber-500 rounded-lg p-2.5 text-white">
+            <div className="bg-[var(--ad-warning)] rounded-lg p-2.5 text-white">
               <Clock className="h-5 w-5" />
             </div>
             <div>
@@ -136,14 +136,14 @@ export default async function AdminPostsPage() {
                     {post.title}
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                    <span className="inline-flex items-center rounded-full bg-[var(--ad-accent)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--ad-accent)]">
                       {post.category.name}
                     </span>
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${post.status === "published"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-amber-50 text-amber-700"
+                      ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
+                      : "bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]"
                       }`}>
-                      <span className={`h-1 w-1 rounded-full ${post.status === "published" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                      <span className={`h-1 w-1 rounded-full ${post.status === "published" ? "bg-[var(--ad-success)]" : "bg-[var(--ad-warning)]"}`} />
                       {post.status === "published" ? "Published" : "Draft"}
                     </span>
                   </div>
@@ -157,7 +157,7 @@ export default async function AdminPostsPage() {
                 <Link
                   href={getPostPath(post)}
                   target="_blank"
-                  className="p-2 text-[var(--ad-text-secondary)] hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-xs flex items-center gap-1"
+                  className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] hover:bg-[var(--ad-primary)]/10 rounded-lg transition-all text-xs flex items-center gap-1"
                 >
                   <Eye className="h-3.5 w-3.5" />
                   <span>View</span>
@@ -248,7 +248,7 @@ export default async function AdminPostsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-4 xl:px-6">
-                      <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700">
+                      <span className="inline-flex items-center rounded-full bg-[var(--ad-accent)]/10 px-2.5 py-1 text-xs font-medium text-[var(--ad-accent)]">
                         {post.category.name}
                       </span>
                     </td>
@@ -262,10 +262,10 @@ export default async function AdminPostsPage() {
                     </td>
                     <td className="px-4 py-4 xl:px-6">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${post.status === "published"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-amber-50 text-amber-700"
+                        ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
+                        : "bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]"
                         }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${post.status === "published" ? "bg-emerald-500" : "bg-amber-500"
+                        <span className={`h-1.5 w-1.5 rounded-full ${post.status === "published" ? "bg-[var(--ad-success)]" : "bg-[var(--ad-warning)]"
                           }`} />
                         {post.status === "published" ? "Published" : "Draft"}
                       </span>
@@ -278,7 +278,7 @@ export default async function AdminPostsPage() {
                         <Link
                           href={getPostPath(post)}
                           target="_blank"
-                          className="p-2 text-[var(--ad-text-secondary)] hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] hover:bg-[var(--ad-primary)]/10 rounded-lg transition-all"
                           title="View"
                         >
                           <Eye className="h-4 w-4" />

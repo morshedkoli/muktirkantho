@@ -86,7 +86,7 @@ function DeleteItemButton({
       type="button"
       onClick={handleDelete}
       disabled={isDeleting}
-      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-50"
+      className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-50"
       title={`Delete ${title}`}
     >
       {isDeleting ? (
