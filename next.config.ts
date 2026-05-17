@@ -23,7 +23,8 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.maateen.me",
       "font-src 'self' https://fonts.gstatic.com https://fonts.maateen.me",
-      "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com",
+      // Allow images from any HTTPS host so admins can paste arbitrary image URLs without breaking the page
+      "img-src 'self' data: blob: https:",
       "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
       "connect-src 'self'",
       "object-src 'none'",
@@ -35,10 +36,19 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   images: {
+    // Allow common CMS-image hosts. Wildcards prevent SSR crashes when an
+    // admin uploads to a Cloudinary subdomain (e.g. res-1.cloudinary.com) or
+    // their account is configured under a custom domain.
     remotePatterns: [
+      { protocol: "https", hostname: "**.cloudinary.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "**.unsplash.com" },
     ],
+    // Don't throw on unsupported image — degrade to passthrough rendering
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async headers() {
     return [

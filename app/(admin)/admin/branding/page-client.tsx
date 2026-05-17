@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState, useRef } from "react";
-import Image from "next/image";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SiteLogo, SiteLogoDark, SiteIcon, SiteFavicon } from "@/components/public/site-logo";
 import { saveBrandingSettingsAction } from "@/app/(admin)/admin/actions";
@@ -207,7 +206,8 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
                 <X className="h-3 w-3" />
               </button>
               <p className="text-xs text-[var(--ad-text-secondary)] mb-2">Current {title}:</p>
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={currentUrl}
                 alt={`Current ${title}`}
                 width={previewSize.width}
@@ -264,11 +264,10 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
               </div>
               <div className="bg-white rounded-lg p-6 border border-[var(--ad-border)] min-h-[120px] flex items-center">
                 {form.logoUrl ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={form.logoUrl}
                     alt="Light mode logo"
-                    width={220}
-                    height={56}
                     className="h-auto w-[200px]"
                   />
                 ) : (
@@ -287,19 +286,17 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
               </div>
               <div className="bg-[#1a1a1a] rounded-lg p-6 border border-[var(--ad-border)] min-h-[120px] flex items-center">
                 {form.iconUrl ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={form.iconUrl}
                     alt="Dark mode logo"
-                    width={220}
-                    height={56}
                     className="h-auto w-[200px]"
                   />
                 ) : form.logoUrl ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={form.logoUrl}
                     alt="Logo (using main logo as fallback)"
-                    width={220}
-                    height={56}
                     className="h-auto w-[200px] opacity-80"
                   />
                 ) : (

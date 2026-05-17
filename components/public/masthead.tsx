@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { getSiteSettings } from "@/lib/site-settings";
 import { SiteLogo } from "./site-logo";
@@ -10,12 +9,38 @@ import { SiteLogo } from "./site-logo";
  *  - settings.logoUrl  → light-mode logo
  *  - settings.iconUrl  → dark-mode logo
  *
- * When both exist, both <Image> tags are rendered in the DOM but only the
- * theme-appropriate one is visible (Tailwind `dark:` is wired to data-theme="dark"
- * in globals.css via @custom-variant — no class purge risk).
+ * IMPORTANT: We use plain <img> here (not next/image) because:
+ *  1. Logo URLs come from admin uploads (Cloudinary) and may not match
+ *     remotePatterns exactly — next/image throws hard at SSR for any
+ *     unrecognized hostname or malformed URL, crashing the whole page.
+ *  2. The logo is small (~240×60). Image optimization is not material here.
+ *  3. A broken <img> just shows a broken-icon — it does NOT crash SSR.
+ *
+ * Theme visibility is handled by Tailwind's `dark:` variant wired to
+ * [data-theme="dark"] (see @custom-variant in globals.css).
  */
+function isValidLogoUrl(url: string | null | undefined): url is string {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  // Accept absolute http/https URLs or root-relative paths
+  if (trimmed.startsWith("/")) return true;
+  try {
+    const u = new URL(trimmed);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function Masthead() {
-  const settings = await getSiteSettings();
+  let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
+  try {
+    settings = await getSiteSettings();
+  } catch {
+    settings = null;
+  }
+
   const today = new Date();
 
   const englishDate = new Intl.DateTimeFormat("en-US", {
@@ -26,11 +51,10 @@ export async function Masthead() {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   }).format(today);
 
-  const lightLogo = settings?.logoUrl ?? null;
-  const darkLogo = settings?.iconUrl ?? null;
+  const lightLogo = isValidLogoUrl(settings?.logoUrl) ? settings!.logoUrl : null;
+  const darkLogo = isValidLogoUrl(settings?.iconUrl) ? settings!.iconUrl : null;
   const hasBoth = Boolean(lightLogo && darkLogo);
   const hasAny = Boolean(lightLogo || darkLogo);
-  // When only one is uploaded, use it in both themes
   const fallbackLogo = lightLogo ?? darkLogo;
 
   return (
@@ -42,30 +66,24 @@ export async function Masthead() {
           <Link href="/" className="block shrink-0" aria-label="Muktir Kantho — হোম">
             {hasBoth ? (
               <>
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={lightLogo!}
                   alt="Muktir Kantho"
-                  width={240}
-                  height={60}
-                  priority
                   className="block dark:hidden h-9 sm:h-10 lg:h-12 w-auto"
                 />
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={darkLogo!}
                   alt="Muktir Kantho"
-                  width={240}
-                  height={60}
-                  priority
                   className="hidden dark:block h-9 sm:h-10 lg:h-12 w-auto"
                 />
               </>
             ) : hasAny ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={fallbackLogo!}
                 alt="Muktir Kantho"
-                width={240}
-                height={60}
-                priority
                 className="h-9 sm:h-10 lg:h-12 w-auto"
               />
             ) : (
@@ -73,7 +91,7 @@ export async function Masthead() {
             )}
           </Link>
 
-          {/* Date strip — hidden on mobile, single line on tablet, stacked on desktop */}
+          {/* Date strip */}
           <div className="hidden sm:flex flex-col items-end gap-0.5 text-right">
             <span className="font-label text-[10px] uppercase tracking-[2px] text-[var(--np-text-secondary)]">
               {englishDate}
