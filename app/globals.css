@@ -153,6 +153,13 @@
   transition: none !important;
 }
 
+/* Theme-aware logo: logoUrl = light, iconUrl = dark.
+   Both are rendered in the DOM; CSS controls which is visible. */
+.logo-light { display: block; }
+.logo-dark  { display: none; }
+[data-theme="dark"] .logo-light { display: none; }
+[data-theme="dark"] .logo-dark  { display: block; }
+
 @theme inline {
   /* Editorial Design System Colors */
   --color-ed-ink: var(--ed-ink);
