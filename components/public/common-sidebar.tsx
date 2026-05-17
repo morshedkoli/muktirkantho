@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Grid3X3, TrendingUp } from "lucide-react";
+import { Grid3X3 } from "lucide-react";
 import { LocationFilter } from "@/components/public/location-filter";
 import { AdSlot } from "@/components/public/ad-slot";
 import { AD_PLACEMENTS } from "@/lib/ads";
@@ -12,7 +12,7 @@ export async function CommonSidebar() {
     <aside className="space-y-6">
       {/* Categories */}
       <section>
-        <div className="border border-[var(--np-border)] bg-white p-5">
+        <div className="border border-[var(--np-border)] bg-[var(--np-card)] p-5">
           <div className="mb-4 flex items-center gap-2">
             <Grid3X3 className="h-4 w-4 text-[var(--np-primary)]" />
             <h3 className="font-label text-xs uppercase tracking-wider text-[var(--np-muted)]">বিভাগসমূহ</h3>

@@ -80,13 +80,10 @@ export default function RootLayout({
         {/* BenSen Bangla font — fallback for Noto Sans Bengali */}
         <link rel="stylesheet" href="https://fonts.maateen.me/bensen/font.css" />
         <script
+          // Runs before <body> paints — guarantees data-theme is present
+          // on <html> for the very first render, so dark: classes work from frame 1.
           dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                const theme = localStorage.getItem('theme');
-                document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
-              })();
-            `,
+            __html: `(function(){try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`,
           }}
         />
       </head>

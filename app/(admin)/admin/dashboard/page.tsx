@@ -1,34 +1,45 @@
 import { PostStatus } from "@prisma/client";
 import Link from "next/link";
+import { format, subDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import {
   FileText,
-  CheckCircle,
-  Clock,
+  CheckCircle2,
+  Clock3,
   Tags,
   MapPin,
-  MapPinned,
-  TrendingUp,
-  Plus,
-  ArrowRight,
-  Eye,
-  BarChart3,
+  Users2,
   Calendar,
-  Twitter,
-  Facebook,
-  Zap,
+  ArrowRight,
+  ArrowUpRight,
+  Image as ImageIcon,
+  Globe,
+  Pencil,
+  TrendingUp,
 } from "lucide-react";
-import { format } from "date-fns";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
+  // Aggregate data — single Promise.all
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const sevenDaysAgo = subDays(startOfToday, 6);
+  const thirtyDaysAgo = subDays(startOfToday, 29);
+
   const [
     totalPosts,
     publishedPosts,
     draftPosts,
-    categories,
-    districts,
-    upazilas,
+    categoriesCount,
+    districtsCount,
+    upazilasCount,
+    todayPosts,
+    weekPosts,
+    monthPosts,
     recentPosts,
+    postsByCategory,
+    last7DaysPosts,
   ] = await Promise.all([
     prisma.post.count(),
     prisma.post.count({ where: { status: PostStatus.published } }),
@@ -36,404 +47,445 @@ export default async function AdminDashboardPage() {
     prisma.category.count(),
     prisma.district.count(),
     prisma.upazila.count(),
+    prisma.post.count({ where: { createdAt: { gte: startOfToday } } }),
+    prisma.post.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+    prisma.post.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.post.findMany({
-      take: 8,
+      take: 5,
       orderBy: { updatedAt: "desc" },
       include: { category: true, district: true },
     }),
+    prisma.post.groupBy({
+      by: ["categoryId"],
+      _count: true,
+      orderBy: { _count: { categoryId: "desc" } },
+      take: 5,
+    }),
+    prisma.post.findMany({
+      where: { createdAt: { gte: sevenDaysAgo } },
+      select: { createdAt: true },
+    }),
   ]);
 
-  const primaryStats = [
-    {
-      label: "Total Posts",
-      value: totalPosts,
-      icon: FileText,
-      color: "bg-[var(--ad-ink)]",
-      trend: "+12%",
-      href: "/admin/posts",
-    },
-    {
-      label: "Published",
-      value: publishedPosts,
-      icon: CheckCircle,
-      color: "bg-[var(--ad-success)]",
-      trend: "+8%",
-      href: "/admin/posts",
-    },
-    {
-      label: "Drafts",
-      value: draftPosts,
-      icon: Clock,
-      color: "bg-[var(--ad-alert)]",
-      trend: "+3",
-      href: "/admin/posts",
-    },
-    {
-      label: "Categories",
-      value: categories,
-      icon: Tags,
-      color: "bg-[var(--ad-blue)]",
-      trend: null,
-      href: "/admin/categories",
-    },
-    {
-      label: "Districts",
-      value: districts,
-      icon: MapPin,
-      color: "bg-[var(--ad-primary)]",
-      trend: null,
-      href: "/admin/districts",
-    },
-    {
-      label: "Upazilas",
-      value: upazilas,
-      icon: MapPinned,
-      color: "bg-[var(--ad-accent)]",
-      trend: null,
-      href: "/admin/upazilas",
-    },
+  // Build 7-day chart bins
+  const dayBins = Array.from({ length: 7 }, (_, i) => {
+    const d = subDays(startOfToday, 6 - i);
+    return { date: d, count: 0, label: format(d, "EEE")[0] };
+  });
+  for (const p of last7DaysPosts) {
+    const dayIdx = dayBins.findIndex(
+      (b) => b.date.toDateString() === new Date(p.createdAt).toDateString()
+    );
+    if (dayIdx >= 0) dayBins[dayIdx].count += 1;
+  }
+  const maxDay = Math.max(...dayBins.map((b) => b.count), 1);
+
+  // Resolve category names for the grouped result
+  const catIds = postsByCategory.map((c) => c.categoryId);
+  const catRecords = await prisma.category.findMany({ where: { id: { in: catIds } } });
+  const catName = (id: string) => catRecords.find((c) => c.id === id)?.name ?? "—";
+  const topCategories = postsByCategory.map((c, i) => ({
+    name: catName(c.categoryId),
+    count: c._count,
+    color: ["var(--ad-brand)", "var(--ad-green)", "var(--ad-blue)", "var(--ad-amber)", "var(--ad-purple)"][i] ?? "var(--ad-text-muted)",
+  }));
+  const maxCatCount = Math.max(...topCategories.map((c) => c.count), 1);
+
+  type CardSpec = {
+    label: string;
+    value: number;
+    Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+    accent: string;
+    bg: string;
+    delta: string;
+    neutral?: boolean;
+  };
+  const cards: CardSpec[] = [
+    { label: "Total Posts",  value: totalPosts,      Icon: FileText,    accent: "var(--ad-brand)",      bg: "var(--ad-brand-light)",  delta: "+12" },
+    { label: "Published",    value: publishedPosts,  Icon: CheckCircle2, accent: "var(--ad-green)",      bg: "var(--ad-green-light)",  delta: `+${publishedPosts}` },
+    { label: "Drafts",       value: draftPosts,      Icon: Clock3,      accent: "var(--ad-text-muted)", bg: "var(--ad-paper-2)",      delta: "+0", neutral: true },
+    { label: "Categories",   value: categoriesCount, Icon: Tags,        accent: "var(--ad-blue)",       bg: "var(--ad-blue-light)",   delta: "+3" },
+    { label: "Districts",    value: districtsCount,  Icon: MapPin,      accent: "var(--ad-amber)",      bg: "var(--ad-amber-light)",  delta: "+2" },
+    { label: "Upazilas",     value: upazilasCount,   Icon: Users2,      accent: "var(--ad-purple)",     bg: "var(--ad-purple-light)", delta: "+0", neutral: true },
   ];
 
-  const socialStatus = [
-    { platform: "X / Twitter", status: "Connected", posts: 23, icon: Twitter, color: "bg-black" },
-    { platform: "Facebook", status: "Connected", posts: 18, icon: Facebook, color: "bg-[#1877f2]" },
-    { platform: "Instagram", status: "Connected", posts: 7, icon: CameraIcon, color: "bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888]" },
-    { platform: "LinkedIn", status: "Connected", posts: 12, icon: LinkedinIcon, color: "bg-[#0a66c2]" },
-  ];
+  const dateRange = `${format(sevenDaysAgo, "MMM d")} – ${format(today, "MMM d, yyyy")}`;
 
   return (
-    <div className="w-full min-w-0 space-y-6">
+    <div className="space-y-5">
 
-      {/* Hero — Editorial Dashboard Header */}
-      <div className="relative overflow-hidden rounded-xl bg-[var(--ad-sidebar)] text-white p-6 sm:p-8">
-        <div className="absolute right-0 top-0 text-[140px] sm:text-[200px] font-black font-editorial-display leading-none text-white/[0.03] pointer-events-none select-none">
-          MK
-        </div>
-        <div className="relative z-10">
-          <div className="font-editorial-mono text-[11px] tracking-[3px] uppercase text-[var(--ad-breaking)] mb-3">
-            Dashboard · {format(new Date(), "MMMM d, yyyy")}
-          </div>
-          <h1 className="font-editorial-display text-3xl sm:text-4xl font-black leading-tight max-w-xl">
-            Welcome to the Newsroom
-          </h1>
-          <p className="mt-3 text-sm text-white/60 max-w-lg leading-relaxed">
-            Your editorial command centre. Monitor content, manage social distribution, and track performance — all from one place.
-          </p>
-          <div className="flex flex-wrap gap-6 mt-6 pt-5 border-t border-white/10">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Today&apos;s Publishes</span>
-              <span className="font-editorial-display text-2xl font-black text-white">{publishedPosts}</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Pending</span>
-              <span className="font-editorial-display text-2xl font-black text-white">{draftPosts}</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Social Queue</span>
-              <span className="font-editorial-display text-2xl font-black text-white">47</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="font-editorial-mono text-[10px] tracking-[2px] uppercase text-white/40">Active Readers</span>
-              <span className="font-editorial-display text-2xl font-black text-[var(--ad-success)]">1,284</span>
-            </div>
-          </div>
+      {/* PAGE HEADER */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-[22px] font-bold text-[var(--ad-text-primary)]">Dashboard</h1>
+        <div className="flex items-center gap-1.5 text-[12.5px] text-[var(--ad-text-muted)]">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>{dateRange}</span>
         </div>
       </div>
 
-      {/* Stats Grid — 3 cols desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        {primaryStats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Link
-              key={stat.label}
-              href={stat.href}
-              className="group border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-5 transition-all hover:border-[var(--ad-text-primary)]"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div
-                  className={`${stat.color} shrink-0 rounded-lg p-2.5 text-white`}
-                >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+      {/* PUBLISHING OVERVIEW STRIP */}
+      <section className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl p-5 sm:p-6 shadow-[var(--ad-shadow-lg)]">
+        <h2 className="text-[15px] font-bold text-[var(--ad-text-primary)] mb-4">Publishing Overview</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x divide-[var(--ad-border)]">
+          {[
+            { label: "Today",       value: todayPosts, sub: `${publishedPosts} Total Published`, hint: `${draftPosts} Drafts pending`, pill: "var(--ad-green-light)", pillText: "var(--ad-green)", trend: "+2" },
+            { label: "This Week",   value: weekPosts,  sub: `${weekPosts} Live articles`,        hint: `Across ${categoriesCount} categories`, pill: "var(--ad-amber-light)", pillText: "#92400E", trend: `+${weekPosts}` },
+            { label: "Last 30 Days",value: monthPosts, sub: `${districtsCount} Districts covered`, hint: `${upazilasCount} upazilas active`, pill: "var(--ad-blue-light)", pillText: "var(--ad-blue)", trend: `+${monthPosts}` },
+          ].map((p, i) => (
+            <div key={p.label} className={`${i === 0 ? "sm:pr-6" : i === 2 ? "sm:pl-6" : "sm:px-6"} py-4 sm:py-0 first:pt-0 last:pb-0`}>
+              <span
+                className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-[3px] rounded-full mb-2.5"
+                style={{ background: p.pill, color: p.pillText }}
+              >
+                {p.label}
+              </span>
+              <div className="text-[32px] font-extrabold text-[var(--ad-text-primary)] leading-none mb-1">
+                {p.value}
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-[14px] font-semibold text-[var(--ad-text-primary)]">{p.sub}</div>
+                  <div className="text-[11.5px] text-[var(--ad-text-muted)]">{p.hint}</div>
                 </div>
-                {stat.trend && (
-                  <div className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--ad-success)]/10 px-2 py-0.5 font-editorial-mono text-[10px] font-medium text-[var(--ad-success)] tracking-wider">
-                    <TrendingUp className="h-3 w-3" />
-                    {stat.trend}
-                  </div>
-                )}
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-[2px] rounded-full">
+                  {p.trend} <ArrowUpRight className="h-3 w-3" />
+                </span>
               </div>
-              <div className="mt-4">
-                <p className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">
-                  {stat.label}
-                </p>
-                <p className="mt-1 font-editorial-display text-3xl sm:text-4xl font-black text-[var(--ad-text-primary)] transition-colors group-hover:text-[var(--ad-breaking)]">
-                  {stat.value}
-                </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 6-COL STAT CARDS */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        {cards.map(({ label, value, Icon, accent, bg, delta, neutral }) => (
+          <div
+            key={label}
+            className="relative bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl p-4 shadow-[var(--ad-shadow-lg)] hover:-translate-y-px transition-transform"
+          >
+            <span className="absolute inset-x-0 top-0 h-[3px] rounded-t-xl" style={{ background: accent }} />
+            <div className="flex items-start justify-between mb-3">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ background: bg }}>
+                <Icon className="h-[18px] w-[18px]" style={{ color: accent }} />
               </div>
-            </Link>
-          );
-        })}
-      </div>
+              <span
+                className={`text-[10.5px] font-semibold px-1.5 py-[2px] rounded-full ${
+                  neutral
+                    ? "bg-[var(--ad-paper-2)] text-[var(--ad-text-muted)]"
+                    : "bg-emerald-100 text-emerald-700"
+                }`}
+              >
+                {delta}
+              </span>
+            </div>
+            <div className="text-[28px] font-extrabold text-[var(--ad-text-primary)] leading-none mb-1">{value}</div>
+            <div className="text-[10px] font-semibold tracking-[0.08em] uppercase text-[var(--ad-text-muted)]">{label}</div>
+          </div>
+        ))}
+      </section>
 
-      {/* Main Grid — Recent Posts + Right Panel */}
-      <div className="grid w-full min-w-0 grid-cols-1 gap-5 md:grid-cols-5">
+      {/* MAIN ROW: Articles + (Quick Actions / Social) */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5">
 
-        {/* Recent Posts — wider column (3/5) */}
-        <div className="min-w-0 overflow-hidden border border-[var(--ad-border)] bg-[var(--ad-card)] md:col-span-3">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2 border-b border-[var(--ad-border)] px-5 py-4">
-            <div className="flex items-center gap-2.5">
-              <BarChart3 className="h-4 w-4 text-[var(--ad-ink)]" />
-              <h2 className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)]">
-                Recent Articles
-              </h2>
+        {/* Recent articles panel */}
+        <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-[var(--ad-shadow-lg)] overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--ad-border)]">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-[var(--ad-green)]" />
+              <h3 className="text-[15px] font-bold text-[var(--ad-text-primary)]">Recent Articles</h3>
+              <span className="text-[11px] font-semibold px-2 py-[2px] rounded-full bg-[var(--ad-background)] border border-[var(--ad-border)] text-[var(--ad-text-secondary)]">
+                {totalPosts} total
+              </span>
             </div>
             <Link
               href="/admin/posts"
-              className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] transition-colors flex items-center gap-1"
+              className="flex items-center gap-1 text-[12.5px] font-semibold text-[var(--ad-green)] hover:text-[var(--ad-green-hover)]"
             >
-              View All
-              <ArrowRight className="h-3 w-3" />
+              VIEW ALL <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          {/* Post rows */}
-          <div className="divide-y divide-[var(--ad-border)]">
+          {/* Filter tabs */}
+          <div className="flex gap-1 px-5 py-2.5 border-b border-[var(--ad-border)] bg-[var(--ad-background)]">
+            {["All", "Live", "Draft", "Scheduled"].map((t, i) => (
+              <button
+                key={t}
+                className={`text-[12px] font-semibold px-3 py-[5px] rounded-full transition-all ${
+                  i === 0
+                    ? "bg-[var(--ad-green)] text-white"
+                    : "text-[var(--ad-text-secondary)] hover:bg-[var(--ad-card)] hover:border-[var(--ad-border)] border border-transparent"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {/* Article rows */}
+          <div>
             {recentPosts.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="font-editorial-mono text-xs tracking-wider text-[var(--ad-text-secondary)]">
-                  No posts yet. Create your first post to get started.
-                </p>
+              <div className="px-5 py-12 text-center">
+                <p className="text-sm text-[var(--ad-text-muted)]">No articles yet.</p>
+                <Link
+                  href="/admin/posts/create"
+                  className="inline-flex items-center gap-1 mt-2 text-[13px] font-semibold text-[var(--ad-green)]"
+                >
+                  Create one <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
             ) : (
-              recentPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="flex min-w-0 flex-col gap-2.5 px-5 py-3.5 transition-colors hover:bg-[var(--ad-paper)]"
-                >
-                  {/* Title + status row */}
-                  <div className="flex items-start gap-3">
+              recentPosts.map((post, idx) => {
+                const live = post.status === PostStatus.published;
+                return (
+                  <div
+                    key={post.id}
+                    className={`flex items-center gap-3.5 px-5 py-3.5 hover:bg-[var(--ad-paper)] transition-colors ${
+                      idx < recentPosts.length - 1 ? "border-b border-[var(--ad-border)]" : ""
+                    }`}
+                  >
+                    {/* Live badge */}
                     <span
-                      className={`mt-0.5 shrink-0 font-editorial-mono text-[9px] tracking-wider uppercase px-1.5 py-0.5 ${
-                        post.status === "published"
-                          ? "bg-[var(--ad-success)] text-white"
-                          : "bg-[var(--ad-paper-2)] text-[var(--ad-muted)]"
+                      className={`shrink-0 inline-flex items-center gap-1 text-[9.5px] font-bold tracking-[0.06em] uppercase px-2 py-[3px] rounded text-white ${
+                        live ? "bg-[var(--ad-green)]" : "bg-[var(--ad-amber)]"
                       }`}
                     >
-                      {post.status === "published" ? "Live" : "Draft"}
+                      <span className={`w-[5px] h-[5px] rounded-full bg-white ${live ? "animate-pulse" : ""}`} />
+                      {live ? "Live" : "Draft"}
                     </span>
-                    <h3 className="min-w-0 flex-1 text-sm font-semibold text-[var(--ad-text-primary)] leading-snug">
-                      <Link
-                        href={`/admin/posts/edit/${post.id}`}
-                        className="hover:text-[var(--ad-breaking)] transition-colors"
-                      >
-                        {post.title}
-                      </Link>
-                    </h3>
-                  </div>
 
-                  {/* Meta row */}
-                  <div className="flex min-w-0 flex-wrap items-center gap-3 pl-8">
-                    <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
-                      {post.category.name}
-                    </span>
-                    <span className="text-[var(--ad-border)]">|</span>
-                    <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
-                      {post.district.name}
-                    </span>
-                    <span className="text-[var(--ad-border)]">|</span>
-                    <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
-                      {format(post.updatedAt, "MMM d, yyyy · HH:mm")}
-                    </span>
+                    {/* Info */}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bangla text-[14px] font-semibold text-[var(--ad-text-primary)] truncate">
+                        {post.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[10.5px] font-semibold px-2 py-[2px] rounded bg-[var(--ad-green-light)] text-[var(--ad-green)]">
+                          {post.category.name}
+                        </span>
+                        <span className="text-[10px] text-[var(--ad-border-strong)]">·</span>
+                        <span className="font-mono text-[11px] text-[var(--ad-text-muted)]">{post.district.name}</span>
+                        <span className="text-[10px] text-[var(--ad-border-strong)]">·</span>
+                        <span className="font-mono text-[11px] text-[var(--ad-text-muted)]">
+                          {format(post.updatedAt, "MMM d · HH:mm")}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Edit */}
                     <Link
                       href={`/admin/posts/edit/${post.id}`}
-                      className="ml-auto font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] hover:text-[var(--ad-breaking)] transition-colors"
+                      className="shrink-0 text-[11.5px] font-semibold text-[var(--ad-text-secondary)] hover:text-[var(--ad-green)] bg-[var(--ad-background)] hover:bg-[var(--ad-green-light)] border border-[var(--ad-border)] hover:border-[var(--ad-green)] px-3 py-[5px] rounded-md transition-all flex items-center gap-1"
                     >
-                      Edit →
+                      Edit <ArrowRight className="h-3 w-3" />
                     </Link>
                   </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right column: Quick Actions + Social Distribution */}
+        <div className="flex flex-col gap-4">
+
+          {/* Quick Actions */}
+          <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-[var(--ad-shadow-lg)] overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-[var(--ad-border)]">
+              <h3 className="text-[15px] font-bold text-[var(--ad-text-primary)]">Quick Actions</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 p-4">
+              {[
+                { label: "New Post",   icon: Pencil,    href: "/admin/posts/create", bg: "var(--ad-brand-light)",  fg: "var(--ad-brand)" },
+                { label: "Media",      icon: ImageIcon, href: "/admin/media",        bg: "var(--ad-blue-light)",   fg: "var(--ad-blue)" },
+                { label: "Categories", icon: Tags,      href: "/admin/categories",   bg: "var(--ad-green-light)",  fg: "var(--ad-green)" },
+                { label: "View Site",  icon: Globe,     href: "/",                   bg: "var(--ad-purple-light)", fg: "var(--ad-purple)" },
+              ].map(({ label, icon: Icon, href, bg, fg }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="flex flex-col items-center justify-center gap-2 min-h-[90px] bg-[var(--ad-background)] border border-[var(--ad-border)] rounded-lg p-3 text-center hover:bg-[var(--ad-card)] hover:border-[var(--ad-green)] hover:-translate-y-px hover:shadow-md transition-all"
+                >
+                  <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ background: bg }}>
+                    <Icon className="h-[18px] w-[18px]" style={{ color: fg }} />
+                  </div>
+                  <span className="text-[11px] font-bold tracking-[0.06em] uppercase text-[var(--ad-text-secondary)]">
+                    {label}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Social Distribution */}
+          <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-[var(--ad-shadow-lg)] overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--ad-border)]">
+              <h3 className="text-[15px] font-bold text-[var(--ad-text-primary)]">Social Distribution</h3>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-[3px] rounded-full">
+                <span className="w-[6px] h-[6px] rounded-full bg-emerald-500" />
+                All Active
+              </span>
+            </div>
+            <ul>
+              {[
+                { name: "X / Twitter", count: 23, bg: "#000",     letter: "𝕏", textColor: "white", fontWeight: 800, fontSize: "11px" },
+                { name: "Facebook",    count: 18, bg: "#1877F2",  letter: "f", textColor: "white", fontWeight: 700, fontSize: "14px" },
+                { name: "YouTube",     count: 5,  bg: "#FF0000",  letter: "▶", textColor: "white", fontWeight: 600, fontSize: "12px" },
+                { name: "WhatsApp",    count: 41, bg: "#25D366",  letter: "W", textColor: "white", fontWeight: 700, fontSize: "12px" },
+              ].map((s, i, arr) => (
+                <li
+                  key={s.name}
+                  className={`flex items-center gap-2.5 px-5 py-2.5 hover:bg-[var(--ad-background)] transition-colors ${
+                    i < arr.length - 1 ? "border-b border-[var(--ad-border)]" : ""
+                  }`}
+                >
+                  <div
+                    className="h-7 w-7 rounded-md flex items-center justify-center shrink-0"
+                    style={{ background: s.bg, color: s.textColor, fontWeight: s.fontWeight, fontSize: s.fontSize }}
+                  >
+                    {s.letter}
+                  </div>
+                  <div className="flex-1 text-[13px] font-semibold text-[var(--ad-text-primary)]">{s.name}</div>
+                  <div className="font-mono text-[12px] text-[var(--ad-text-muted)]">{s.count} today</div>
+                  <div className="w-[7px] h-[7px] rounded-full bg-emerald-500 shrink-0" />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM ROW: Chart + Top Categories + Reports */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        {/* Publishing Activity (7-day bars) */}
+        <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-[var(--ad-shadow-lg)] overflow-hidden">
+          <div className="flex items-start justify-between px-5 py-4 border-b border-[var(--ad-border)]">
+            <div>
+              <h3 className="text-[15px] font-bold text-[var(--ad-text-primary)]">Publishing Activity</h3>
+              <p className="text-[11px] text-[var(--ad-text-muted)] mt-0.5">Last 7 days</p>
+            </div>
+            <div className="text-right">
+              <div className="text-[24px] font-extrabold leading-none text-[var(--ad-text-primary)]">{weekPosts}</div>
+              <div className="font-mono text-[10px] text-[var(--ad-text-muted)] mt-1">TOTAL POSTS</div>
+            </div>
+          </div>
+          <div className="px-5 pt-4 pb-5">
+            <p className="text-[11px] text-[var(--ad-text-muted)] mb-3">Posts per day</p>
+            <div className="flex items-end gap-1.5 h-20">
+              {dayBins.map((b, i) => {
+                const isToday = i === dayBins.length - 1;
+                const h = `${Math.max(8, (b.count / maxDay) * 100)}%`;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className={`w-full rounded-t transition-colors ${
+                        isToday ? "bg-[var(--ad-green)]" : "bg-[var(--ad-green-light)] hover:bg-[var(--ad-green)]"
+                      }`}
+                      style={{ height: h }}
+                      title={`${b.count} posts on ${format(b.date, "MMM d")}`}
+                    />
+                    <span
+                      className={`font-mono text-[9px] ${
+                        isToday ? "text-[var(--ad-green)] font-bold" : "text-[var(--ad-text-muted)]"
+                      }`}
+                    >
+                      {format(b.date, "EEEEE")}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Top Categories */}
+        <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-[var(--ad-shadow-lg)] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--ad-border)]">
+            <h3 className="text-[15px] font-bold text-[var(--ad-text-primary)]">Top Categories</h3>
+            <Link
+              href="/admin/categories"
+              className="flex items-center gap-1 text-[12.5px] font-semibold text-[var(--ad-green)] hover:text-[var(--ad-green-hover)]"
+            >
+              All <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="px-5 py-4 space-y-2.5">
+            {topCategories.length === 0 ? (
+              <p className="text-sm text-[var(--ad-text-muted)] text-center py-4">No categories yet</p>
+            ) : (
+              topCategories.map((c) => (
+                <div key={c.name} className="flex items-center gap-3">
+                  <div className="font-bangla text-[12.5px] font-medium text-[var(--ad-text-primary)] flex-1 truncate">
+                    {c.name}
+                  </div>
+                  <div className="w-20 h-1.5 bg-[var(--ad-border)] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${(c.count / maxCatCount) * 100}%`, background: c.color }}
+                    />
+                  </div>
+                  <div className="font-mono text-[11px] text-[var(--ad-text-muted)] w-5 text-right">{c.count}</div>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* Right sidebar — 2/5 */}
-        <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
-
-          {/* Quick Actions */}
-          <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
-            <h3 className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] mb-3">
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-2 gap-2.5">
-              {[
-                { name: "New Post", href: "/admin/posts/create", icon: Plus, color: "bg-[var(--ad-ink)]" },
-                { name: "Media", href: "/admin/media", icon: ImageIcon, color: "bg-[var(--ad-blue)]" },
-                { name: "Categories", href: "/admin/categories", icon: Tags,       color: "bg-[var(--ad-accent)]" },
-                { name: "View Site", href: "/", icon: Eye, color: "bg-[var(--ad-success)]" },
-              ].map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link
-                    key={action.name}
-                    href={action.href}
-                    className="group flex flex-col items-center gap-2 border border-[var(--ad-border)] p-3.5 transition-all hover:border-[var(--ad-text-primary)]"
-                  >
-                    <div
-                      className={`${action.color} rounded-lg p-2.5 text-white transition-transform group-hover:scale-110`}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <span className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">
-                      {action.name}
-                    </span>
-                  </Link>
-                );
-              })}
+        {/* Last Reports / Status Table */}
+        <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-[var(--ad-shadow-lg)] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--ad-border)]">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[15px] font-bold text-[var(--ad-text-primary)]">Last Reports</h3>
+              <span className="text-[11px] font-semibold px-2 py-[2px] rounded-full bg-[var(--ad-background)] border border-[var(--ad-border)] text-[var(--ad-text-secondary)]">
+                {totalPosts} total
+              </span>
             </div>
-          </div>
-
-          {/* Social Automation Status */}
-          <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">
-                Social Distribution
-              </h3>
-              <span className="font-editorial-mono text-[10px] text-[var(--ad-success)] tracking-wider">● All Active</span>
-            </div>
-            <div className="space-y-3">
-              {socialStatus.map((s) => {
-                const Icon = s.icon;
-                return (
-                  <div key={s.platform} className="flex items-center gap-3">
-                    <div className={`${s.color} flex h-8 w-8 items-center justify-center rounded-lg text-white`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-[var(--ad-text-primary)]">{s.platform}</p>
-                      <p className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] tracking-wider">
-                        {s.posts} posts today
-                      </p>
-                    </div>
-                    <div className="h-2 w-2 rounded-full bg-[var(--ad-success)]" />
-                  </div>
-                );
-              })}
-            </div>
-            <Link
-              href="/admin/social/queue"
-              className="mt-3 flex items-center justify-center gap-2 border border-[var(--ad-border)] py-2.5 text-xs font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper)] transition-colors font-editorial-mono tracking-wider uppercase"
+            <button
+              type="button"
+              className="bg-[var(--ad-green)] hover:bg-[var(--ad-green-hover)] text-white text-[12px] font-semibold px-3.5 py-1.5 rounded-md flex items-center gap-1 transition-colors"
             >
-              <Zap className="h-3.5 w-3.5" />
-              Manage Social Queue
-            </Link>
+              <TrendingUp className="h-3 w-3" /> Export
+            </button>
           </div>
-
-          {/* Publishing Overview */}
-          <div className="border border-[var(--ad-border)] bg-[var(--ad-sidebar)] p-5 text-white">
-            <h3 className="font-editorial-mono text-[10px] tracking-widest uppercase text-white/40 mb-4">
-              Publishing Overview
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="font-editorial-mono text-[10px] tracking-wider uppercase text-white/50">Published</span>
-                  <span className="font-editorial-display font-black text-white text-lg">{publishedPosts}</span>
-                </div>
-                <div className="h-1.5 bg-[var(--ad-card)]/10">
-                  <div
-                    className="h-full bg-[var(--ad-success)] transition-all"
-                    style={{
-                      width: `${totalPosts > 0 ? (publishedPosts / totalPosts) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="font-editorial-mono text-[10px] tracking-wider uppercase text-white/50">Drafts</span>
-                  <span className="font-editorial-display font-black text-white text-lg">{draftPosts}</span>
-                </div>
-                <div className="h-1.5 bg-[var(--ad-card)]/10">
-                  <div
-                    className="h-full bg-[var(--ad-alert)] transition-all"
-                    style={{
-                      width: `${totalPosts > 0 ? (draftPosts / totalPosts) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Today's date */}
-          <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center border border-[var(--ad-border)] bg-[var(--ad-paper)]">
-                <Calendar className="h-5 w-5 text-[var(--ad-text-secondary)]" />
-              </div>
-              <div>
-                <p className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">Today</p>
-                <p className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)]">
-                  {format(new Date(), "MMMM d, yyyy")}
-                </p>
-              </div>
-            </div>
-          </div>
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr className="bg-[var(--ad-background)]">
+                <th className="text-left px-5 py-2 font-bold text-[10px] tracking-[0.07em] uppercase text-[var(--ad-text-muted)] border-b border-[var(--ad-border)]">
+                  Title
+                </th>
+                <th className="text-left px-2 py-2 font-bold text-[10px] tracking-[0.07em] uppercase text-[var(--ad-text-muted)] border-b border-[var(--ad-border)]">
+                  Date
+                </th>
+                <th className="text-left px-2 py-2 font-bold text-[10px] tracking-[0.07em] uppercase text-[var(--ad-text-muted)] border-b border-[var(--ad-border)]">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { title: "System Report",  date: format(today, "dd.MM.yyyy"), status: "Completed",  bg: "bg-emerald-100", fg: "text-emerald-700" },
+                { title: "Weekly Digest",  date: format(subDays(today, 7), "dd.MM.yyyy"), status: "In Progress", bg: "bg-amber-100",   fg: "text-amber-700" },
+                { title: "Monthly Recap",  date: format(subDays(today, 14), "dd.MM.yyyy"), status: "Pending",    bg: "bg-red-100",     fg: "text-red-700" },
+              ].map((r, i, arr) => (
+                <tr
+                  key={r.title}
+                  className={`hover:bg-[var(--ad-paper)] transition-colors ${
+                    i < arr.length - 1 ? "border-b border-[var(--ad-border)]" : ""
+                  }`}
+                >
+                  <td className="px-5 py-2.5 font-medium text-[var(--ad-text-primary)]">{r.title}</td>
+                  <td className="px-2 py-2.5 font-mono text-[11px] text-[var(--ad-text-muted)]">{r.date}</td>
+                  <td className="px-2 py-2.5">
+                    <span className={`text-[10px] font-bold px-2 py-[3px] rounded ${r.bg} ${r.fg}`}>
+                      {r.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-  );
-}
-
-function CameraIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
-  );
-}
-
-function LinkedinIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-    >
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-    </svg>
-  );
-}
-
-function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <circle cx="8.5" cy="8.5" r="1.5" />
-      <polyline points="21 15 16 10 5 21" />
-    </svg>
   );
 }

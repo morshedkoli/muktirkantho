@@ -1,7 +1,12 @@
 /**
- * Simple in-memory rate limiter for login attempts.
+ * Simple in-memory rate limiter.
  * Tracks attempts by key (email or IP) and blocks after MAX_ATTEMPTS
  * within the WINDOW_MS time window.
+ *
+ * LIMITATION: State lives in process memory — it resets on server restart and
+ * does not share counts across multiple server instances (horizontal scaling).
+ * For production with multiple replicas, replace the Map with a Redis store
+ * (e.g. `ioredis` + sliding window counter) so limits are enforced globally.
  */
 
 const MAX_ATTEMPTS = 5;

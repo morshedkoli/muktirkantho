@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/route-auth";
 import { generatePostSeo } from "@/lib/seo";
 import { getAuthUser } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
 
 async function resolveCurrentAuthor() {
@@ -21,6 +22,16 @@ async function resolveCurrentAuthor() {
 }
 
 export async function GET(request: Request) {
+  // Basic IP-based rate limiting to prevent scraping/enumeration
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = checkRateLimit(`api:posts:${ip}`);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
 
   const category = searchParams.get("category");
@@ -39,15 +50,19 @@ export async function GET(request: Request) {
     ...(status ? { status: status as PostStatus } : {}),
   };
 
-  const items = await prisma.post.findMany({
-    where,
-    include: { category: true, district: true, upazila: true },
-    orderBy: { publishedAt: "desc" },
-    skip: (Math.max(page, 1) - 1) * limit,
-    take: limit,
-  });
-
-  return NextResponse.json(items);
+  try {
+    const items = await prisma.post.findMany({
+      where,
+      include: { category: true, district: true, upazila: true },
+      orderBy: { publishedAt: "desc" },
+      skip: (Math.max(page, 1) - 1) * limit,
+      take: limit,
+    });
+    return NextResponse.json(items);
+  } catch (err) {
+    console.error("[GET /api/posts] DB query failed:", err);
+    return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

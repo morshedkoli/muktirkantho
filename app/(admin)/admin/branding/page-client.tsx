@@ -246,68 +246,94 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
 
         {/* Current Branding Preview */}
         <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
-          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
-            Current Branding Preview
+          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-1">
+            Live Preview
           </h2>
+          <p className="text-sm text-[var(--ad-text-secondary)] mb-4">
+            How each logo appears on the public site in light and dark themes.
+          </p>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Light Mode Preview */}
+            {/* Light Mode Preview — uses Main Logo */}
             <div>
-              <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Light Mode</h3>
-              <div className="bg-[var(--ad-card)] rounded-lg p-6 border border-[var(--ad-border)]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-[var(--ad-text-primary)]">Light Mode</h3>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ad-text-secondary)]">
+                  uses Main Logo
+                </span>
+              </div>
+              <div className="bg-white rounded-lg p-6 border border-[var(--ad-border)] min-h-[120px] flex items-center">
                 {form.logoUrl ? (
                   <Image
                     src={form.logoUrl}
-                    alt="Site Logo"
+                    alt="Light mode logo"
                     width={220}
                     height={56}
-                    className="h-auto w-[180px]"
+                    className="h-auto w-[200px]"
                   />
                 ) : (
-                  <SiteLogo width={180} height={48} />
+                  <SiteLogo width={200} height={50} />
                 )}
               </div>
             </div>
 
-            {/* Dark Mode Preview */}
+            {/* Dark Mode Preview — uses Dark Logo (stored in iconUrl) */}
             <div>
-              <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Dark Mode</h3>
-              <div className="bg-[var(--ad-ink)] rounded-lg p-6 border border-[var(--ad-border)]">
-                {form.logoUrl ? (
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-[var(--ad-text-primary)]">Dark Mode</h3>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ad-text-secondary)]">
+                  uses Dark Mode Logo
+                </span>
+              </div>
+              <div className="bg-[#1a1a1a] rounded-lg p-6 border border-[var(--ad-border)] min-h-[120px] flex items-center">
+                {form.iconUrl ? (
                   <Image
-                    src={form.logoUrl}
-                    alt="Site Logo"
+                    src={form.iconUrl}
+                    alt="Dark mode logo"
                     width={220}
                     height={56}
-                    className="h-auto w-[180px]"
+                    className="h-auto w-[200px]"
+                  />
+                ) : form.logoUrl ? (
+                  <Image
+                    src={form.logoUrl}
+                    alt="Logo (using main logo as fallback)"
+                    width={220}
+                    height={56}
+                    className="h-auto w-[200px] opacity-80"
                   />
                 ) : (
-                  <SiteLogoDark width={180} height={48} />
+                  <SiteLogoDark width={200} height={50} />
                 )}
               </div>
+              {!form.iconUrl && form.logoUrl && (
+                <p className="mt-2 font-mono text-[10px] text-[var(--ad-text-secondary)]">
+                  No dark-mode logo uploaded — main logo will be used in dark theme.
+                </p>
+              )}
             </div>
           </div>
         </section>
 
-        {/* Logo Upload */}
+        {/* Light-mode logo (Main Logo) */}
         <UploadSection
           type="logo"
-          title="Main Logo"
-          description="Upload your main site logo. This will be displayed in the masthead. For best results in dark mode, use a logo with light/white text or a version that works on both backgrounds."
-          recommendedSize="320x90px"
+          title="Light Mode Logo"
+          description="The primary logo shown when visitors are using the light theme. Use a logo with dark colors that look good on a white background."
+          recommendedSize="320 × 90 px"
           previewSize={{ width: 200, height: 50 }}
           currentUrl={form.logoUrl}
           currentPublicId={form.logoPublicId}
           defaultComponent={<SiteLogo width={160} height={40} />}
         />
 
-        {/* Icon Upload */}
+        {/* Dark-mode logo (stored in iconUrl) */}
         <UploadSection
           type="icon"
-          title="Site Icon"
-          description="Square icon for use in various parts of the site."
-          recommendedSize="48x48px"
-          previewSize={{ width: 48, height: 48 }}
+          title="Dark Mode Logo"
+          description="The alternate logo shown when visitors switch to the dark theme. Use a version with light or white text that's readable on a dark background. If left empty, the light-mode logo will be used in both themes."
+          recommendedSize="320 × 90 px"
+          previewSize={{ width: 200, height: 50 }}
           currentUrl={form.iconUrl}
           currentPublicId={form.iconPublicId}
           defaultComponent={<SiteIcon size={48} />}

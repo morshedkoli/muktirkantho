@@ -3,51 +3,87 @@ import Link from "next/link";
 import { getSiteSettings } from "@/lib/site-settings";
 import { SiteLogo } from "./site-logo";
 
+/**
+ * Masthead — site identity + date strip
+ *
+ * Logo strategy:
+ *  - settings.logoUrl  → light-mode logo
+ *  - settings.iconUrl  → dark-mode logo
+ *
+ * When both exist, both <Image> tags are rendered in the DOM but only the
+ * theme-appropriate one is visible (Tailwind `dark:` is wired to data-theme="dark"
+ * in globals.css via @custom-variant — no class purge risk).
+ */
 export async function Masthead() {
   const settings = await getSiteSettings();
   const today = new Date();
-  const dateOptions: Intl.DateTimeFormatOptions = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
 
-  const banglaDate = new Intl.DateTimeFormat("bn-BD", dateOptions).format(today);
-  const englishDate = new Intl.DateTimeFormat("en-US", dateOptions).format(today);
+  const englishDate = new Intl.DateTimeFormat("en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  }).format(today);
+
+  const banglaDate = new Intl.DateTimeFormat("bn-BD", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  }).format(today);
+
+  const lightLogo = settings?.logoUrl ?? null;
+  const darkLogo = settings?.iconUrl ?? null;
+  const hasBoth = Boolean(lightLogo && darkLogo);
+  const hasAny = Boolean(lightLogo || darkLogo);
+  // When only one is uploaded, use it in both themes
+  const fallbackLogo = lightLogo ?? darkLogo;
 
   return (
-    <div className="border-b-4 border-double border-[var(--np-primary)] bg-[var(--np-card)] py-3 sm:py-4">
-      <div className="mx-auto max-w-7xl px-3 sm:px-4">
-        {/* Top bar with branding on left and date on right */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
-          {/* Logo on the left - slightly bigger */}
-          <Link href="/" className="group">
-            {settings?.logoUrl ? (
-              <div className="w-[150px] sm:w-[220px]">
+    <header className="border-b border-[var(--np-border)] bg-[var(--np-card)]">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 lg:py-5">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+
+          {/* Logo */}
+          <Link href="/" className="block shrink-0" aria-label="Muktir Kantho — হোম">
+            {hasBoth ? (
+              <>
                 <Image
-                  src={settings.logoUrl}
+                  src={lightLogo!}
                   alt="Muktir Kantho"
-                  width={220}
-                  height={56}
-                  className="h-auto w-full object-contain"
+                  width={240}
+                  height={60}
                   priority
+                  className="block dark:hidden h-9 sm:h-10 lg:h-12 w-auto"
                 />
-              </div>
+                <Image
+                  src={darkLogo!}
+                  alt="Muktir Kantho"
+                  width={240}
+                  height={60}
+                  priority
+                  className="hidden dark:block h-9 sm:h-10 lg:h-12 w-auto"
+                />
+              </>
+            ) : hasAny ? (
+              <Image
+                src={fallbackLogo!}
+                alt="Muktir Kantho"
+                width={240}
+                height={60}
+                priority
+                className="h-9 sm:h-10 lg:h-12 w-auto"
+              />
             ) : (
-              <SiteLogo width={180} height={48} className="w-[150px] sm:w-[220px] h-auto" />
+              <SiteLogo width={200} height={50} className="h-9 sm:h-10 lg:h-12 w-auto" />
             )}
           </Link>
 
-          {/* Date on the right */}
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-xs sm:text-sm text-[var(--np-text-secondary)]">
-            <span className="font-medium">{englishDate}</span>
-            <span className="hidden sm:inline text-[var(--np-border)]">|</span>
-            <span className="font-medium text-[var(--np-primary)]">{banglaDate}</span>
+          {/* Date strip — hidden on mobile, single line on tablet, stacked on desktop */}
+          <div className="hidden sm:flex flex-col items-end gap-0.5 text-right">
+            <span className="font-label text-[10px] uppercase tracking-[2px] text-[var(--np-text-secondary)]">
+              {englishDate}
+            </span>
+            <span className="text-[11px] sm:text-xs font-medium text-[var(--np-primary)]">
+              {banglaDate}
+            </span>
           </div>
         </div>
-
       </div>
-    </div>
+    </header>
   );
 }

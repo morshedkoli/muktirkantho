@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 export const AD_PLACEMENTS = {
@@ -81,7 +82,10 @@ export async function getActiveAd(placement: AdPlacement) {
   });
 }
 
-export async function getActiveAdsByPlacement(placement: AdPlacement) {
+// cache() deduplicates calls with the same placement key within a single render pass.
+export const getActiveAdsByPlacement = cache(async function getActiveAdsByPlacement(
+  placement: AdPlacement
+) {
   const delegate = getAdDelegate();
   if (!delegate) return [];
 
@@ -89,7 +93,7 @@ export async function getActiveAdsByPlacement(placement: AdPlacement) {
     where: { placement, isActive: true },
     orderBy: { createdAt: "desc" },
   });
-}
+});
 
 export async function createAd(input: {
   title: string;

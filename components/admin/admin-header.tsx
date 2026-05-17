@@ -1,28 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Search, Bell, Menu, LogOut, Settings, ChevronDown, AlertCircle, X } from "lucide-react";
-import { AdminThemeToggle } from "@/components/theme-toggle";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
+import {
+  Search,
+  Bell,
+  Menu,
+  LogOut,
+  Settings as SettingsIcon,
+  AlertCircle,
+  X,
+  MessageSquare,
+} from "lucide-react";
+import { AdminThemeToggle } from "@/components/theme-toggle";
 import { logoutAdminAction } from "@/app/(admin)/admin/actions";
 
-type AdminUser = {
-  name: string;
-  email: string;
-  role: string;
-};
+type AdminUser = { name: string; email: string; role: string };
 
-const ROLE_COLORS: Record<string, { bg: string; text: string; ring: string; badge: string }> = {
-  admin: { bg: "bg-red-500", text: "text-white", ring: "ring-red-500/20", badge: "bg-red-500/10 text-red-600 dark:text-red-400" },
-  editor: { bg: "bg-blue-500", text: "text-white", ring: "ring-blue-500/20", badge: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-  author: { bg: "bg-emerald-500", text: "text-white", ring: "ring-emerald-500/20", badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-  contributor: { bg: "bg-amber-500", text: "text-white", ring: "ring-amber-500/20", badge: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-};
-
-function getInitials(name: string): string {
+function initials(name?: string) {
+  if (!name) return "AD";
   return name
     .split(" ")
-    .map((part) => part[0])
+    .map((p) => p[0])
     .filter(Boolean)
     .slice(0, 2)
     .join("")
@@ -43,38 +43,10 @@ type Notification = {
 };
 
 const sampleNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "breaking",
-    title: "Breaking News Alert",
-    description: "New article flagged as breaking ready for review",
-    time: "2m ago",
-    unread: true,
-  },
-  {
-    id: "2",
-    type: "social",
-    title: "Facebook Post Failed",
-    description: "Scheduled post 'Budget Analysis 2026' failed to publish",
-    time: "15m ago",
-    unread: true,
-  },
-  {
-    id: "3",
-    type: "comment",
-    title: "Comment Spike Detected",
-    description: "45 new comments on 'Local Election Results'",
-    time: "1h ago",
-    unread: false,
-  },
-  {
-    id: "4",
-    type: "system",
-    title: "Sitemap Updated",
-    description: "XML sitemap regenerated successfully",
-    time: "2h ago",
-    unread: false,
-  },
+  { id: "1", type: "breaking", title: "Breaking News Alert", description: "New article flagged as breaking ready for review", time: "2m ago", unread: true },
+  { id: "2", type: "social", title: "Facebook Post Failed", description: "Scheduled post 'Budget Analysis 2026' failed to publish", time: "15m ago", unread: true },
+  { id: "3", type: "comment", title: "Comment Spike Detected", description: "45 new comments on 'Local Election Results'", time: "1h ago", unread: false },
+  { id: "4", type: "system", title: "Sitemap Updated", description: "XML sitemap regenerated successfully", time: "2h ago", unread: false },
 ];
 
 const notificationIcons: Record<string, React.ElementType> = {
@@ -84,24 +56,16 @@ const notificationIcons: Record<string, React.ElementType> = {
   system: Bell,
 };
 
-function MessageSquare({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
+/** Build a 2-segment breadcrumb from the current pathname. */
+function getBreadcrumb(pathname: string): { root: string; sub: string } {
+  const seg = pathname.split("/").filter(Boolean);
+  if (seg.length < 2) return { root: "Admin", sub: "Dashboard" };
+  const sub = seg[1].charAt(0).toUpperCase() + seg[1].slice(1).replace(/-/g, " ");
+  return { root: "Admin", sub };
 }
 
 export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
+  const pathname = usePathname();
   const [user, setUser] = useState<AdminUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -109,197 +73,180 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
   const notifRef = useRef<HTMLDivElement | null>(null);
   const [notifications] = useState<Notification[]>(sampleNotifications);
   const unreadCount = notifications.filter((n) => n.unread).length;
+  const crumb = getBreadcrumb(pathname);
 
   useEffect(() => {
-    let active = true;
     fetch("/api/admin/me", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: AdminUser | null) => {
-        if (active && data) setUser(data);
-      })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: AdminUser | null) => d && setUser(d))
       .catch(() => {});
-    return () => { active = false; };
   }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
-    const onPointerDown = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    const fn = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     };
-    window.addEventListener("mousedown", onPointerDown);
-    return () => window.removeEventListener("mousedown", onPointerDown);
+    window.addEventListener("mousedown", fn);
+    return () => window.removeEventListener("mousedown", fn);
   }, [menuOpen]);
 
   useEffect(() => {
     if (!notifOpen) return;
-    const onPointerDown = (event: MouseEvent) => {
-      if (!notifRef.current?.contains(event.target as Node)) setNotifOpen(false);
+    const fn = (e: MouseEvent) => {
+      if (!notifRef.current?.contains(e.target as Node)) setNotifOpen(false);
     };
-    window.addEventListener("mousedown", onPointerDown);
-    return () => window.removeEventListener("mousedown", onPointerDown);
+    window.addEventListener("mousedown", fn);
+    return () => window.removeEventListener("mousedown", fn);
   }, [notifOpen]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-[var(--ad-border)] bg-[var(--ad-background)] px-3 sm:px-4 lg:px-6">
-      {/* Left side */}
-      <div className="flex items-center gap-2 sm:gap-4">
+    <header className="sticky top-0 z-30 h-[60px] bg-[var(--ad-card)] border-b border-[var(--ad-border)] shadow-[var(--ad-shadow)]">
+      <div className="h-full flex items-center gap-3 px-4 sm:px-6 lg:px-7">
+
+        {/* Mobile hamburger */}
         <button
           onClick={onMobileMenuToggle}
-          className="lg:hidden p-2 hover:bg-[var(--ad-paper-2)] rounded-lg transition-colors"
+          className="lg:hidden p-2 -ml-2 rounded-lg text-[var(--ad-text-secondary)] hover:bg-[var(--ad-paper-2)] transition-colors"
           aria-label="Toggle menu"
         >
-          <Menu className="h-5 w-5 text-[var(--ad-text-secondary)]" />
+          <Menu className="h-5 w-5" />
         </button>
 
         {/* Breadcrumb */}
-        <nav className="hidden md:flex items-center gap-2 text-sm">
-          <Link href="/admin/dashboard" className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] transition-colors">
-            Admin
+        <div className="hidden sm:flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.05em]">
+          <Link href="/admin/dashboard" className="text-[var(--ad-text-muted)] hover:text-[var(--ad-text-primary)] transition-colors">
+            {crumb.root}
           </Link>
-          <span className="text-[var(--ad-text-secondary)]/40">/</span>
-          <span className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-primary)]">
-            Dashboard
-          </span>
-        </nav>
-      </div>
-
-      {/* Right side */}
-      <div className="flex items-center gap-1 sm:gap-2">
-        {/* Search */}
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--ad-text-secondary)]" />
-          <input
-            type="text"
-            placeholder="Search articles, categories..."
-            className="w-48 lg:w-64 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] py-2 pl-9 pr-4 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-text-primary)] focus:ring-0 transition-colors placeholder:text-[var(--ad-text-secondary)] font-editorial-sans"
-          />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-1 rounded border border-[var(--ad-border)] bg-[var(--ad-paper-2)] px-1.5 py-0.5 font-editorial-mono text-[10px] text-[var(--ad-text-secondary)]">
-            ⌘K
-          </kbd>
+          <span className="text-[var(--ad-text-muted)]/60">/</span>
+          <span className="text-[var(--ad-text-secondary)]">{crumb.sub}</span>
         </div>
 
-        {/* Theme Toggle */}
-        <AdminThemeToggle variant="minimal" size="md" />
+        {/* Search pill — center */}
+        <div className="flex-1 max-w-[420px] mx-auto">
+          <div className="flex items-center gap-2 h-9 bg-[var(--ad-background)] border border-[var(--ad-border)] rounded-full px-3.5 hover:border-[var(--ad-green)] transition-colors cursor-text">
+            <Search className="h-3.5 w-3.5 text-[var(--ad-text-muted)] shrink-0" />
+            <input
+              type="text"
+              placeholder="Search articles, categories…"
+              className="flex-1 bg-transparent border-none outline-none text-[13px] text-[var(--ad-text-primary)] placeholder:text-[var(--ad-text-muted)] min-w-0"
+            />
+            <kbd className="hidden md:inline-flex font-mono text-[10px] bg-[var(--ad-border)] text-[var(--ad-text-muted)] px-1.5 py-0.5 rounded">
+              ⌘K
+            </kbd>
+          </div>
+        </div>
 
-        {/* Notifications */}
-        <div ref={notifRef} className="relative">
-          <button
-            onClick={() => setNotifOpen((o) => !o)}
-            className="relative p-2 hover:bg-[var(--ad-paper-2)] rounded-lg transition-colors"
-          >
-            <Bell className="h-4 w-4 text-[var(--ad-text-secondary)]" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ad-breaking)] text-[9px] font-bold text-white font-editorial-mono">
-                {unreadCount}
-              </span>
-            )}
-          </button>
+        {/* Actions */}
+        <div className="flex items-center gap-2 ml-auto">
 
-          {notifOpen && (
-            <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-lg shadow-black/5 overflow-hidden">
-              <div className="border-b border-[var(--ad-border)] px-4 py-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-[var(--ad-text-primary)]">Notifications</h3>
-                <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)]">
-                  {unreadCount} unread
-                </span>
-              </div>
-              <div className="max-h-80 overflow-y-auto divide-y divide-[var(--ad-border)]">
-                {notifications.map((n) => {
-                  const Icon = notificationIcons[n.type];
-                  return (
-                    <div
-                      key={n.id}
-                      className={`px-4 py-3 transition-colors hover:bg-[var(--ad-paper)] ${
-                        n.unread ? "bg-[var(--ad-paper)]" : ""
-                      }`}
-                    >
-                      <div className="flex gap-3">
-                        <div
-                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                            n.type === "breaking"
-                              ? "bg-[var(--ad-error)]/10 text-[var(--ad-error)]"
-                              : n.type === "social"
-                              ? "bg-[var(--ad-primary)]/10 text-[var(--ad-primary)]"
-                              : n.type === "comment"
-                              ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
-                              : "bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]"
-                          }`}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
+          {/* Theme toggle */}
+          <div className="h-[34px] w-[34px] flex items-center justify-center rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] hover:border-[var(--ad-green)] transition-colors">
+            <AdminThemeToggle variant="minimal" size="sm" />
+          </div>
+
+          {/* Notifications */}
+          <div ref={notifRef} className="relative">
+            <button
+              onClick={() => setNotifOpen((o) => !o)}
+              className="h-[34px] w-[34px] flex items-center justify-center rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] hover:border-[var(--ad-green)] hover:text-[var(--ad-green)] text-[var(--ad-text-secondary)] transition-colors relative"
+              aria-label="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute top-[5px] right-[5px] w-[7px] h-[7px] bg-[var(--ad-brand)] rounded-full border-[1.5px] border-[var(--ad-card)]" />
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-[var(--ad-shadow-lg)] overflow-hidden">
+                <div className="border-b border-[var(--ad-border)] px-4 py-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-[var(--ad-text-primary)]">Notifications</h3>
+                  <span className="font-mono text-[10px] text-[var(--ad-text-muted)]">{unreadCount} unread</span>
+                </div>
+                <div className="max-h-80 overflow-y-auto divide-y divide-[var(--ad-border)]">
+                  {notifications.map((n) => {
+                    const Icon = notificationIcons[n.type];
+                    return (
+                      <div
+                        key={n.id}
+                        className={`px-4 py-3 transition-colors hover:bg-[var(--ad-paper)] ${
+                          n.unread ? "bg-[var(--ad-paper)]" : ""
+                        }`}
+                      >
+                        <div className="flex gap-3">
+                          <div
+                            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                              n.type === "breaking"
+                                ? "bg-[var(--ad-brand-light)] text-[var(--ad-brand)]"
+                                : n.type === "social"
+                                ? "bg-[var(--ad-blue-light)] text-[var(--ad-blue)]"
+                                : n.type === "comment"
+                                ? "bg-[var(--ad-green-light)] text-[var(--ad-green)]"
+                                : "bg-[var(--ad-amber-light)] text-[var(--ad-amber)]"
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-[var(--ad-text-primary)]">{n.title}</p>
+                            <p className="text-xs text-[var(--ad-text-secondary)] mt-0.5 line-clamp-1">{n.description}</p>
+                            <p className="font-mono text-[10px] text-[var(--ad-text-muted)] mt-1">{n.time}</p>
+                          </div>
+                          {n.unread && <span className="mt-1.5 h-2 w-2 rounded-full bg-[var(--ad-brand)] shrink-0" />}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[var(--ad-text-primary)]">{n.title}</p>
-                          <p className="text-xs text-[var(--ad-text-secondary)] mt-0.5 line-clamp-1">{n.description}</p>
-                          <p className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)] mt-1">{n.time}</p>
-                        </div>
-                        {n.unread && <span className="mt-1.5 h-2 w-2 rounded-full bg-[var(--ad-breaking)] shrink-0" />}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="border-t border-[var(--ad-border)] px-4 py-2.5">
-                <button className="w-full text-center text-xs font-medium text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] transition-colors font-editorial-mono tracking-wider uppercase">
-                  View All
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User menu */}
-        <div ref={menuRef} className="relative border-l border-[var(--ad-border)] pl-2 sm:pl-3">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((open) => !open)}
-            className="flex items-center gap-1.5 p-1.5 hover:bg-[var(--ad-paper-2)] rounded-lg transition-colors"
-          >
-            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold ${(() => {
-              const c = ROLE_COLORS[user?.role?.toLowerCase() || ""] || ROLE_COLORS.admin;
-              return `${c.bg} ${c.text}`;
-            })()}`}>
-              {getInitials(user?.name || "A")}
-            </div>
-            <span className="hidden sm:inline font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">
-              {user?.role || "Admin"}
-            </span>
-          </button>
-
-          {menuOpen && (
-            <div className="absolute right-0 top-10 z-50 w-56 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-lg shadow-black/5 overflow-hidden">
-              <div className="px-4 py-3 flex items-center gap-3 border-b border-[var(--ad-border)]">
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${(() => {
-                  const c = ROLE_COLORS[user?.role?.toLowerCase() || ""] || ROLE_COLORS.admin;
-                  return `${c.bg} ${c.text}`;
-                })()}`}>
-                  {getInitials(user?.name || "A")}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[var(--ad-text-primary)] truncate">{user?.name || "Admin"}</p>
-                  <p className="text-xs text-[var(--ad-text-secondary)] truncate">{user?.email || ""}</p>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="p-1">
-                <Link
-                  href="/admin/user"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--ad-text-primary)] hover:bg-[var(--ad-background)] transition-colors"
-                >
-                  <Settings className="h-4 w-4 text-[var(--ad-text-secondary)]" />
-                  Profile Settings
-                </Link>
-                <form action={logoutAdminAction}>
-                  <button
-                    type="submit"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 transition-colors"
+            )}
+          </div>
+
+          {/* User avatar / menu */}
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="h-[34px] w-[34px] rounded-full flex items-center justify-center text-white text-[12px] font-bold bg-gradient-to-br from-[var(--ad-green)] to-[var(--ad-green-mid)] hover:opacity-90 transition-opacity"
+              aria-label="User menu"
+            >
+              {initials(user?.name)}
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-[var(--ad-shadow-lg)] overflow-hidden">
+                <div className="px-4 py-3 flex items-center gap-3 border-b border-[var(--ad-border)]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white text-sm font-bold bg-gradient-to-br from-[var(--ad-green)] to-[var(--ad-green-mid)]">
+                    {initials(user?.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[var(--ad-text-primary)] truncate">{user?.name || "Admin"}</p>
+                    <p className="text-xs text-[var(--ad-text-muted)] truncate">{user?.email || ""}</p>
+                  </div>
+                </div>
+                <div className="p-1">
+                  <Link
+                    href="/admin/user"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--ad-text-primary)] hover:bg-[var(--ad-background)] transition-colors"
                   >
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                  </button>
-                </form>
+                    <SettingsIcon className="h-4 w-4 text-[var(--ad-text-secondary)]" />
+                    Profile Settings
+                  </Link>
+                  <form action={logoutAdminAction}>
+                    <button
+                      type="submit"
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--ad-brand)] hover:bg-[var(--ad-brand-light)] transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </form>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </header>

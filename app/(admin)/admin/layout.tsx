@@ -11,42 +11,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const isLoginPage = pathname === "/admin/login";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Login page doesn't get the sidebar layout
   if (isLoginPage) {
     return (
       <ToastProvider>
-        <ConfirmProvider>
-          {children}
-        </ConfirmProvider>
+        <ConfirmProvider>{children}</ConfirmProvider>
       </ToastProvider>
     );
   }
 
-  // Protected pages get the full admin layout with sidebar
   return (
     <ToastProvider>
       <ConfirmProvider>
-        <div className="min-h-screen bg-[var(--ad-background)] overflow-x-hidden">
-          <div className="flex">
-            {/* Sidebar */}
-            <AdminSidebar
-              mobileMenuOpen={mobileMenuOpen}
-              onMobileMenuClose={() => setMobileMenuOpen(false)}
-              collapsed={sidebarCollapsed}
-              onCollapsedChange={setSidebarCollapsed}
-            />
+        <div className="min-h-screen bg-[var(--ad-background)]">
+          <AdminSidebar
+            mobileMenuOpen={mobileMenuOpen}
+            onMobileMenuClose={() => setMobileMenuOpen(false)}
+          />
 
-            {/* Main content area - margin adjusts based on sidebar state */}
-            <div className={`flex-1 min-w-0 w-full max-w-full transition-all duration-300 ease-in-out pb-16 lg:pb-0 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
-              <AdminHeader
-                onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-              />
-              <main className="w-full max-w-full overflow-x-hidden p-3 sm:p-4 lg:p-6">
-                {children}
-              </main>
-            </div>
+          {/* Main column — offset 220px on desktop for fixed sidebar */}
+          <div className="lg:ml-[220px] flex flex-col min-h-screen">
+            <AdminHeader onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
+            <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7 pb-20 lg:pb-7 w-full max-w-full overflow-x-hidden">
+              {children}
+            </main>
           </div>
         </div>
       </ConfirmProvider>

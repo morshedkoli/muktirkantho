@@ -82,9 +82,22 @@ export async function DELETE(_: Request, { params }: Context) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const post = await prisma.post.delete({ where: { id } });
+  let post;
+  try {
+    post = await prisma.post.delete({ where: { id } });
+  } catch (err) {
+    console.error("[DELETE /api/posts/:id] DB delete failed:", err);
+    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
+  }
+
+  // Image cleanup is best-effort: log failure but don't surface it to the caller
+  // since the DB record is already gone.
   if (post.imagePublicId) {
-    await deleteImage(post.imagePublicId);
+    try {
+      await deleteImage(post.imagePublicId);
+    } catch (err) {
+      console.error("[DELETE /api/posts/:id] Cloudinary cleanup failed for", post.imagePublicId, err);
+    }
   }
 
   return NextResponse.json({ ok: true });
@@ -94,7 +107,9 @@ export async function POST(request: Request, { params }: Context) {
   const formData = await request.formData();
   const method = formData.get("_method");
   if (method === "DELETE") {
-    await DELETE(request, { params });
+    const result = await DELETE(request, { params });
+    // If deletion failed, surface the error rather than blindly redirecting
+    if (result.status !== 200) return result;
     return NextResponse.redirect(new URL("/admin/posts", request.url));
   }
   return NextResponse.json({ error: "Unsupported action" }, { status: 405 });
