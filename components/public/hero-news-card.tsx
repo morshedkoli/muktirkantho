@@ -5,39 +5,38 @@ import { Clock, MapPin, ArrowRight } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
 import { ImageWatermark } from "./image-watermark";
 
-type HeroNewsCardProps = {
-  post: {
-    id?: string;
-    title: string;
-    slug: string;
-    excerpt: string;
-    content?: string;
-    imageUrl: string;
-    publishedAt: Date | null;
-    category?: { name: string; slug: string } | null;
-    district?: { name: string; slug: string } | null;
-    tags?: string[];
-  };
+type Post = {
+  id?: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  imageUrl: string;
+  publishedAt: Date | null;
+  category?: { name: string; slug: string } | null;
+  district?: { name: string; slug: string } | null;
 };
 
-export function HeroNewsCard({ post }: HeroNewsCardProps) {
+/** Hero card — full-bleed image with bottom-gradient overlay for text */
+export function HeroNewsCard({ post }: { post: Post }) {
   const postPath = getPostPath(post);
 
   return (
-    <Link href={postPath} className="group relative block w-full overflow-hidden bg-[var(--np-background)]">
-      {/* Full-bleed image with gradient overlay */}
-      <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden">
+    <Link
+      href={postPath}
+      className="group relative block w-full overflow-hidden bg-[var(--np-background)]"
+    >
+      <div className="relative aspect-[16/10] w-full overflow-hidden sm:aspect-[16/9]">
         <Image
           src={post.imageUrl}
           alt={post.title}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 70vw, 900px"
-          className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 65vw, 800px"
+          className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
           priority
         />
 
-        {/* Gradient overlay — bottom-heavy for readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+        {/* Gradient overlay for legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
         {/* Watermark */}
         <div className="absolute right-3 top-3 z-10">
@@ -47,16 +46,16 @@ export function HeroNewsCard({ post }: HeroNewsCardProps) {
         {/* Category badge */}
         {post.category && (
           <div className="absolute left-4 top-4 z-10">
-            <span className="inline-block bg-[var(--np-primary)] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+            <span className="inline-block bg-[var(--np-primary)] px-2.5 py-1 font-label text-[10px] font-semibold uppercase tracking-[1.5px] text-white">
               {post.category.name}
             </span>
           </div>
         )}
 
-        {/* Text content sits on top of gradient */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 p-4 sm:p-6">
-          {/* Meta row */}
-          <div className="mb-2 flex flex-wrap items-center gap-3 text-[11px] text-white/70 font-mono uppercase tracking-wider">
+        {/* Bottom content */}
+        <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6">
+          {/* Meta */}
+          <div className="mb-2 flex flex-wrap items-center gap-3 text-[10.5px] font-mono uppercase tracking-[1.5px] text-white/70">
             {post.publishedAt && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -71,19 +70,20 @@ export function HeroNewsCard({ post }: HeroNewsCardProps) {
             )}
           </div>
 
-          {/* Headline */}
-          <h2 className="np-headline-lg text-white text-balance leading-tight text-xl sm:text-2xl md:text-3xl group-hover:text-white/90 transition-colors">
+          {/* Title */}
+          <h2 className="np-headline-lg text-balance leading-tight text-white text-xl sm:text-2xl md:text-[28px] group-hover:underline decoration-2 underline-offset-[6px]">
             {post.title}
           </h2>
 
-          {/* Excerpt — visible on larger screens */}
-          <p className="mt-2 hidden sm:block text-sm sm:text-base text-white/75 line-clamp-2 leading-relaxed max-w-2xl">
+          {/* Excerpt (sm+) */}
+          <p className="mt-2 hidden max-w-2xl text-[13.5px] leading-relaxed text-white/80 line-clamp-2 sm:block">
             {post.excerpt}
           </p>
 
-          {/* Read more */}
-          <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-widest text-[var(--np-secondary)] group-hover:text-white transition-colors">
-            বিস্তারিত পড়ুন <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+          {/* CTA */}
+          <div className="mt-3 inline-flex items-center gap-1.5 font-label text-[10px] uppercase tracking-[2px] text-[var(--np-secondary)] group-hover:text-white transition-colors">
+            বিস্তারিত পড়ুন
+            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
           </div>
         </div>
       </div>
@@ -91,50 +91,47 @@ export function HeroNewsCard({ post }: HeroNewsCardProps) {
   );
 }
 
-/** Compact vertical card for the secondary story stack beside the hero */
+/** Compact horizontal card for the secondary stack beside the hero */
 export function SecondaryStoryCard({
   post,
   rank,
 }: {
-  post: HeroNewsCardProps["post"];
+  post: Post;
   rank?: number;
 }) {
   const postPath = getPostPath(post);
   return (
     <Link
       href={postPath}
-      className="group flex gap-3 border-b border-[var(--np-border)] pb-3 last:border-0 last:pb-0"
+      className="group flex gap-3 border-b border-[var(--np-border)] pb-4 last:border-0 last:pb-0"
     >
-      {/* Rank number */}
       {rank !== undefined && (
-        <span className="shrink-0 text-2xl font-bold text-[var(--np-border)] leading-none mt-0.5 w-6 text-right">
+        <span className="font-display shrink-0 text-3xl font-bold leading-none text-[var(--np-border)] mt-0.5 w-7 text-right">
           {rank}
         </span>
       )}
 
-      {/* Thumbnail */}
       {post.imageUrl && (
-        <div className="relative h-16 w-20 shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
+        <div className="relative h-16 w-[88px] shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
           <Image
             src={post.imageUrl}
             alt=""
             fill
-            sizes="80px"
+            sizes="88px"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
       )}
 
-      {/* Text */}
       <div className="min-w-0 flex-1">
         {post.category && (
-          <span className="np-category text-[10px] block mb-0.5">{post.category.name}</span>
+          <span className="np-category text-[10px] block">{post.category.name}</span>
         )}
-        <h3 className="np-headline-sm text-[13px] leading-snug line-clamp-2 group-hover:text-[var(--np-primary)] transition-colors">
+        <h3 className="np-headline-sm mt-0.5 line-clamp-2 text-[13px] leading-snug group-hover:text-[var(--np-primary)] transition-colors">
           {post.title}
         </h3>
         {post.publishedAt && (
-          <p className="np-timestamp text-[10px] mt-1">
+          <p className="np-timestamp mt-1 text-[10px]">
             {format(post.publishedAt, "MMM d · h:mm a")}
           </p>
         )}

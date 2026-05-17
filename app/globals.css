@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Bind Tailwind's `dark:` modifier to our [data-theme="dark"] attribute.
+   This makes className="dark:hidden block" work reliably across SSR + client,
+   because Tailwind generates these classes itself (no purge risk). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ============================================
    THEME VARIABLES - NEWSPAPER
    ============================================ */
@@ -153,12 +158,9 @@
   transition: none !important;
 }
 
-/* Theme-aware logo: logoUrl = light, iconUrl = dark.
-   Both are rendered in the DOM; CSS controls which is visible. */
-.logo-light { display: block; }
-.logo-dark  { display: none; }
-[data-theme="dark"] .logo-light { display: none; }
-[data-theme="dark"] .logo-dark  { display: block; }
+/* Logo theme visibility is now handled by Tailwind's dark: variant
+   (see @custom-variant above) — use `dark:hidden block` for light logos
+   and `hidden dark:block` for dark logos. No custom classes needed. */
 
 @theme inline {
   /* Editorial Design System Colors */
@@ -595,32 +597,40 @@ img {
   color: var(--np-breaking);
 }
 
-/* Section header — 3px red top border like Prothomalo */
+/* Section header — single h2, no duplicate label.
+   3px red accent bar at top, optional "see all" link on right. */
 .np-section-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   border-top: 3px solid var(--np-primary);
-  padding-top: 0.75rem;
-  margin-bottom: 1.5rem;
+  padding-top: 0.875rem;
+  margin-bottom: 1.25rem;
 }
-.np-section-header .np-section-label {
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.625rem;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--np-muted);
-}
+.np-section-header h2,
 .np-section-header .np-headline {
+  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--np-text-primary);
   margin: 0;
 }
 .np-section-header .np-section-more {
   font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--np-muted);
-  margin-left: auto;
+  color: var(--np-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+.np-section-header .np-section-more:hover {
+  color: var(--np-primary);
 }
 
 /* Subheading — sans-serif */
