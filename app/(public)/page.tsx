@@ -33,8 +33,15 @@ export default async function HomePage() {
         <AdSlot placement={AD_PLACEMENTS.HOMEPAGE_BANNER} className="w-full" showPlaceholder={false} />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:py-8">
-        <div className="grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-[200px_minmax(0,1fr)_280px] lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-5 md:py-6 lg:py-8">
+        {/*
+          Responsive grid:
+          - mobile (default):   single column
+          - md (768px+):        2-col → main content + right sidebar
+          - lg (1024px+):       2-col with wider sidebar
+          - xl (1280px+):       3-col → adds left breaking rail
+        */}
+        <div className="grid grid-cols-1 gap-5 md:gap-6 lg:gap-8 md:grid-cols-[minmax(0,1fr)_240px] lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[200px_minmax(0,1fr)_280px]">
 
           {/* ═══════════════════════════════════
               LEFT RAIL — Breaking news ticker

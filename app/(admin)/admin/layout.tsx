@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <AdminHeader
                 onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
               />
-              <main className="w-full max-w-full overflow-x-hidden p-3 sm:p-4 lg:p-6">
+              <main className="w-full max-w-full overflow-x-hidden p-4 sm:p-5 lg:p-6">
                 {children}
               </main>
             </div>

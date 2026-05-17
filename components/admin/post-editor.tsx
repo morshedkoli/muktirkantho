@@ -144,7 +144,7 @@ export function PostEditor({
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Content Column */}
-        <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+        <div className="lg:col-span-2 space-y-6 order-1">
 
           {/* Editor Toolbar */}
           <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] overflow-hidden">
@@ -336,7 +336,7 @@ Use / for commands or @ to mention..."
         </div>
 
         {/* Sidebar Column */}
-        <div className="space-y-4 order-1 lg:order-2">
+        <div className="space-y-4 order-2">
           {/* Publish Panel */}
           <div className="border border-[var(--ad-border)] bg-[var(--ad-card)]">
             <div className="border-b border-[var(--ad-border)] bg-[var(--ad-paper)] px-5 py-3.5">

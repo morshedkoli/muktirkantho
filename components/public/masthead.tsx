@@ -35,8 +35,8 @@ export async function Masthead() {
 
   return (
     <header className="border-b border-[var(--np-border)] bg-[var(--np-card)]">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:py-5">
-        <div className="flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 lg:py-5">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
 
           {/* Logo */}
           <Link href="/" className="block shrink-0" aria-label="Muktir Kantho — হোম">
@@ -48,7 +48,7 @@ export async function Masthead() {
                   width={240}
                   height={60}
                   priority
-                  className="block dark:hidden h-10 sm:h-12 w-auto"
+                  className="block dark:hidden h-9 sm:h-10 lg:h-12 w-auto"
                 />
                 <Image
                   src={darkLogo!}
@@ -56,7 +56,7 @@ export async function Masthead() {
                   width={240}
                   height={60}
                   priority
-                  className="hidden dark:block h-10 sm:h-12 w-auto"
+                  className="hidden dark:block h-9 sm:h-10 lg:h-12 w-auto"
                 />
               </>
             ) : hasAny ? (
@@ -66,19 +66,19 @@ export async function Masthead() {
                 width={240}
                 height={60}
                 priority
-                className="h-10 sm:h-12 w-auto"
+                className="h-9 sm:h-10 lg:h-12 w-auto"
               />
             ) : (
-              <SiteLogo width={200} height={50} className="h-10 sm:h-12 w-auto" />
+              <SiteLogo width={200} height={50} className="h-9 sm:h-10 lg:h-12 w-auto" />
             )}
           </Link>
 
-          {/* Date strip — collapses on mobile */}
+          {/* Date strip — hidden on mobile, single line on tablet, stacked on desktop */}
           <div className="hidden sm:flex flex-col items-end gap-0.5 text-right">
             <span className="font-label text-[10px] uppercase tracking-[2px] text-[var(--np-text-secondary)]">
               {englishDate}
             </span>
-            <span className="text-xs font-medium text-[var(--np-primary)]">
+            <span className="text-[11px] sm:text-xs font-medium text-[var(--np-primary)]">
               {banglaDate}
             </span>
           </div>
