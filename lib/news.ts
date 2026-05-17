@@ -18,26 +18,30 @@ type SearchResult = {
   query: string;
 };
 
+export type CategoryWithPosts = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+  posts: PostWithRelations[];
+};
+
 export async function getHomeData() {
   const where = { status: PostStatus.published } as const;
 
-  const [breaking, featured, latest, categories, divisions] = await Promise.all([
+  // Single round-trip: breaking and latest are the same query — derive breaking from latest
+  const [allLatest, featured, categories, divisions] = await Promise.all([
     prisma.post.findMany({
       where,
       include: POST_INCLUDE,
-      take: 8,
+      take: 12,
       orderBy: { publishedAt: "desc" },
     }),
     prisma.post.findMany({
       where: { ...where, featured: true },
       include: POST_INCLUDE,
       take: 6,
-      orderBy: { publishedAt: "desc" },
-    }),
-    prisma.post.findMany({
-      where,
-      include: POST_INCLUDE,
-      take: 12,
       orderBy: { publishedAt: "desc" },
     }),
     prisma.category.findMany({ take: 6, orderBy: { createdAt: "desc" } }),
@@ -57,16 +61,37 @@ export async function getHomeData() {
     }),
   ]);
 
-  const tags = await prisma.post.findMany({
-    where,
-    select: { tags: true },
-    take: 50,
-    orderBy: { publishedAt: "desc" },
-  });
+  const breaking = allLatest.slice(0, 8);
+  const latest = allLatest;
 
-  const trendingTags = [...new Set(tags.flatMap((item) => item.tags))].slice(0, 16);
+  // Second batch: trending tags + per-category posts — all in one parallel round-trip
+  const topCategories = categories.slice(0, 3);
+  const [tagsResult, categoryPostArrays] = await Promise.all([
+    prisma.post.findMany({
+      where,
+      select: { tags: true },
+      take: 50,
+      orderBy: { publishedAt: "desc" },
+    }),
+    Promise.all(
+      topCategories.map((cat) =>
+        prisma.post.findMany({
+          where: { categoryId: cat.id, status: PostStatus.published },
+          include: POST_INCLUDE,
+          take: 3,
+          orderBy: { publishedAt: "desc" },
+        })
+      )
+    ),
+  ]);
 
-  return { breaking, featured, latest, categories, divisions, trendingTags };
+  const trendingTags = [...new Set(tagsResult.flatMap((item) => item.tags))].slice(0, 16);
+  const categoryWithPosts: CategoryWithPosts[] = topCategories.map((cat, i) => ({
+    ...cat,
+    posts: categoryPostArrays[i] ?? [],
+  }));
+
+  return { breaking, featured, latest, categories, divisions, trendingTags, categoryWithPosts };
 }
 
 export async function getSidebarData() {
@@ -246,8 +271,8 @@ export async function getSearchResults(query: string, pageParam: string | null):
       items,
       query: trimmed,
     };
-  } catch {
-    // Falls back if text index has not been created yet.
+  } catch (err) {
+    console.error("[search] Text-index query failed, falling back to regex search:", err);
   }
 
   const where: Prisma.PostWhereInput = {

@@ -33,5 +33,8 @@ export async function verifyCsrf() {
         }
     }
 
-    // If neither header is present, allow (same-origin fetch may omit them)
+    // If neither header is present, allow — same-origin fetch can legitimately omit both.
+    // NOTE: For stronger CSRF protection, replace this header-origin check with a
+    // double-submit cookie or synchronizer token pattern so requests without
+    // Origin/Referer (old browsers, certain proxies) are still protected.
 }

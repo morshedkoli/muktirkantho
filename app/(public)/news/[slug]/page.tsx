@@ -18,13 +18,17 @@ export const revalidate = 60;
 
 type Props = { params: Promise<{ slug: string }> };
 
-function splitHtmlForMiddleEmbed(html: string) {
+// Split rendered HTML at the paragraph boundary closest to the middle.
+// Used once to position both video embeds and inline ads consistently.
+function splitHtmlAtMiddleParagraph(html: string): { before: string; after: string } {
   if (!html) return { before: "", after: "" };
-  const middle = Math.floor(html.length / 2);
-  const paragraphIndex = html.indexOf("</p>", middle);
-  if (paragraphIndex === -1) return { before: html, after: "" };
-  const splitIndex = paragraphIndex + 4;
-  return { before: html.slice(0, splitIndex), after: html.slice(splitIndex) };
+  const parts = html.split("</p>");
+  if (parts.length <= 1) return { before: html, after: "" };
+  const splitAt = Math.max(1, Math.floor(parts.length / 2));
+  return {
+    before: parts.slice(0, splitAt).join("</p>") + "</p>",
+    after: parts.slice(splitAt).join("</p>"),
+  };
 }
 
 function getBanglaRelativeTime(date: Date): string {
@@ -61,10 +65,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.metaTitle || post.title,
       description: post.metaDescription || post.excerpt,
       url: canonical, type: "article",
-      images: [post.imageUrl], section: post.category.name,
+      ...(post.imageUrl ? { images: [post.imageUrl] } : {}),
+      section: post.category.name,
       publishedTime: post.publishedAt?.toISOString(),
     },
-    twitter: { card: "summary_large_image", title: post.metaTitle || post.title, description: post.metaDescription || post.excerpt, images: [post.imageUrl] },
+    twitter: {
+      card: "summary_large_image",
+      title: post.metaTitle || post.title,
+      description: post.metaDescription || post.excerpt,
+      ...(post.imageUrl ? { images: [post.imageUrl] } : {}),
+    },
   };
 }
 
@@ -86,19 +96,16 @@ export default async function NewsDetailPage({ params }: Props) {
 
   const html = await renderContent(post.content);
   const embedUrl = getYouTubeEmbedUrl(post.youtubeUrl ?? "");
-  const { before: htmlBeforeVideo, after: htmlAfterVideo } = splitHtmlForMiddleEmbed(html);
+  // Single split used for both video embed and inline ad positioning
+  const { before: htmlBeforeEmbed, after: htmlAfterEmbed } = splitHtmlAtMiddleParagraph(html);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const postUrl = `${siteUrl}${getPostPath(post)}`;
 
-  // Insert in-article ad after ~4th paragraph for desktop (Zone 7)
-  const bodyParts = html.split("</p>");
-  const adInsertIndex = Math.min(4, Math.floor(bodyParts.length / 3));
-  const bodyBeforeAd = bodyParts.slice(0, adInsertIndex).join("</p>") + (bodyParts[adInsertIndex - 1] ? "</p>" : "");
-  const bodyAfterAd = bodyParts.slice(adInsertIndex).join("</p>");
-
   const jsonLd = {
     "@context": "https://schema.org", "@type": "NewsArticle",
-    headline: post.title, image: [post.imageUrl],
+    headline: post.title,
+    // imageUrl is required by schema.org; omit the field entirely if missing
+    ...(post.imageUrl ? { image: [post.imageUrl] } : {}),
     datePublished: post.publishedAt?.toISOString(), dateModified: post.updatedAt.toISOString(),
     author: [{ "@type": "Person", name: post.author }],
     publisher: { "@type": "Organization", name: "Muktir Kantho" },
@@ -114,7 +121,7 @@ export default async function NewsDetailPage({ params }: Props) {
       <div className="flex gap-0 lg:gap-8">
         {/* ── ARTICLE CONTENT ── */}
         <div className="flex-1 min-w-0 max-w-[760px] mx-auto lg:mx-0">
-          <article className="border border-[var(--np-border)] bg-white">
+          <article className="border border-[var(--np-border)] bg-[var(--np-card)]">
             {/* Breadcrumb */}
             <div className="flex flex-wrap items-center gap-1 px-5 sm:px-8 pt-5 sm:pt-8 np-category text-[var(--np-text-secondary)]">
               <Link href={`/category/${post.category.slug}`} className="hover:text-[var(--np-primary)]">{post.category.name}</Link>
@@ -181,7 +188,7 @@ export default async function NewsDetailPage({ params }: Props) {
             <div className="prose-news px-5 sm:px-8 mt-6 min-h-[100px] max-w-none">
               {embedUrl ? (
                 <>
-                  <div dangerouslySetInnerHTML={{ __html: htmlBeforeVideo }} />
+                  <div dangerouslySetInnerHTML={{ __html: htmlBeforeEmbed }} />
                   <div className="my-8 overflow-hidden rounded-lg border border-[var(--np-border)] bg-black">
                     <div className="relative w-full pt-[56.25%]">
                       <iframe src={embedUrl} title={`Video for ${post.title}`}
@@ -189,16 +196,16 @@ export default async function NewsDetailPage({ params }: Props) {
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
                     </div>
                   </div>
-                  {htmlAfterVideo && <div dangerouslySetInnerHTML={{ __html: htmlAfterVideo }} />}
+                  {htmlAfterEmbed && <div dangerouslySetInnerHTML={{ __html: htmlAfterEmbed }} />}
                 </>
               ) : (
                 <>
-                  <div dangerouslySetInnerHTML={{ __html: bodyBeforeAd }} />
+                  <div dangerouslySetInnerHTML={{ __html: htmlBeforeEmbed }} />
                   {/* In-article Ad (Zone 7) */}
                   <div className="my-6 py-4 border-t border-b border-[var(--np-border)]">
                     <AdSlot placement={AD_PLACEMENTS.ARTICLE_INLINE} className="w-full" showPlaceholder={false} />
                   </div>
-                  <div dangerouslySetInnerHTML={{ __html: bodyAfterAd }} />
+                  <div dangerouslySetInnerHTML={{ __html: htmlAfterEmbed }} />
                 </>
               )}
             </div>
@@ -217,13 +224,10 @@ export default async function NewsDetailPage({ params }: Props) {
               </div>
             )}
 
-            {/* Comments Section Placeholder */}
+            {/* Comments Section — public comment system not yet available */}
             <div className="px-5 sm:px-8 py-6 border-b border-[var(--np-border)]">
               <div className="rounded-sm bg-[var(--np-newsprint-2)] p-5 text-center">
-                <p className="text-sm text-[var(--np-muted)]">মতামত দিন — লগইন করে মন্তব্য করুন</p>
-                <Link href="/admin/login" className="inline-block mt-2 rounded-sm bg-[var(--np-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--np-primary-hover)] transition-colors">
-                  লগইন
-                </Link>
+                <p className="text-sm text-[var(--np-muted)]">মন্তব্য বিভাগটি近く শীঘ্রই চালু হবে।</p>
               </div>
             </div>
 

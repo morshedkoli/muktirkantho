@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { format } from "date-fns";
 import { getHomeData, getLatestNews } from "@/lib/news";
 import { NewsCard } from "@/components/public/news-card";
@@ -9,7 +8,7 @@ import { AD_PLACEMENTS } from "@/lib/ads";
 export const revalidate = 60;
 
 export default async function EnglishHomePage() {
-  const { featured, categories, trendingTags } = await getHomeData();
+  const { featured, trendingTags } = await getHomeData();
   const { items: latest } = await getLatestNews(1, 12);
 
   return (
@@ -54,7 +53,7 @@ export default async function EnglishHomePage() {
         <aside className="hidden lg:block space-y-6">
           <AdSlot placement={AD_PLACEMENTS.SIDEBAR_PRIMARY} showPlaceholder={false} />
           {trendingTags.length > 0 && (
-            <div className="border border-[var(--np-border)] bg-white p-5">
+            <div className="border border-[var(--np-border)] bg-[var(--np-card)] p-5">
               <h3 className="font-label text-xs uppercase tracking-wider text-[var(--np-muted)] mb-3">Trending</h3>
               <div className="flex flex-wrap gap-2">
                 {trendingTags.slice(0, 8).map((tag) => (

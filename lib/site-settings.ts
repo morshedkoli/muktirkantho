@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 const GLOBAL_KEY = "global";
@@ -72,11 +73,13 @@ function getDelegate(): SiteSettingDelegate | null {
   return delegate ?? null;
 }
 
-export async function getSiteSettings() {
+// cache() deduplicates calls within a single request render — no extra DB hits when
+// multiple components (AdSlot, Masthead, layout) call this on the same page.
+export const getSiteSettings = cache(async function getSiteSettings() {
   const delegate = getDelegate();
   if (!delegate) return null;
   return delegate.findUnique({ where: { key: GLOBAL_KEY } });
-}
+});
 
 export async function saveSiteSettings(input: SiteSettingsInput) {
   const delegate = getDelegate();
