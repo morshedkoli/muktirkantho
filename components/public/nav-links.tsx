@@ -3,29 +3,33 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type NavItem = { slug: string; name: string };
+export type NavMenuItem = { label: string; href: string; openNewTab?: boolean };
 
-export function NavLinks({ categories }: { categories: NavItem[] }) {
+function isActive(href: string, pathname: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+export function NavLinks({ items }: { items: NavMenuItem[] }) {
   const pathname = usePathname();
 
   return (
     <div className="flex items-stretch">
-      {categories.slice(0, 11).map((cat) => {
-        const href = cat.slug ? `/category/${cat.slug}` : "/";
-        const isActive = cat.slug
-          ? pathname === href || pathname.startsWith(`/category/${cat.slug}`)
-          : pathname === "/";
+      {items.map((item, i) => {
+        const active = isActive(item.href, pathname);
         return (
           <Link
-            key={cat.slug || "home"}
-            href={href}
+            key={`${item.href}-${i}`}
+            href={item.href}
+            target={item.openNewTab ? "_blank" : undefined}
+            rel={item.openNewTab ? "noreferrer" : undefined}
             className={`flex items-center px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap transition-colors border-r border-r-[var(--np-border)] font-medium ${
-              isActive
+              active
                 ? "bg-[var(--np-primary)] text-white"
                 : "text-[var(--np-text-secondary)] hover:text-[var(--np-primary)] hover:bg-[var(--np-newsprint)]"
             }`}
           >
-            {cat.name}
+            {item.label}
           </Link>
         );
       })}

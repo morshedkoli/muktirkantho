@@ -87,7 +87,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${sourceSans.variable} ${libreBaskerville.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${sourceSans.variable} ${libreBaskerville.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} antialiased`}>
         <ThemeProvider>
           {children}
         </ThemeProvider>

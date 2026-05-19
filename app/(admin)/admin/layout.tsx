@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/admin/toast-provider";
 import { ConfirmProvider } from "@/components/admin/confirm-provider";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { LangProvider } from "@/lib/admin-i18n";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,6 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ToastProvider>
       <ConfirmProvider>
+      <LangProvider>
         <div className="min-h-screen bg-[var(--ad-background)]">
           <AdminSidebar
             mobileMenuOpen={mobileMenuOpen}
@@ -37,6 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </main>
           </div>
         </div>
+      </LangProvider>
       </ConfirmProvider>
     </ToastProvider>
   );

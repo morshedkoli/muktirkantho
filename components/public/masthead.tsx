@@ -70,15 +70,15 @@ export async function Masthead() {
             {hasBoth ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={lightLogo!} alt="Muktir Kantho" className="block dark:hidden w-auto"
+                <img src={lightLogo!} alt="Muktir Kantho" className="block dark:hidden w-auto max-w-[50vw] sm:max-w-none"
                   style={{ height: `${logoH}px` }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={darkLogo!} alt="Muktir Kantho" className="hidden dark:block w-auto"
+                <img src={darkLogo!} alt="Muktir Kantho" className="hidden dark:block w-auto max-w-[50vw] sm:max-w-none"
                   style={{ height: `${logoH}px` }} />
               </>
             ) : hasAny ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={fallbackLogo!} alt="Muktir Kantho" className="w-auto"
+              <img src={fallbackLogo!} alt="Muktir Kantho" className="w-auto max-w-[50vw] sm:max-w-none"
                 style={{ height: `${logoH}px` }} />
             ) : (
               <SiteLogo width={Math.round(logoH * 4)} height={logoH} />

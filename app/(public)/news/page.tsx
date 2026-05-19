@@ -22,17 +22,17 @@ export default async function LatestNewsPage({ searchParams }: Props) {
   const data = await getLatestNews(toInt(page, 1), 12);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
       <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
         <section>
           <div className="mb-6 border-b border-[var(--np-border)] pb-3">
-            <h1 className="np-headline-lg text-[var(--np-text-primary)]">Latest News</h1>
-            <p className="mt-2 text-sm text-[var(--np-text-secondary)]">{data.total} published articles</p>
+            <h1 className="np-headline-lg text-[var(--np-text-primary)]">সর্বশেষ সংবাদ</h1>
+            <p className="mt-2 text-sm text-[var(--np-text-secondary)]">{data.total}টি সংবাদ প্রকাশিত</p>
           </div>
 
           {data.items.length === 0 ? (
             <div className="rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-8 text-center text-[var(--np-text-secondary)]">
-              No published news found.
+              কোনো সংবাদ পাওয়া যায়নি।
             </div>
           ) : (
             <>

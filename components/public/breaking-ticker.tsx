@@ -18,7 +18,7 @@ export function BreakingTicker({ items }: BreakingTickerProps) {
           {/* Breaking label */}
           <div className="flex items-center gap-1.5 sm:gap-2 bg-[var(--np-breaking)] px-2.5 sm:px-4 py-2.5 sm:py-3 text-white shrink-0">
             <AlertCircle className="h-4 w-4 animate-pulse" />
-            <span className="hidden min-[400px]:inline text-xs sm:text-sm font-bold uppercase tracking-wider">Breaking</span>
+            <span className="hidden min-[400px]:inline text-xs sm:text-sm font-bold uppercase tracking-wider">ব্রেকিং</span>
           </div>
 
           {/* Ticker content */}
@@ -43,7 +43,7 @@ export function BreakingTicker({ items }: BreakingTickerProps) {
 
           {/* Time indicator */}
           <div className="hidden md:flex items-center px-4 border-l border-[var(--np-border)] text-xs text-[var(--np-text-secondary)] shrink-0">
-            <span>LIVE UPDATES</span>
+            <span>সরাসরি আপডেট</span>
           </div>
         </div>
       </div>

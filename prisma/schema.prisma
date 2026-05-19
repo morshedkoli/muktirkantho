@@ -129,6 +129,19 @@ model SiteSetting {
   updatedAt       DateTime @updatedAt
 }
 
+model MenuItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  label      String
+  href       String
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  openNewTab Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive, order])
+}
+
 model Ad {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   title         String

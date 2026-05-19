@@ -56,7 +56,7 @@ export async function Footer() {
               )}
             </div>
             <p className="text-sm leading-relaxed text-[var(--np-text-secondary)]">
-              Voice of Freedom — Your trusted source for regional news, local reporting, and verified journalism from across Bangladesh.
+              স্বাধীনতার কণ্ঠ — বাংলাদেশের জেলা-উপজেলা পর্যায়ের বিশ্বস্ত আঞ্চলিক সংবাদমাধ্যম।
             </p>
             <div className="flex gap-2">
               {SOCIAL_LINKS.map((social) => {
@@ -159,13 +159,12 @@ export async function Footer() {
       <div className="border-t border-[var(--np-border)]">
         <div className="mx-auto max-w-7xl px-4 py-5">
           <div className="flex flex-col items-center justify-between gap-3 text-xs text-[var(--np-text-secondary)] sm:flex-row">
-            <p>&copy; {new Date().getFullYear()} Muktir Kantho. All rights reserved.</p>
-            <div className="flex flex-wrap gap-4 sm:gap-6">
-              <Link href="/privacy-policy" className="hover:text-[var(--np-primary)] transition-colors">Privacy Policy</Link>
-              <Link href="/terms-of-use" className="hover:text-[var(--np-primary)] transition-colors">Terms of Use</Link>
-              <Link href="/cookie-policy" className="hover:text-[var(--np-primary)] transition-colors">Cookie Policy</Link>
-              <Link href="/accessibility" className="hover:text-[var(--np-primary)] transition-colors">Accessibility</Link>
-              <Link href="/contact" className="hover:text-[var(--np-primary)] transition-colors">Contact</Link>
+            <p>&copy; {new Date().getFullYear()} মুক্তির কণ্ঠ। সর্বস্বত্ব সংরক্ষিত।</p>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              <Link href="/privacy-policy" className="hover:text-[var(--np-primary)] transition-colors">গোপনীয়তা নীতি</Link>
+              <Link href="/terms-of-use" className="hover:text-[var(--np-primary)] transition-colors">ব্যবহারের শর্ত</Link>
+              <Link href="/cookie-policy" className="hover:text-[var(--np-primary)] transition-colors">কুকি নীতি</Link>
+              <Link href="/contact" className="hover:text-[var(--np-primary)] transition-colors">যোগাযোগ</Link>
             </div>
           </div>
         </div>

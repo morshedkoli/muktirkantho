@@ -9,7 +9,7 @@ import {
   Tags,
   MapPin,
   MapPinned,
-  LogOut,
+
   Settings,
   Megaphone,
   X,
@@ -36,101 +36,93 @@ import {
   HelpCircle,
   Globe,
 } from "lucide-react";
-import { logoutAdminAction } from "@/app/(admin)/admin/actions";
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useCallback } from "react";
+import { useLang, type TranslationKey } from "@/lib/admin-i18n";
+import { useTheme } from "@/components/theme-provider";
 
 type NavItem = {
-  name: string;
+  nameKey: TranslationKey;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
 };
 
 type NavSection = {
-  label: string;
+  labelKey: TranslationKey;
   items: NavItem[];
 };
 
 const navSections: NavSection[] = [
   {
-    label: "Overview",
-    items: [{ name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard }],
+    labelKey: "sectionOverview",
+    items: [{ nameKey: "navDashboard", href: "/admin/dashboard", icon: LayoutDashboard }],
   },
   {
-    label: "Content",
+    labelKey: "sectionContent",
     items: [
-      { name: "All Posts", href: "/admin/posts", icon: FileText },
-      { name: "New Post", href: "/admin/posts/create", icon: Layout },
-      { name: "Categories", href: "/admin/categories", icon: Tags },
-      { name: "Tags", href: "/admin/tags", icon: Hash },
-      { name: "Media", href: "/admin/media", icon: Image },
-      { name: "Comments", href: "/admin/comments", icon: MessageSquare },
-      { name: "E-Paper", href: "/admin/e-paper", icon: BookOpen },
+      { nameKey: "navAllPosts",   href: "/admin/posts",          icon: FileText },
+      { nameKey: "navNewPost",    href: "/admin/posts/create",   icon: Layout },
+      { nameKey: "navCategories", href: "/admin/categories",     icon: Tags },
+      { nameKey: "navTags",       href: "/admin/tags",           icon: Hash },
+      { nameKey: "navMedia",      href: "/admin/media",          icon: Image },
+      { nameKey: "navComments",   href: "/admin/comments",       icon: MessageSquare },
+      { nameKey: "navMenus",      href: "/admin/menus",          icon: Layout },
+      { nameKey: "navEPaper",     href: "/admin/e-paper",        icon: BookOpen },
     ],
   },
   {
-    label: "Modules",
+    labelKey: "sectionModules",
     items: [
-      { name: "Opinion", href: "/admin/opinion", icon: Lightbulb },
-      { name: "Video", href: "/admin/video", icon: Video },
-      { name: "Gallery", href: "/admin/gallery", icon: Images },
-      { name: "Breaking", href: "/admin/breaking", icon: Radio },
-      { name: "Homepage", href: "/admin/homepage", icon: Layout },
-      { name: "Districts", href: "/admin/districts", icon: MapPin },
-      { name: "Upazilas", href: "/admin/upazilas", icon: MapPinned },
+      { nameKey: "navOpinion",  href: "/admin/opinion",   icon: Lightbulb },
+      { nameKey: "navVideo",    href: "/admin/video",     icon: Video },
+      { nameKey: "navGallery",  href: "/admin/gallery",   icon: Images },
+      { nameKey: "navBreaking", href: "/admin/breaking",  icon: Radio },
+      { nameKey: "navHomepage", href: "/admin/homepage",  icon: Layout },
+      { nameKey: "navDistricts",href: "/admin/districts", icon: MapPin },
+      { nameKey: "navUpazilas", href: "/admin/upazilas",  icon: MapPinned },
     ],
   },
   {
-    label: "Social",
+    labelKey: "sectionSocial",
     items: [
-      { name: "X / Twitter", href: "/admin/social/twitter", icon: Twitter },
-      { name: "Facebook", href: "/admin/facebook", icon: Facebook },
-      { name: "Instagram", href: "/admin/social/instagram", icon: Instagram },
-      { name: "LinkedIn", href: "/admin/social/linkedin", icon: Linkedin },
-      { name: "Queue", href: "/admin/social/queue", icon: Zap },
-      { name: "Templates", href: "/admin/social/templates", icon: FileTextIcon },
+      { nameKey: "navTwitter",   href: "/admin/social/twitter",    icon: Twitter },
+      { nameKey: "navFacebook",  href: "/admin/facebook",          icon: Facebook },
+      { nameKey: "navInstagram", href: "/admin/social/instagram",  icon: Instagram },
+      { nameKey: "navLinkedIn",  href: "/admin/social/linkedin",   icon: Linkedin },
+      { nameKey: "navQueue",     href: "/admin/social/queue",      icon: Zap },
+      { nameKey: "navTemplates", href: "/admin/social/templates",  icon: FileTextIcon },
     ],
   },
   {
-    label: "Analytics",
+    labelKey: "sectionAnalytics",
     items: [
-      { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
-      { name: "SEO", href: "/admin/seo", icon: Search },
-      { name: "Ads", href: "/admin/ads", icon: Megaphone },
+      { nameKey: "navAnalytics", href: "/admin/analytics", icon: TrendingUp },
+      { nameKey: "navSEO",       href: "/admin/seo",       icon: Search },
+      { nameKey: "navAds",       href: "/admin/ads",       icon: Megaphone },
     ],
   },
   {
-    label: "System",
+    labelKey: "sectionSystem",
     items: [
-      { name: "Branding", href: "/admin/branding", icon: Palette },
-      { name: "Geo", href: "/admin/divisions", icon: Globe },
-      { name: "Users", href: "/admin/users", icon: HelpCircle },
-      { name: "Subscribers", href: "/admin/subscribers", icon: Lock },
-      { name: "Settings", href: "/admin/settings", icon: Settings },
+      { nameKey: "navBranding",     href: "/admin/branding",     icon: Palette },
+      { nameKey: "navGeo",          href: "/admin/divisions",    icon: Globe },
+      { nameKey: "navUsers",        href: "/admin/users",        icon: HelpCircle },
+      { nameKey: "navSubscribers",  href: "/admin/subscribers",  icon: Lock },
+      { nameKey: "navSettings",     href: "/admin/settings",     icon: Settings },
     ],
   },
 ];
 
 const mobileNavItems: NavItem[] = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { name: "Posts", href: "/admin/posts", icon: FileText },
-  { name: "Media", href: "/admin/media", icon: Image },
-  { name: "Comments", href: "/admin/comments", icon: MessageSquare },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  { nameKey: "navDashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { nameKey: "navPosts",     href: "/admin/posts",     icon: FileText },
+  { nameKey: "navMedia",     href: "/admin/media",     icon: Image },
+  { nameKey: "navComments",  href: "/admin/comments",  icon: MessageSquare },
+  { nameKey: "navSettings",  href: "/admin/settings",  icon: Settings },
 ];
 
-type AdminUser = { name: string; email: string; role: string };
-
-function initials(name?: string) {
-  if (!name) return "AD";
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+type LogoData = { logoUrl: string | null; darkLogoUrl: string | null; logoHeight: number | null };
 
 interface AdminSidebarProps {
   mobileMenuOpen?: boolean;
@@ -144,114 +136,145 @@ export function AdminSidebar({
   onMobileMenuClose,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [user, setUser] = useState<AdminUser | null>(null);
+  const { t } = useLang();
+  const { theme } = useTheme();
+  const [logoData, setLogoData] = useState<LogoData>({ logoUrl: null, darkLogoUrl: null, logoHeight: null });
 
   useEffect(() => {
-    fetch("/api/admin/me", { cache: "no-store" })
+    fetch("/api/admin/logo", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: AdminUser | null) => data && setUser(data))
+      .then((data: LogoData | null) => data && setLogoData(data))
       .catch(() => {});
   }, []);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
+  const sectionHasActive = useCallback(
+    (section: NavSection) => section.items.some((item) => isActive(item.href)),
+    [pathname] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // Start with sections open if they contain the active route
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(navSections.map((s) => [s.labelKey, s.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))]))
+  );
+
+  // Re-open the active section when pathname changes
+  useEffect(() => {
+    setOpenSections((prev) => {
+      const next = { ...prev };
+      navSections.forEach((s) => {
+        if (s.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))) {
+          next[s.labelKey] = true;
+        }
+      });
+      return next;
+    });
+  }, [pathname]);
+
+  const toggleSection = (key: string) =>
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+
   const navTree = (
-    <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-3 scrollbar-thin">
-      {navSections.map((section) => (
-        <div key={section.label}>
-          <div className="px-3 pt-1 pb-1.5 text-[9.5px] font-semibold tracking-[0.1em] uppercase text-[var(--ad-text-muted)]">
-            {section.label}
-          </div>
-          <ul className="space-y-0.5">
-            {section.items.map((item) => {
-              const active = isActive(item.href);
-              const Icon = item.icon;
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    onClick={onMobileMenuClose}
-                    className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-all ${
-                      active
-                        ? "bg-[var(--ad-green)] text-white shadow-sm"
-                        : "text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)]/60 hover:text-[var(--ad-text-primary)]"
-                    }`}
-                  >
-                    <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-white" : "opacity-80"}`} />
-                    <span className="flex-1 truncate">{item.name}</span>
-                    {item.badge && (
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
-                          active ? "bg-white/20 text-white" : "bg-[var(--ad-brand)] text-white"
+    <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5 scrollbar-thin">
+      {navSections.map((section) => {
+        const isOpen = openSections[section.labelKey] ?? false;
+        const hasActive = sectionHasActive(section);
+        return (
+          <div key={section.labelKey}>
+            {/* Section header — clickable toggle */}
+            <button
+              type="button"
+              onClick={() => toggleSection(section.labelKey)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] font-semibold tracking-[0.08em] uppercase transition-colors ${
+                hasActive
+                  ? "text-[var(--ad-green)]"
+                  : "text-[var(--ad-text-muted)] hover:text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)]/40"
+              }`}
+            >
+              <span>{t(section.labelKey)}</span>
+              <ChevronRight
+                className={`h-3 w-3 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
+              />
+            </button>
+
+            {/* Collapsible items */}
+            {isOpen && (
+              <ul className="mt-0.5 mb-1 space-y-0.5">
+                {section.items.map((item) => {
+                  const active = isActive(item.href);
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.nameKey}>
+                      <Link
+                        href={item.href}
+                        onClick={onMobileMenuClose}
+                        className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all ${
+                          active
+                            ? "bg-[var(--ad-green)] text-white shadow-sm"
+                            : "text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)]/60 hover:text-[var(--ad-text-primary)]"
                         }`}
                       >
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+                        <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? "text-white" : "opacity-70"}`} />
+                        <span className="flex-1 truncate">{t(item.nameKey)}</span>
+                        {item.badge && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${active ? "bg-white/20 text-white" : "bg-[var(--ad-brand)] text-white"}`}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 
   const userCard = (
     <div className="border-t border-[var(--ad-sidebar-divider)] p-3 shrink-0">
-      <div className="flex items-center gap-2.5 rounded-lg bg-[var(--ad-card)] p-2.5 shadow-[var(--ad-shadow)]">
-        <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-white text-[13px] font-bold shrink-0 bg-gradient-to-br from-[var(--ad-green)] to-[var(--ad-green-mid)]">
-          {initials(user?.name)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-semibold text-[var(--ad-text-primary)] truncate">
-            {user?.name || "Admin"}
-          </div>
-          <div className="text-[10.5px] text-[var(--ad-text-muted)] truncate">
-            {user?.role || "Super Admin"}
-          </div>
-        </div>
-        <Link
-          href="/admin/user"
-          aria-label="Profile"
-          className="ml-auto flex h-6 w-6 items-center justify-center rounded-md bg-[var(--ad-green)] text-white shrink-0 hover:bg-[var(--ad-green-hover)] transition-colors"
-        >
-          <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
       <Link
         href="/"
-        className="mt-2 flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)]/60 hover:text-[var(--ad-text-primary)] transition-all"
+        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-sidebar-divider)]/60 hover:text-[var(--ad-text-primary)] transition-all"
       >
         <Home className="h-4 w-4" />
-        View Site
+        {t("viewSite")}
       </Link>
-      <form action={logoutAdminAction}>
-        <button
-          type="submit"
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] font-medium text-[var(--ad-text-secondary)] hover:bg-[var(--ad-brand-light)] hover:text-[var(--ad-brand)] transition-all"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign Out
-        </button>
-      </form>
     </div>
   );
 
+  const activeLogo = theme === "dark"
+    ? (logoData.darkLogoUrl ?? logoData.logoUrl)
+    : (logoData.logoUrl ?? logoData.darkLogoUrl);
+
   const logo = (
-    <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-3 py-4 border-b border-[var(--ad-sidebar-divider)]">
-      <div className="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-[var(--ad-brand)] text-white text-[16px] font-bold font-bangla shrink-0">
-        ম
-      </div>
-      <div className="min-w-0">
-        <div className="text-[13.5px] font-bold leading-tight text-[var(--ad-text-primary)] truncate">
-          Muktir Kantho
+    <Link href="/admin/dashboard" className="flex items-center justify-center px-3 py-3 border-b border-[var(--ad-sidebar-divider)] min-h-[60px]">
+      {activeLogo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={activeLogo}
+          alt="মুক্তির কণ্ঠ"
+          style={{ height: `${Math.min(logoData.logoHeight ?? 40, 44)}px`, maxWidth: "100%" }}
+          className="object-contain w-full lg:w-auto lg:max-w-[180px]"
+        />
+      ) : (
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-[var(--ad-brand)] text-white text-[16px] font-bold font-bangla shrink-0">
+            ম
+          </div>
+          <div className="min-w-0">
+            <div className="text-[13.5px] font-bold leading-tight text-[var(--ad-text-primary)] truncate">
+              মুক্তির কণ্ঠ
+            </div>
+            <div className="text-[10px] font-mono tracking-[0.05em] text-[var(--ad-text-muted)] uppercase">
+              {t("adminPanel")}
+            </div>
+          </div>
         </div>
-        <div className="text-[10px] font-mono tracking-[0.05em] text-[var(--ad-text-muted)] uppercase">
-          Admin Panel
-        </div>
-      </div>
+      )}
     </Link>
   );
 
@@ -300,7 +323,7 @@ export function AdminSidebar({
             const Icon = item.icon;
             return (
               <Link
-                key={item.name}
+                key={item.nameKey}
                 href={item.href}
                 className={`flex flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 transition-all ${
                   active
@@ -309,7 +332,7 @@ export function AdminSidebar({
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium truncate">{item.name}</span>
+                <span className="text-[10px] font-medium truncate">{t(item.nameKey)}</span>
               </Link>
             );
           })}
