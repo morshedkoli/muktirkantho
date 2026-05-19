@@ -10,6 +10,7 @@ export type SiteSettingsInput = {
   iconPublicId?: string | null;
   faviconUrl?: string | null;
   faviconPublicId?: string | null;
+  logoHeight?: number | null;
   contactAddress?: string | null;
   contactPhone?: string | null;
   contactEmail?: string | null;
@@ -38,6 +39,7 @@ type SiteSettingsRecord = {
   iconPublicId: string | null;
   faviconUrl: string | null;
   faviconPublicId: string | null;
+  logoHeight: number | null;
   contactAddress: string | null;
   contactPhone: string | null;
   contactEmail: string | null;

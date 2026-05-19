@@ -1,22 +1,49 @@
 import { headers } from "next/headers";
 
 /**
- * Verify that the request Origin / Referer matches the site URL.
- * Call this at the top of any server action that mutates data.
- * Throws an error if the origin is suspicious (possible CSRF attack).
+ * Verify that the request Origin / Referer matches the request's own host.
+ *
+ * This is a same-origin check: a legitimate browser form submission always
+ * carries an Origin (or at least Referer) that matches the Host header of
+ * the request itself. A cross-site attacker's request will have an Origin
+ * from their own site (different from the user's host), so the check still
+ * catches CSRF.
+ *
+ * Why not compare to NEXT_PUBLIC_SITE_URL?
+ *   In production behind Vercel, an admin can hit the site via several
+ *   hostnames (apex, www, branch preview URLs, vercel.app). Hard-coding
+ *   one canonical origin means every other host fails CSRF and the site
+ *   crashes on form submit. The request's own Host header is authoritative.
  */
 export async function verifyCsrf() {
     const hdrs = await headers();
     const origin = hdrs.get("origin");
     const referer = hdrs.get("referer");
+    const host = hdrs.get("host");
+    const forwardedHost = hdrs.get("x-forwarded-host");
+    const forwardedProto = hdrs.get("x-forwarded-proto") ?? "https";
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const allowedOrigin = new URL(siteUrl).origin;
+    // The request's true host (Vercel/edge proxies use x-forwarded-host)
+    const expectedHost = forwardedHost || host;
+    if (!expectedHost) {
+        // If we can't determine our own host, fail safe and reject
+        if (origin || referer) {
+            throw new Error("CSRF check failed: cannot determine host");
+        }
+        return; // no headers at all — same-origin fetch
+    }
 
-    // At least one of origin / referer must be present and match
+    const expectedOrigin = `${forwardedProto}://${expectedHost}`;
+    // Also accept the env-configured site URL as a fallback
+    const configured = process.env.NEXT_PUBLIC_SITE_URL;
+    const allowedOrigins = new Set<string>([expectedOrigin]);
+    if (configured) {
+        try { allowedOrigins.add(new URL(configured).origin); } catch { /* ignore */ }
+    }
+
     if (origin) {
-        if (origin !== allowedOrigin) {
-            throw new Error("CSRF check failed: origin mismatch");
+        if (!allowedOrigins.has(origin)) {
+            throw new Error(`CSRF check failed: origin mismatch (got ${origin}, expected ${expectedOrigin})`);
         }
         return;
     }
@@ -24,8 +51,8 @@ export async function verifyCsrf() {
     if (referer) {
         try {
             const refOrigin = new URL(referer).origin;
-            if (refOrigin !== allowedOrigin) {
-                throw new Error("CSRF check failed: referer mismatch");
+            if (!allowedOrigins.has(refOrigin)) {
+                throw new Error(`CSRF check failed: referer mismatch (got ${refOrigin}, expected ${expectedOrigin})`);
             }
             return;
         } catch {
@@ -33,8 +60,5 @@ export async function verifyCsrf() {
         }
     }
 
-    // If neither header is present, allow — same-origin fetch can legitimately omit both.
-    // NOTE: For stronger CSRF protection, replace this header-origin check with a
-    // double-submit cookie or synchronizer token pattern so requests without
-    // Origin/Referer (old browsers, certain proxies) are still protected.
+    // Neither header — allow (same-origin fetch can legitimately omit both).
 }

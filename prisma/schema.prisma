@@ -104,6 +104,8 @@ model SiteSetting {
   iconPublicId    String?
   faviconUrl      String?
   faviconPublicId String?
+  // Logo display height in pixels for the desktop masthead. Mobile auto-scales (~75%).
+  logoHeight      Int?     @default(48)
   contactAddress  String?
   contactPhone    String?
   contactEmail    String?

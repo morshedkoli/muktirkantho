@@ -476,6 +476,11 @@ export async function saveBrandingSettingsAction(
   const iconPublicId = formData.get("iconPublicId")?.toString().trim() ?? "";
   const faviconUrl = formData.get("faviconUrl")?.toString().trim() ?? "";
   const faviconPublicId = formData.get("faviconPublicId")?.toString().trim() ?? "";
+  // Clamp logo height to [24, 120] px to prevent ridiculous values
+  const rawHeight = Number(formData.get("logoHeight"));
+  const logoHeight = Number.isFinite(rawHeight) && rawHeight > 0
+    ? Math.max(24, Math.min(120, Math.round(rawHeight)))
+    : null;
 
   const current = await getSiteSettings();
 
@@ -486,6 +491,7 @@ export async function saveBrandingSettingsAction(
     iconPublicId: iconPublicId || null,
     faviconUrl: faviconUrl || null,
     faviconPublicId: faviconPublicId || null,
+    logoHeight,
   });
 
   if (current?.logoPublicId && current.logoPublicId !== logoPublicId) {
