@@ -5,14 +5,17 @@ import { MenusClient } from "./menus-client";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenusPage() {
-  const items = await prisma.menuItem.findMany({ orderBy: { order: "asc" } });
+  const [items, categories] = await Promise.all([
+    prisma.menuItem.findMany({ orderBy: { order: "asc" } }),
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <AdminShell
       title="মেনু ম্যানেজার"
-      description="পাবলিক সাইটের নেভিগেশন মেনু তৈরি ও পরিচালনা করুন। ক্রম পরিবর্তন করুন, সক্রিয়/নিষ্ক্রিয় করুন।"
+      description="পাবলিক সাইটের নেভিগেশন মেনু তৈরি ও পরিচালনা করুন।"
     >
-      <MenusClient initial={items} />
+      <MenusClient initial={items} categories={categories} />
     </AdminShell>
   );
 }

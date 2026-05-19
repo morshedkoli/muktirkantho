@@ -6,26 +6,12 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileNav } from "@/components/public/mobile-nav";
 import { NavLinks, type NavMenuItem } from "@/components/public/nav-links";
 
-const FALLBACK_MENU: NavMenuItem[] = [
-  { label: "সর্বশেষ", href: "/" },
-  { label: "বাংলাদেশ", href: "/category/bangladesh" },
-  { label: "রাজনীতি", href: "/category/politics" },
-  { label: "বিশ্ব", href: "/category/world" },
-  { label: "বাণিজ্য", href: "/category/business" },
-  { label: "মতামত", href: "/category/opinion" },
-  { label: "খেলা", href: "/category/sports" },
-  { label: "বিনোদন", href: "/category/entertainment" },
-  { label: "চাকরি", href: "/category/jobs" },
-  { label: "ভিডিও", href: "/category/video" },
-];
-
 const getMenuItems = unstable_cache(
   async (): Promise<NavMenuItem[]> => {
     const items = await prisma.menuItem.findMany({
       where: { isActive: true },
       orderBy: { order: "asc" },
     });
-    if (items.length === 0) return FALLBACK_MENU;
     return items.map((i) => ({ label: i.label, href: i.href, openNewTab: i.openNewTab }));
   },
   ["public-menu-items"],

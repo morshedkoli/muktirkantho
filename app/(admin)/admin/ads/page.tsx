@@ -13,8 +13,8 @@ export default async function AdminAdsPage() {
 
   return (
     <AdminShell
-      title="Ads"
-      description="Manage ads and publish them on website ad slots."
+      title="বিজ্ঞাপন"
+      description="বিজ্ঞাপন তৈরি ও পরিচালনা করুন।"
     >
       {!modelReady ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

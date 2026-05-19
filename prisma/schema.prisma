@@ -133,6 +133,7 @@ model MenuItem {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   label      String
   href       String
+  icon       String?
   order      Int      @default(0)
   isActive   Boolean  @default(true)
   openNewTab Boolean  @default(false)

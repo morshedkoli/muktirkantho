@@ -63,7 +63,7 @@ export async function Masthead() {
   return (
     <header className="border-b border-[var(--np-border)] bg-[var(--np-card)]">
       <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 lg:py-5">
-        <div className="flex items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center justify-center sm:justify-between gap-3 sm:gap-4">
 
           {/* Logo — height is set by admin (branding page); dark: variant swaps logos */}
           <Link href="/" className="block shrink-0" aria-label="Muktir Kantho — হোম">

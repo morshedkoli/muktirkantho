@@ -1,124 +1,187 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { TrendingUp, Users, Eye, Clock, ArrowUp, ArrowDown, Download } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { FileText, Send, FolderOpen, Megaphone, TrendingUp, Clock } from "lucide-react";
+import Link from "next/link";
 
-export default function AnalyticsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AnalyticsPage() {
+  const now = new Date();
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const [
+    totalPosts,
+    publishedPosts,
+    draftPosts,
+    thisMonthPosts,
+    lastMonthPosts,
+    totalCategories,
+    totalAds,
+    activeAds,
+    categoryCounts,
+    recentPosts,
+  ] = await Promise.all([
+    prisma.post.count(),
+    prisma.post.count({ where: { status: "published" } }),
+    prisma.post.count({ where: { status: "draft" } }),
+    prisma.post.count({ where: { createdAt: { gte: startOfThisMonth } } }),
+    prisma.post.count({ where: { createdAt: { gte: startOfLastMonth, lt: startOfThisMonth } } }),
+    prisma.category.count(),
+    prisma.ad.count(),
+    prisma.ad.count({ where: { isActive: true } }),
+    prisma.category.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { posts: true } } },
+    }),
+    prisma.post.findMany({
+      where: { status: "published" },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: { id: true, title: true, slug: true, createdAt: true, category: { select: { name: true } } },
+    }),
+  ]);
+
+  const monthDiff = lastMonthPosts > 0
+    ? Math.round(((thisMonthPosts - lastMonthPosts) / lastMonthPosts) * 100)
+    : thisMonthPosts > 0 ? 100 : 0;
+
+  const topCategories = [...categoryCounts]
+    .sort((a, b) => b._count.posts - a._count.posts)
+    .slice(0, 8);
+
+  const maxCatCount = topCategories[0]?._count.posts ?? 0;
+
   return (
     <AdminShell
-      title="Analytics Hub"
-      description="Track readership patterns, social performance, and editorial effectiveness"
-      actions={
-        <button className="inline-flex items-center gap-2 rounded-lg border border-[var(--ad-border)] px-4 py-2.5 text-sm font-semibold text-[var(--ad-text-primary)] hover:bg-[var(--ad-paper)] transition-all font-editorial-mono tracking-wider uppercase">
-          <Download className="h-4 w-4" />
-          Export Report
-        </button>
-      }
+      title="বিশ্লেষণ"
+      description="কন্টেন্ট কার্যক্রমের সারসংক্ষেপ।"
     >
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Page Views", value: "284.5K", change: "+12.3%", icon: Eye, up: true },
-          { label: "Active Readers", value: "1,284", change: "+8.1%", icon: Users, up: true },
-          { label: "Avg. Session", value: "4m 32s", change: "-2.1%", icon: Clock, up: false },
-          { label: "Bounce Rate", value: "38.2%", change: "-5.4%", icon: TrendingUp, up: true },
-        ].map((kpi) => {
-          const Icon = kpi.icon;
-          return (
-            <div key={kpi.label} className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">{kpi.label}</span>
-                <Icon className="h-4 w-4 text-[var(--ad-text-secondary)]" />
+      <div className="space-y-5">
+        {/* KPI cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "মোট পোস্ট", value: totalPosts, icon: FileText, color: "bg-blue-500/10 text-blue-500" },
+            { label: "প্রকাশিত", value: publishedPosts, icon: Send, color: "bg-emerald-500/10 text-emerald-500" },
+            { label: "ড্রাফট", value: draftPosts, icon: Clock, color: "bg-amber-500/10 text-amber-500" },
+            { label: "বিভাগ", value: totalCategories, icon: FolderOpen, color: "bg-violet-500/10 text-violet-500" },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] px-4 py-4 flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
+                <Icon className="h-5 w-5" />
               </div>
-              <p className="font-editorial-display text-3xl font-black text-[var(--ad-text-primary)]">{kpi.value}</p>
-              <div className={`flex items-center gap-1 mt-1 font-editorial-mono text-[10px] tracking-wider ${kpi.up ? "text-[var(--ad-success)]" : "text-[var(--ad-error)]"}`}>
-                {kpi.up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                {kpi.change} vs last period
+              <div>
+                <p className="text-2xl font-bold text-[var(--ad-text-primary)] leading-none">{value}</p>
+                <p className="text-[11px] text-[var(--ad-text-muted)] mt-1">{label}</p>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Page Views Chart */}
-        <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)]">Page Views</h2>
-            <div className="flex gap-2">
-              {["7D", "30D", "90D"].map((period) => (
-                <button key={period} className={`font-editorial-mono text-[10px] tracking-wider uppercase px-2.5 py-1 ${period === "7D" ? "bg-[var(--ad-ink)] text-white" : "text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)]"} transition-colors`}>
-                  {period}
-                </button>
-              ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* This month vs last month */}
+          <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="h-4 w-4 text-[var(--ad-green)]" />
+              <h2 className="text-sm font-semibold text-[var(--ad-text-primary)]">এই মাসের কার্যক্রম</h2>
+            </div>
+            <div className="flex items-end gap-6">
+              <div>
+                <p className="text-4xl font-bold text-[var(--ad-text-primary)]">{thisMonthPosts}</p>
+                <p className="text-xs text-[var(--ad-text-muted)] mt-1">এই মাসে পোস্ট</p>
+              </div>
+              <div className="pb-1">
+                <p className={`text-sm font-semibold ${monthDiff >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                  {monthDiff >= 0 ? "+" : ""}{monthDiff}%
+                </p>
+                <p className="text-xs text-[var(--ad-text-muted)]">গত মাসের তুলনায়</p>
+              </div>
+              <div className="pb-1 ml-auto text-right">
+                <p className="text-2xl font-bold text-[var(--ad-text-muted)]">{lastMonthPosts}</p>
+                <p className="text-xs text-[var(--ad-text-muted)]">গত মাসে</p>
+              </div>
             </div>
           </div>
-          <div className="flex items-end gap-2 h-48">
-            {[35, 45, 30, 55, 70, 60, 80, 65, 50, 75, 85, 90, 60, 75].map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div
-                  className="w-full bg-[var(--ad-ink)] transition-all hover:bg-[var(--ad-breaking)] cursor-pointer"
-                  style={{ height: `${h}%` }}
-                />
+
+          {/* Ads */}
+          <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Megaphone className="h-4 w-4 text-amber-500" />
+              <h2 className="text-sm font-semibold text-[var(--ad-text-primary)]">বিজ্ঞাপন</h2>
+            </div>
+            <div className="flex items-end gap-6">
+              <div>
+                <p className="text-4xl font-bold text-[var(--ad-text-primary)]">{activeAds}</p>
+                <p className="text-xs text-[var(--ad-text-muted)] mt-1">সক্রিয় বিজ্ঞাপন</p>
               </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-2 font-editorial-mono text-[9px] tracking-wider text-[var(--ad-text-secondary)]">
-            <span>May 3</span>
-            <span>May 10</span>
-            <span>May 17</span>
+              <div className="pb-1 ml-auto text-right">
+                <p className="text-2xl font-bold text-[var(--ad-text-muted)]">{totalAds}</p>
+                <p className="text-xs text-[var(--ad-text-muted)]">মোট বিজ্ঞাপন</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Traffic Sources */}
-        <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-6">
-          <h2 className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)] mb-5">Traffic Sources</h2>
-          <div className="space-y-4">
-            {[
-              { name: "Direct", pct: 38, color: "bg-[var(--ad-ink)]" },
-              { name: "Search", pct: 32, color: "bg-[var(--ad-blue)]" },
-              { name: "Social", pct: 18, color: "bg-[var(--ad-facebook)]" },
-              { name: "Referral", pct: 12, color: "bg-[var(--ad-gold)]" },
-            ].map((source) => (
-              <div key={source.name}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-medium text-[var(--ad-text-primary)]">{source.name}</span>
-                  <span className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)]">{source.pct}%</span>
-                </div>
-                <div className="h-2 bg-[var(--ad-border)]">
-                  <div className={`h-full ${source.color} transition-all`} style={{ width: `${source.pct}%` }} />
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Category breakdown */}
+          <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
+            <h2 className="text-sm font-semibold text-[var(--ad-text-primary)] mb-4">বিভাগ অনুযায়ী পোস্ট</h2>
+            {topCategories.length === 0 ? (
+              <p className="text-sm text-[var(--ad-text-muted)] py-6 text-center">কোনো বিভাগ নেই</p>
+            ) : (
+              <div className="space-y-2.5">
+                {topCategories.map((cat) => (
+                  <div key={cat.id}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-[var(--ad-text-primary)]">{cat.name}</span>
+                      <span className="text-xs text-[var(--ad-text-muted)]">{cat._count.posts}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[var(--ad-bg)] overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[var(--ad-green)] transition-all"
+                        style={{ width: maxCatCount > 0 ? `${(cat._count.posts / maxCatCount) * 100}%` : "0%" }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+          </div>
+
+          {/* Recent published posts */}
+          <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
+            <h2 className="text-sm font-semibold text-[var(--ad-text-primary)] mb-4">সাম্প্রতিক প্রকাশিত পোস্ট</h2>
+            {recentPosts.length === 0 ? (
+              <p className="text-sm text-[var(--ad-text-muted)] py-6 text-center">কোনো প্রকাশিত পোস্ট নেই</p>
+            ) : (
+              <div className="space-y-1">
+                {recentPosts.map((post, i) => (
+                  <Link
+                    key={post.id}
+                    href={`/admin/posts/${post.id}/edit`}
+                    className="flex items-start gap-3 px-2 py-2 rounded-lg hover:bg-[var(--ad-bg)] transition-colors group"
+                  >
+                    <span className="text-xs font-bold text-[var(--ad-text-muted)] w-4 shrink-0 mt-0.5">{i + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-[var(--ad-text-primary)] truncate group-hover:text-[var(--ad-green)]">{post.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-[var(--ad-text-muted)]">{post.category.name}</span>
+                        <span className="text-[var(--ad-border)]">·</span>
+                        <span className="text-[10px] text-[var(--ad-text-muted)]">
+                          {new Date(post.createdAt).toLocaleDateString("bn-BD")}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Top Articles */}
-        <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 md:col-span-2">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)]">Top Performing Articles</h2>
-            <span className="font-editorial-mono text-[10px] tracking-wider text-[var(--ad-text-secondary)]">Last 24 hours</span>
-          </div>
-          <div className="space-y-1">
-            {[
-              { rank: 1, title: "Local Election Results: Full Coverage of Dhaka North", views: "12,847", shares: 342 },
-              { rank: 2, title: "Budget Analysis 2026: What It Means for the Middle Class", views: "9,234", shares: 287 },
-              { rank: 3, title: "Cyclone Warning: Coastal Areas on High Alert", views: "8,612", shares: 523 },
-              { rank: 4, title: "Interview: Education Minister on National Curriculum Reform", views: "7,445", shares: 198 },
-              { rank: 5, title: "Economic Growth Projections: Bangladesh GDP 2026 Outlook", views: "6,123", shares: 156 },
-            ].map((article) => (
-              <div key={article.rank} className="flex items-center gap-4 px-3 py-2.5 hover:bg-[var(--ad-paper)] transition-colors">
-                <span className="font-editorial-display text-xl font-black text-[var(--ad-text-secondary)] w-6 text-right">{article.rank}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--ad-text-primary)] truncate">{article.title}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-editorial-mono text-xs font-medium text-[var(--ad-text-primary)]">{article.views}</p>
-                  <p className="font-editorial-mono text-[10px] text-[var(--ad-text-secondary)]">{article.shares} shares</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <p className="text-xs text-[var(--ad-text-muted)] text-center">
+          পেজভিউ ট্র্যাকিংয়ের জন্য Google Analytics বা Plausible সংযুক্ত করুন।
+        </p>
       </div>
     </AdminShell>
   );

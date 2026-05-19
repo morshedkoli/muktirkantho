@@ -1,20 +1,27 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
+import { CategoriesManager } from "@/components/admin/categories-manager";
 import {
   createCategoryAction,
   deleteCategoryAction,
 } from "@/app/(admin)/admin/actions";
-
-const initialState = { status: "idle" as const };
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
+const initialState = { status: "idle" as const };
+
 export default async function AdminCategoriesPage() {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.category.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { posts: true } } },
+  });
 
   return (
-    <AdminShell title="Categories">
-      <TaxonomyManager
-        title="Category"
+    <AdminShell
+      title="বিভাগ"
+      description="সংবাদের বিভাগ তৈরি ও পরিচালনা করুন।"
+    >
+      <CategoriesManager
         items={categories}
         createAction={createCategoryAction}
         deleteAction={deleteCategoryAction}
