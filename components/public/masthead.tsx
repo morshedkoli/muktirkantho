@@ -57,37 +57,31 @@ export async function Masthead() {
   const hasAny = Boolean(lightLogo || darkLogo);
   const fallbackLogo = lightLogo ?? darkLogo;
 
+  // Admin-configured logo height. Mobile auto-scales to ~75% via CSS calc.
+  const logoH = settings?.logoHeight ?? 48;
+
   return (
     <header className="border-b border-[var(--np-border)] bg-[var(--np-card)]">
       <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 lg:py-5">
         <div className="flex items-center justify-between gap-3 sm:gap-4">
 
-          {/* Logo */}
+          {/* Logo — height is set by admin (branding page); dark: variant swaps logos */}
           <Link href="/" className="block shrink-0" aria-label="Muktir Kantho — হোম">
             {hasBoth ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={lightLogo!}
-                  alt="Muktir Kantho"
-                  className="block dark:hidden h-9 sm:h-10 lg:h-12 w-auto"
-                />
+                <img src={lightLogo!} alt="Muktir Kantho" className="block dark:hidden w-auto"
+                  style={{ height: `${logoH}px` }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={darkLogo!}
-                  alt="Muktir Kantho"
-                  className="hidden dark:block h-9 sm:h-10 lg:h-12 w-auto"
-                />
+                <img src={darkLogo!} alt="Muktir Kantho" className="hidden dark:block w-auto"
+                  style={{ height: `${logoH}px` }} />
               </>
             ) : hasAny ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fallbackLogo!}
-                alt="Muktir Kantho"
-                className="h-9 sm:h-10 lg:h-12 w-auto"
-              />
+              <img src={fallbackLogo!} alt="Muktir Kantho" className="w-auto"
+                style={{ height: `${logoH}px` }} />
             ) : (
-              <SiteLogo width={200} height={50} className="h-9 sm:h-10 lg:h-12 w-auto" />
+              <SiteLogo width={Math.round(logoH * 4)} height={logoH} />
             )}
           </Link>
 
