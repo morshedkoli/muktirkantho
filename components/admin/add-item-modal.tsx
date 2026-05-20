@@ -1,8 +1,18 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useCallback } from "react";
-import { X, Plus, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -30,29 +40,6 @@ export function AddItemModal({
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(createAction, initialState);
 
-  // Close on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen && formRef.current) {
@@ -62,59 +49,40 @@ export function AddItemModal({
 
   const handleSubmit = useCallback(async (formData: FormData) => {
     await formAction(formData);
-    // After form action completes, check if there was an error
-    // If no error, the server action will redirect and close the modal
   }, [formAction]);
-
-  if (!isOpen) return null;
 
   const isUpazila = type === "upazila";
   const isDistrict = type === "district";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-lg bg-[var(--ad-card)] rounded-xl shadow-2xl border border-[var(--ad-border)] animate-in zoom-in-95 fade-in duration-200">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md p-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--ad-border)] bg-[var(--ad-background)] rounded-t-xl">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--ad-text-primary)]">
-              {title}
-            </h2>
-            <p className="text-sm text-[var(--ad-text-secondary)] mt-0.5">
-              Add a new {itemName.toLowerCase()} to your system
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-[var(--ad-card)] text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <DialogHeader className="px-6 py-5 border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50">
+          <DialogTitle className="text-base font-bold text-[var(--ad-text-primary)]">
+            {title}
+          </DialogTitle>
+          <DialogDescription className="text-[10px] text-[var(--ad-text-muted)] font-mono tracking-wider uppercase font-semibold mt-1">
+            Add a new {itemName.toLowerCase()} to your database
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Form */}
-        <form ref={formRef} action={handleSubmit} className="p-6 space-y-5">
+        <form ref={formRef} action={handleSubmit} className="px-6 py-5 space-y-5">
           {/* Name Field */}
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2"
+              className="block text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-secondary)] font-bold mb-2"
             >
               {itemName} Name <span className="text-[var(--ad-error)]">*</span>
             </label>
-            <input
+            <Input
               id="name"
               name="name"
               type="text"
               placeholder={`Enter ${itemName.toLowerCase()} name...`}
-              className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all placeholder:text-[var(--ad-text-secondary)]"
+              className="h-10"
               required
               autoFocus
             />
@@ -124,19 +92,19 @@ export function AddItemModal({
           <div>
             <label
               htmlFor="slug"
-              className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2"
+              className="block text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-secondary)] font-bold mb-2"
             >
-              Slug <span className="text-[var(--ad-text-secondary)] font-normal">(optional)</span>
+              Slug <span className="text-[var(--ad-text-muted)]/70 font-bold">(Optional)</span>
             </label>
-            <input
+            <Input
               id="slug"
               name="slug"
               type="text"
               placeholder="auto-generated-from-name"
-              className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all placeholder:text-[var(--ad-text-secondary)]"
+              className="h-10"
             />
-            <p className="mt-1.5 text-xs text-[var(--ad-text-secondary)]">
-              Used in URLs. Leave blank to auto-generate from name.
+            <p className="mt-1.5 text-[9.5px] text-[var(--ad-text-muted)] font-mono tracking-wider uppercase font-semibold">
+              Used in URLs. Leave blank to auto-generate.
             </p>
           </div>
 
@@ -145,15 +113,14 @@ export function AddItemModal({
             <div>
               <label
                 htmlFor="districtId"
-                className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2"
+                className="block text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-secondary)] font-bold mb-2"
               >
                 District <span className="text-[var(--ad-error)]">*</span>
               </label>
-              <select
+              <Select
                 id="districtId"
                 name="districtId"
                 required
-                className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all"
               >
                 <option value="">Select a district...</option>
                 {districts.map((district) => (
@@ -161,7 +128,7 @@ export function AddItemModal({
                     {district.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
 
@@ -170,14 +137,13 @@ export function AddItemModal({
             <div>
               <label
                 htmlFor="divisionId"
-                className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2"
+                className="block text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-secondary)] font-bold mb-2"
               >
-                Division <span className="text-[var(--ad-text-secondary)] font-normal">(optional)</span>
+                Division <span className="text-[var(--ad-text-muted)]/70 font-bold">(Optional)</span>
               </label>
-              <select
+              <Select
                 id="divisionId"
                 name="divisionId"
-                className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all"
               >
                 <option value="">Select a division...</option>
                 {divisions.map((division) => (
@@ -185,47 +151,50 @@ export function AddItemModal({
                     {division.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
 
           {/* Error Message */}
           {state.status === "error" && (
-            <div className="rounded-lg bg-[var(--ad-error)]/10 border border-[var(--ad-error)]/20 p-3 flex items-start gap-2">
+            <div className="rounded-xl bg-[var(--ad-error)]/5 border border-[var(--ad-error)]/20 p-3.5 flex items-start gap-2.5 animate-in fade-in duration-200">
               <AlertCircle className="h-4 w-4 text-[var(--ad-error)] shrink-0 mt-0.5" />
-              <p className="text-sm text-[var(--ad-error)]">{state.message}</p>
+              <p className="text-xs text-[var(--ad-error)] font-medium leading-normal">{state.message}</p>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--ad-border)]">
+            <Button
               type="button"
+              variant="ghost"
               onClick={onClose}
-              className="px-4 py-2.5 text-sm font-medium text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] bg-transparent hover:bg-[var(--ad-background)] rounded-lg transition-colors"
+              className="text-xs font-mono font-bold uppercase tracking-wider h-10 px-4"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               disabled={pending}
               type="submit"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--ad-primary)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
+              variant="default"
+              className="text-xs font-mono font-bold uppercase tracking-wider h-10 px-5 shadow-lg shadow-[var(--ad-primary)]/20"
             >
               {pending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Creating...
                 </>
               ) : (
                 <>
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   Create {itemName}
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
+

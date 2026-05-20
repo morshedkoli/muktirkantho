@@ -1,40 +1,12 @@
 import Link from "next/link";
-import { unstable_cache } from "next/cache";
-import { prisma } from "@/lib/prisma";
 import { Search, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileNav } from "@/components/public/mobile-nav";
 import { NavLinks } from "@/components/public/nav-links";
-
-const NAV_CATEGORIES = [
-  { slug: "", name: "সর্বশেষ" },
-  { slug: "bangladesh", name: "বাংলাদেশ" },
-  { slug: "politics", name: "রাজনীতি" },
-  { slug: "world", name: "বিশ্ব" },
-  { slug: "business", name: "বাণিজ্য" },
-  { slug: "opinion", name: "মতামত" },
-  { slug: "sports", name: "খেলা" },
-  { slug: "entertainment", name: "বিনোদন" },
-  { slug: "jobs", name: "চাকরি" },
-  { slug: "lifestyle", name: "জীবনযাপন" },
-  { slug: "video", name: "ভিডিও" },
-];
-
-// Cache categories for 5 minutes to avoid a DB hit on every page render
-const getCachedCategories = unstable_cache(
-  () => prisma.category.findMany({ take: 12, orderBy: { name: "asc" } }),
-  ["nav-categories"],
-  { revalidate: 300 }
-);
+import { getHeaderMenuItems } from "@/lib/menus";
 
 export async function Header() {
-  const dbCategories = await getCachedCategories();
-
-  // Merge static nav list with live DB categories — DB takes precedence on slug/name match
-  const mergedCategories: { slug: string; name: string }[] = NAV_CATEGORIES.map((nav) => {
-    const match = dbCategories.find((c) => c.slug === nav.slug || c.name === nav.name);
-    return match ? { slug: match.slug, name: match.name } : nav;
-  });
+  const menuItems = await getHeaderMenuItems();
 
   return (
     <header className="sticky top-0 z-50 bg-[var(--np-card)] border-b border-[var(--np-border)] shadow-sm">
@@ -42,12 +14,12 @@ export async function Header() {
         <nav className="flex items-stretch">
           {/* Mobile hamburger */}
           <div className="flex lg:hidden items-stretch">
-            <MobileNav categories={dbCategories} />
+            <MobileNav menuItems={menuItems} />
           </div>
 
-          {/* Scrollable category strip — client component owns active-state logic */}
+          {/* Scrollable nav strip */}
           <div className="flex flex-1 overflow-x-auto scrollbar-none">
-            <NavLinks categories={mergedCategories} />
+            <NavLinks items={menuItems.map((m) => ({ label: m.label, url: m.url }))} />
           </div>
 
           {/* Right-side utilities */}

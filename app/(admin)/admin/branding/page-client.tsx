@@ -151,10 +151,6 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
         <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-2">
           {title}
         </h2>
-        <p className="text-sm text-[var(--ad-text-secondary)] mb-4">
-          {description}
-        </p>
-
         {/* Upload Area */}
         <div className="mb-4">
           <div className="border-2 border-dashed border-[var(--ad-border)] rounded-lg p-6 text-center hover:border-[var(--ad-primary)] transition-colors bg-[var(--ad-background)]">
@@ -252,12 +248,9 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
 
         {/* Current Branding Preview */}
         <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
-          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-1">
+          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
             Live Preview
           </h2>
-          <p className="text-sm text-[var(--ad-text-secondary)] mb-4">
-            How each logo appears on the public site in light and dark themes.
-          </p>
 
           {/* Logo size control */}
           <div className="mb-5 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] p-4">
@@ -266,9 +259,6 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
                 <label htmlFor="logoHeight" className="text-sm font-medium text-[var(--ad-text-primary)]">
                   Logo display height
                 </label>
-                <p className="text-xs text-[var(--ad-text-secondary)] mt-0.5">
-                  Applies to the masthead and login page. Mobile auto-scales smaller.
-                </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <input
@@ -356,11 +346,6 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
                   <SiteLogoDark width={200} height={form.logoHeight} />
                 )}
               </div>
-              {!form.iconUrl && form.logoUrl && (
-                <p className="mt-2 font-mono text-[10px] text-[var(--ad-text-secondary)]">
-                  No dark-mode logo uploaded — main logo will be used in dark theme.
-                </p>
-              )}
             </div>
           </div>
         </section>
@@ -406,9 +391,6 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
             Default SVG Logos (Auto Dark Mode)
           </h2>
-          <p className="text-sm text-[var(--ad-text-secondary)] mb-4">
-            If no custom logo is uploaded, these default SVG logos will be used. They automatically adapt to both light and dark modes for maximum visibility.
-          </p>
 
           <div className="grid gap-6 md:grid-cols-2">
             <div>

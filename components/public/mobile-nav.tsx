@@ -4,20 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, Search, FileText, Globe, User } from "lucide-react";
 
-type MobileNavProps = {
-  categories: Array<{ id: string; name: string; slug: string }>;
+type MenuItem = {
+  id: string;
+  label: string;
+  url: string;
+  openInNewTab: boolean;
 };
 
-export function MobileNav({ categories }: MobileNavProps) {
-  const [open, setOpen] = useState(false);
+type MobileNavProps = {
+  menuItems: MenuItem[];
+};
 
+export function MobileNav({ menuItems }: MobileNavProps) {
+  const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; };
+    return () => { document.body.style.overflow = prev; };
   }, [open]);
 
   return (
@@ -31,7 +37,7 @@ export function MobileNav({ categories }: MobileNavProps) {
         {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
-      {open ? (
+      {open && (
         <div className="lg:hidden">
           <button
             type="button"
@@ -52,25 +58,26 @@ export function MobileNav({ categories }: MobileNavProps) {
               </Link>
             </div>
 
-            {/* Categories */}
+            {/* Menu items */}
             <div className="space-y-0.5 px-3 py-4">
-              <Link
-                href="/"
-                onClick={close}
-                className="block rounded-md px-3 py-2.5 text-sm font-semibold text-[var(--np-text-primary)] hover:bg-[var(--np-newsprint-2)]"
-              >
-                সর্বশেষ
-              </Link>
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/category/${category.slug}`}
-                  onClick={close}
-                  className="block rounded-md px-3 py-2.5 text-sm text-[var(--np-text-soft)] hover:bg-[var(--np-newsprint-2)]"
-                >
-                  {category.name}
-                </Link>
-              ))}
+              {menuItems.length === 0 ? (
+                <p className="px-3 py-2 text-sm text-[var(--np-text-secondary)]">
+                  No menu items configured.
+                </p>
+              ) : (
+                menuItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.url}
+                    onClick={close}
+                    target={item.openInNewTab ? "_blank" : undefined}
+                    rel={item.openInNewTab ? "noopener noreferrer" : undefined}
+                    className="block rounded-md px-3 py-2.5 text-sm text-[var(--np-text-soft)] hover:bg-[var(--np-newsprint-2)]"
+                  >
+                    {item.label}
+                  </Link>
+                ))
+              )}
             </div>
 
             {/* Utility links */}
@@ -101,7 +108,7 @@ export function MobileNav({ categories }: MobileNavProps) {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </>
   );
 }

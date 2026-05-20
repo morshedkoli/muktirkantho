@@ -3,6 +3,10 @@
 import { useActionState, useState } from "react";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
 import { saveSiteSettingsAction } from "@/app/(admin)/admin/actions";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type SiteSettingsFormProps = {
   initial: {
@@ -34,70 +38,64 @@ export function SiteSettingsForm({ initial }: SiteSettingsFormProps) {
         <p className="rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-4 py-3 text-sm text-[var(--ad-error)]">{state.message}</p>
       ) : null}
 
-      <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
-        <h3 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-2">
-          Footer Contact Information
-        </h3>
-        <p className="text-sm text-[var(--ad-text-secondary)] mb-6">
-          This information appears in the footer Contact Us section.
-        </p>
-
-        <div className="space-y-5">
+      <Card>
+        <CardHeader>
+          <CardTitle>Footer Contact Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[var(--ad-text-secondary)] mb-2 font-mono">
               Address
             </label>
-            <textarea
+            <Textarea
               name="contactAddress"
               value={form.contactAddress}
               onChange={(event) => setForm((prev) => ({ ...prev, contactAddress: event.target.value }))}
               rows={3}
               placeholder="123 News Street, Dhaka-1200, Bangladesh"
-              className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2.5 text-sm text-[var(--ad-text-primary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 outline-none transition-all"
             />
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--ad-text-secondary)] mb-2 font-mono">
                 Phone
               </label>
-              <input
+              <Input
                 name="contactPhone"
                 type="text"
                 value={form.contactPhone}
                 onChange={(event) => setForm((prev) => ({ ...prev, contactPhone: event.target.value }))}
                 placeholder="+880 1234-567890"
-                className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2.5 text-sm text-[var(--ad-text-primary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--ad-text-secondary)] mb-2 font-mono">
                 Email
               </label>
-              <input
+              <Input
                 name="contactEmail"
                 type="email"
                 value={form.contactEmail}
                 onChange={(event) => setForm((prev) => ({ ...prev, contactEmail: event.target.value }))}
                 placeholder="editor@muktirkantho.com"
-                className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2.5 text-sm text-[var(--ad-text-primary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 outline-none transition-all"
               />
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <div className="flex justify-end">
-        <button
+        <Button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-[var(--ad-primary)] px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--ad-primary)]/20 hover:bg-[var(--ad-primary-hover)] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+          className="bg-[var(--ad-primary)] shadow-lg shadow-[var(--ad-primary)]/20 hover:bg-[var(--ad-primary-hover)] text-white text-xs uppercase tracking-wider font-bold px-6"
         >
           {pending ? "Saving..." : "Save Settings"}
-        </button>
+        </Button>
       </div>
     </form>
   );
 }
+

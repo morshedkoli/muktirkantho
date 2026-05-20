@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { GeoManager } from "@/components/admin/geo-manager";
+import { LocationManager } from "@/components/admin/location-manager";
 import {
     createDivisionAction,
     deleteDivisionAction,
@@ -40,7 +40,7 @@ export default async function AdminDivisionsPage() {
                 </a>
             }
         >
-            <GeoManager
+            <LocationManager
                 type="division"
                 items={divisions.map(d => ({
                     id: d.id,

@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
+import { CategoryManager } from "@/components/admin/category-manager";
 import {
   createCategoryAction,
   deleteCategoryAction,
@@ -9,13 +9,15 @@ const initialState = { status: "idle" as const };
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminCategoriesPage() {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.category.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { posts: true } } },
+  });
 
   return (
     <AdminShell title="Categories">
-      <TaxonomyManager
-        title="Category"
-        items={categories}
+      <CategoryManager
+        categories={categories}
         createAction={createCategoryAction}
         deleteAction={deleteCategoryAction}
         initialState={initialState}

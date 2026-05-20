@@ -6,6 +6,15 @@ import { Plus, Trash2, Loader2, Tag, MapPin, MapPinned } from "lucide-react";
 import { useToast } from "@/components/admin/toast-provider";
 import { useConfirm } from "@/components/admin/confirm-provider";
 import { AddItemModal } from "./add-item-modal";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Item = {
   id: string;
@@ -82,19 +91,27 @@ function DeleteItemButton({
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleDelete}
-      disabled={isDeleting}
-      className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-50"
-      title={`Delete ${title}`}
-    >
-      {isDeleting ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Trash2 className="h-4 w-4" />
-      )}
-    </button>
+    <Tooltip delayDuration={50}>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          onClick={handleDelete}
+          disabled={isDeleting}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-50 cursor-pointer"
+        >
+          {isDeleting ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--ad-error)]" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">
+        Delete {title}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -121,118 +138,123 @@ export function TaxonomyManager({
   else if (isUpazila) modalType = "upazila";
 
   return (
-    <div className="space-y-6">
-      {/* Header with Add Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)]">
-            {title} Management
-          </h2>
-          <p className="text-sm text-[var(--ad-text-secondary)] mt-1">
-            Manage your {title.toLowerCase()}s and their associations
-          </p>
-        </div>
-        {!disableActions && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 sm:px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] transition-all shadow-sm hover:shadow-md w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4" />
-            Add {title}
-          </button>
-        )}
-      </div>
-
-      {/* Add Item Modal */}
-      {!disableActions && (
-        <AddItemModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={`Add New ${title}`}
-          itemName={title}
-          createAction={createAction}
-          initialState={initialState}
-          districts={districts}
-          divisions={divisions}
-          type={modalType}
-        />
-      )}
-
-      {/* Items List */}
-      <div className="rounded-xl bg-[var(--ad-card)] shadow-[var(--ad-shadow)] border border-[var(--ad-border)] overflow-hidden">
-        <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)] px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[var(--ad-text-primary)] uppercase tracking-wider">
-            All {title}s
-          </h3>
-          <span className="text-xs text-[var(--ad-text-secondary)] bg-[var(--ad-background)] px-2.5 py-1 rounded-full border border-[var(--ad-border)]">
-            {items.length} total
-          </span>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--ad-background)] mb-4">
-              {isCategory && <Tag className="h-8 w-8 text-[var(--ad-text-secondary)]" />}
-              {isDistrict && <MapPin className="h-8 w-8 text-[var(--ad-text-secondary)]" />}
-              {!isCategory && !isDistrict && <MapPinned className="h-8 w-8 text-[var(--ad-text-secondary)]" />}
-            </div>
-            <p className="text-[var(--ad-text-primary)] font-medium">No {title.toLowerCase()}s yet</p>
-            {!disableActions && (
-              <p className="text-sm text-[var(--ad-text-secondary)] mt-1">
-                Click the button above to add your first {title.toLowerCase()}
-              </p>
-            )}
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Header with Add Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-[var(--ad-text-primary)]">
+              {title} Management
+            </h2>
+            <p className="text-xs text-[var(--ad-text-secondary)] font-medium mt-1">
+              Manage your {title.toLowerCase()}s and their associations
+            </p>
           </div>
-        ) : (
-          <div className="divide-y divide-[var(--ad-border)]">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-[var(--ad-background)] transition-colors group"
-              >
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--ad-background)] text-[var(--ad-text-secondary)] group-hover:bg-[var(--ad-card)] group-hover:text-[var(--ad-primary)] group-hover:shadow-sm transition-all border border-[var(--ad-border)]">
-                    {isCategory && <Tag className="h-5 w-5" />}
-                    {isDistrict && <MapPin className="h-5 w-5" />}
-                    {!isCategory && !isDistrict && <MapPinned className="h-5 w-5" />}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-[var(--ad-text-primary)] text-sm sm:text-base truncate">{item.name}</p>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
-                      <span className="text-xs text-[var(--ad-text-secondary)] font-mono">/{item.slug}</span>
-                      {isUpazila && item.district && (
-                        <>
-                          <span className="text-[var(--ad-border)]">•</span>
-                          <span className="text-xs text-[var(--ad-text-secondary)]">{item.district.name}</span>
-                        </>
-                      )}
-                      {isDistrict && item.division && (
-                        <>
-                          <span className="text-[var(--ad-border)]">•</span>
-                          <span className="text-xs text-[var(--ad-text-secondary)]">{item.division.name}</span>
-                        </>
-                      )}
-                      {item._count && (
-                        <>
-                          <span className="text-[var(--ad-border)]">•</span>
-                          <span className="text-xs text-[var(--ad-text-secondary)]">{item._count.posts} posts</span>
-                        </>
-                      )}
+          {!disableActions && (
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[var(--ad-green)] shadow-lg shadow-[var(--ad-green)]/20 hover:bg-[var(--ad-green-hover)] text-white w-full sm:w-auto text-xs uppercase tracking-wider font-bold"
+            >
+              <Plus className="h-4 w-4" />
+              Add {title}
+            </Button>
+          )}
+        </div>
+
+        {/* Add Item Modal */}
+        {!disableActions && (
+          <AddItemModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            title={`Add New ${title}`}
+            itemName={title}
+            createAction={createAction}
+            initialState={initialState}
+            districts={districts}
+            divisions={divisions}
+            type={modalType}
+          />
+        )}
+
+        {/* Items List */}
+        <Card className="overflow-hidden">
+          <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50 px-5 py-4 flex items-center justify-between">
+            <h3 className="text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-primary)] font-bold">
+              All {title}s
+            </h3>
+            <Badge variant="secondary">
+              {items.length} total
+            </Badge>
+          </div>
+
+          {items.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--ad-background)] mb-4">
+                {isCategory && <Tag className="h-7 w-7 text-[var(--ad-text-secondary)]" />}
+                {isDistrict && <MapPin className="h-7 w-7 text-[var(--ad-text-secondary)]" />}
+                {!isCategory && !isDistrict && <MapPinned className="h-7 w-7 text-[var(--ad-text-secondary)]" />}
+              </div>
+              <p className="text-[var(--ad-text-primary)] font-bold">No {title.toLowerCase()}s yet</p>
+              {!disableActions && (
+                <p className="text-xs text-[var(--ad-text-secondary)] mt-1 font-medium">
+                  Click the button above to add your first {title.toLowerCase()}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--ad-border)]">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between px-5 py-4 hover:bg-[var(--ad-background)]/30 transition-colors group"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ad-border)]/20 text-[var(--ad-text-secondary)] group-hover:bg-[var(--ad-green-light)] group-hover:text-[var(--ad-green)] group-hover:border-[var(--ad-green)]/20 transition-all border border-[var(--ad-border)] shrink-0">
+                      {isCategory && <Tag className="h-5 w-5" />}
+                      {isDistrict && <MapPin className="h-5 w-5" />}
+                      {!isCategory && !isDistrict && <MapPinned className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[var(--ad-text-primary)] text-[14px] sm:text-[14.5px] truncate font-bangla">{item.name}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                        <span className="text-[11px] text-[var(--ad-text-muted)] font-mono font-medium">/{item.slug}</span>
+                        {isUpazila && item.district && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-[var(--ad-text-muted)] opacity-40 shrink-0" />
+                            <span className="text-xs font-semibold text-[var(--ad-text-secondary)]">{item.district.name}</span>
+                          </>
+                        )}
+                        {isDistrict && item.division && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-[var(--ad-text-muted)] opacity-40 shrink-0" />
+                            <span className="text-xs font-semibold text-[var(--ad-text-secondary)]">{item.division.name}</span>
+                          </>
+                        )}
+                        {item._count && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-[var(--ad-text-muted)] opacity-40 shrink-0" />
+                            <Badge variant="success">
+                              {item._count.posts} posts
+                            </Badge>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <DeleteItemButton
-                  item={item}
-                  title={title}
-                  deleteAction={deleteAction}
-                  disabled={disableActions}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+                  <DeleteItemButton
+                    item={item}
+                    title={title}
+                    deleteAction={deleteAction}
+                    disabled={disableActions}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
+

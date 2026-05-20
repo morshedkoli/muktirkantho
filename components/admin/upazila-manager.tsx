@@ -6,6 +6,15 @@ import { Plus, Trash2, Loader2, MapPinned, ChevronDown, ChevronRight } from "luc
 import { useToast } from "@/components/admin/toast-provider";
 import { useConfirm } from "@/components/admin/confirm-provider";
 import { AddItemModal } from "./add-item-modal";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type District = {
   id: string;
@@ -78,19 +87,27 @@ function DeleteUpazilaButton({
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleDelete}
-      disabled={isDeleting}
-      className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
-      title="Delete Upazila"
-    >
-      {isDeleting ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Trash2 className="h-4 w-4" />
-      )}
-    </button>
+    <Tooltip delayDuration={50}>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          onClick={handleDelete}
+          disabled={isDeleting}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 cursor-pointer"
+        >
+          {isDeleting ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--ad-error)]" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">
+        Delete Upazila
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -108,23 +125,23 @@ function DistrictSection({
       {/* District Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-6 py-4 bg-[var(--ad-card)] hover:bg-[var(--ad-background)]/50 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 bg-[var(--ad-card)] hover:bg-[var(--ad-background)]/50 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ad-primary)]/10 text-[var(--ad-primary)]">
-            <span className="text-xs font-bold">{district.name.charAt(0)}</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ad-primary)]/10 text-[var(--ad-primary)] font-bold text-xs">
+            {district.name.charAt(0)}
           </div>
           <div className="text-left">
-            <h4 className="font-semibold text-[var(--ad-text-primary)]">{district.name}</h4>
-            <p className="text-xs text-[var(--ad-text-secondary)]">{district.upazilas.length} upazila{district.upazilas.length !== 1 ? 's' : ''}</p>
+            <h4 className="font-bold text-[var(--ad-text-primary)] text-sm">{district.name}</h4>
+            <p className="text-xs text-[var(--ad-text-secondary)] font-medium">{district.upazilas.length} upazila{district.upazilas.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--ad-text-secondary)] font-mono">/{district.slug}</span>
+          <span className="text-xs text-[var(--ad-text-secondary)] font-mono font-medium">/{district.slug}</span>
           {isExpanded ? (
-            <ChevronDown className="h-5 w-5 text-[var(--ad-text-secondary)]" />
+            <ChevronDown className="h-4 w-4 text-[var(--ad-text-secondary)]" />
           ) : (
-            <ChevronRight className="h-5 w-5 text-[var(--ad-text-secondary)]" />
+            <ChevronRight className="h-4 w-4 text-[var(--ad-text-secondary)]" />
           )}
         </div>
       </button>
@@ -133,7 +150,7 @@ function DistrictSection({
       {isExpanded && (
         <div className="divide-y divide-[var(--ad-border)]">
           {district.upazilas.length === 0 ? (
-            <div className="px-6 py-4 text-sm text-[var(--ad-text-secondary)] italic">
+            <div className="px-6 py-4 text-xs text-[var(--ad-text-secondary)] italic font-medium">
               No upazilas in this district yet
             </div>
           ) : (
@@ -147,8 +164,8 @@ function DistrictSection({
                     <MapPinned className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="font-medium text-[var(--ad-text-primary)]">{upazila.name}</p>
-                    <p className="text-xs text-[var(--ad-text-secondary)] font-mono">/{upazila.slug}</p>
+                    <p className="font-bold text-[var(--ad-text-primary)] text-sm">{upazila.name}</p>
+                    <p className="text-xs text-[var(--ad-text-secondary)] font-mono font-medium">/{upazila.slug}</p>
                   </div>
                 </div>
 
@@ -175,71 +192,74 @@ export function UpazilaManager({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
-      {/* Header with Add Button */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)]">
-            Upazila Management
-          </h2>
-          <p className="text-sm text-[var(--ad-text-secondary)] mt-1">
-            Manage upazilas organized by district
-          </p>
-        </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--ad-primary)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] transition-all shadow-sm hover:shadow-md"
-        >
-          <Plus className="h-4 w-4" />
-          Add Upazila
-        </button>
-      </div>
-
-      {/* Add Item Modal */}
-      <AddItemModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Add New Upazila"
-        itemName="Upazila"
-        createAction={createAction}
-        initialState={initialState}
-        districts={districts}
-        type="upazila"
-      />
-
-      {/* Upazilas Grouped by District */}
-      <div className="rounded-xl bg-[var(--ad-card)] shadow-[var(--ad-shadow)] border border-[var(--ad-border)] overflow-hidden">
-        <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)] px-6 py-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[var(--ad-text-primary)] uppercase tracking-wider">
-            Upazilas by District
-          </h3>
-          <span className="text-xs text-[var(--ad-text-secondary)] bg-[var(--ad-background)] px-2.5 py-1 rounded-full border border-[var(--ad-border)]">
-            {upazilasByDistrict.reduce((acc, d) => acc + d.upazilas.length, 0)} total
-          </span>
-        </div>
-
-        {upazilasByDistrict.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--ad-background)] mb-4">
-              <MapPinned className="h-8 w-8 text-[var(--ad-text-secondary)]" />
-            </div>
-            <p className="text-[var(--ad-text-primary)] font-medium">No districts available</p>
-            <p className="text-sm text-[var(--ad-text-secondary)] mt-1">
-              Please add districts first
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Header with Add Button */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-[var(--ad-text-primary)]">
+              Upazila Management
+            </h2>
+            <p className="text-xs text-[var(--ad-text-secondary)] font-medium mt-1">
+              Manage upazilas organized by district
             </p>
           </div>
-        ) : (
-          <div>
-            {upazilasByDistrict.map((district) => (
-              <DistrictSection
-                key={district.id}
-                district={district}
-                deleteAction={deleteAction}
-              />
-            ))}
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[var(--ad-primary)] shadow-lg shadow-[var(--ad-primary)]/20 hover:bg-[var(--ad-primary-hover)] text-white text-xs uppercase tracking-wider font-bold"
+          >
+            <Plus className="h-4 w-4" />
+            Add Upazila
+          </Button>
+        </div>
+
+        {/* Add Item Modal */}
+        <AddItemModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="Add New Upazila"
+          itemName="Upazila"
+          createAction={createAction}
+          initialState={initialState}
+          districts={districts}
+          type="upazila"
+        />
+
+        {/* Upazilas Grouped by District */}
+        <Card className="overflow-hidden">
+          <div className="border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50 px-6 py-4 flex items-center justify-between">
+            <h3 className="text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-primary)] font-bold">
+              Upazilas by District
+            </h3>
+            <Badge variant="secondary">
+              {upazilasByDistrict.reduce((acc, d) => acc + d.upazilas.length, 0)} total
+            </Badge>
           </div>
-        )}
+
+          {upazilasByDistrict.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--ad-background)] mb-4">
+                <MapPinned className="h-8 w-8 text-[var(--ad-text-secondary)]" />
+              </div>
+              <p className="text-[var(--ad-text-primary)] font-bold">No districts available</p>
+              <p className="text-xs text-[var(--ad-text-secondary)] mt-1 font-medium">
+                Please add districts first
+              </p>
+            </div>
+          ) : (
+            <div>
+              {upazilasByDistrict.map((district) => (
+                <DistrictSection
+                  key={district.id}
+                  district={district}
+                  deleteAction={deleteAction}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
+
