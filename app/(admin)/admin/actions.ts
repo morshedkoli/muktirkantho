@@ -827,7 +827,7 @@ export async function saveMenuItemAction(
     });
   }
 
-  revalidateTag("menu-items");
+  revalidateTag("menu-items", {});
   revalidatePath("/", "layout");
   revalidatePath("/admin/menus");
   return { status: "success" };
@@ -836,7 +836,7 @@ export async function saveMenuItemAction(
 export async function deleteMenuItemAction(id: string): Promise<void> {
   await requireActionAdmin();
   await prisma.menuItem.delete({ where: { id } });
-  revalidateTag("menu-items");
+  revalidateTag("menu-items", {});
   revalidatePath("/", "layout");
   revalidatePath("/admin/menus");
 }

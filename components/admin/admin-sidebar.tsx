@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
-  FileText as FileTextIcon,
   Image,
   Tags,
   MapPin,
@@ -21,12 +20,11 @@ import {
   Zap,
   TrendingUp,
   Layout,
-  Lock,
   Navigation,
+  Users,
   ChevronRight,
   ChevronLeft,
   ChevronDown,
-  HelpCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -77,7 +75,6 @@ const navSections: NavSection[] = [
     items: [
       { name: "Facebook", href: "/admin/facebook", icon: Facebook },
       { name: "Queue", href: "/admin/social/queue", icon: Zap },
-      { name: "Templates", href: "/admin/social/templates", icon: FileTextIcon },
     ],
   },
   {
@@ -92,8 +89,7 @@ const navSections: NavSection[] = [
     label: "System",
     items: [
       { name: "Branding", href: "/admin/branding", icon: Palette },
-      { name: "Users", href: "/admin/users", icon: HelpCircle },
-      { name: "Subscribers", href: "/admin/subscribers", icon: Lock },
+      { name: "Users", href: "/admin/users", icon: Users },
       { name: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },
