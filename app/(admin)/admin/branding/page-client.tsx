@@ -296,6 +296,53 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
             <input type="hidden" name="logoHeight" value={form.logoHeight} />
           </div>
 
+          {/* Logo size control */}
+          <div className="mb-5 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] p-4">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div>
+                <label htmlFor="logoHeight" className="text-sm font-medium text-[var(--ad-text-primary)]">
+                  Logo display height
+                </label>
+                <p className="text-xs text-[var(--ad-text-secondary)] mt-0.5">
+                  Applies to the masthead and login page. Mobile auto-scales smaller.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <input
+                  type="number"
+                  min={MIN_LOGO_HEIGHT}
+                  max={MAX_LOGO_HEIGHT}
+                  value={form.logoHeight}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (Number.isFinite(v)) {
+                      setForm((p) => ({ ...p, logoHeight: Math.max(MIN_LOGO_HEIGHT, Math.min(MAX_LOGO_HEIGHT, Math.round(v))) }));
+                    }
+                  }}
+                  className="w-20 rounded-md border border-[var(--ad-border)] bg-[var(--ad-card)] px-2 py-1.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)]"
+                />
+                <span className="font-mono text-xs text-[var(--ad-text-secondary)]">px</span>
+              </div>
+            </div>
+            <input
+              id="logoHeight"
+              type="range"
+              min={MIN_LOGO_HEIGHT}
+              max={MAX_LOGO_HEIGHT}
+              step={2}
+              value={form.logoHeight}
+              onChange={(e) => setForm((p) => ({ ...p, logoHeight: Number(e.target.value) }))}
+              className="w-full accent-[var(--ad-primary)]"
+            />
+            <div className="flex justify-between text-[10px] font-mono text-[var(--ad-text-secondary)] mt-1">
+              <span>{MIN_LOGO_HEIGHT}px</span>
+              <span>Default: {DEFAULT_LOGO_HEIGHT}px</span>
+              <span>{MAX_LOGO_HEIGHT}px</span>
+            </div>
+            {/* Hidden field for form submission */}
+            <input type="hidden" name="logoHeight" value={form.logoHeight} />
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Light Mode Preview — uses Main Logo */}
             <div>
