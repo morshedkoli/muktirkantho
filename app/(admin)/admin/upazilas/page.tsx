@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { GeoManager } from "@/components/admin/geo-manager";
+import { LocationManager } from "@/components/admin/location-manager";
 import { createUpazilaAction, deleteUpazilaAction } from "@/app/(admin)/admin/actions";
 import { prisma } from "@/lib/prisma";
 
@@ -32,7 +32,7 @@ export default async function AdminUpazilasPage() {
         </a>
       }
     >
-      <GeoManager
+      <LocationManager
         type="upazila"
         items={upazilas.map(u => ({
           id: u.id,

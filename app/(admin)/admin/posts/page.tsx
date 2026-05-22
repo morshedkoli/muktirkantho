@@ -15,6 +15,24 @@ import {
   FileText
 } from "lucide-react";
 import { format } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default async function AdminPostsPage() {
   const posts = await prisma.post.findMany({
@@ -26,306 +44,320 @@ export default async function AdminPostsPage() {
   const draftCount = posts.filter(p => p.status === PostStatus.draft).length;
 
   return (
-    <AdminShell
-      title="Manage Posts"
-      description="Create, edit, and manage your news articles"
-      actions={
-        <Link
-          href="/admin/posts/create"
-          className="inline-flex items-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--ad-primary)]/20 hover:bg-[var(--ad-primary-hover)] transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Create Post
-        </Link>
-      }
-    >
-      {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)] border border-[var(--ad-border)]">
-          <div className="flex items-center gap-3">
-            <div className="bg-[var(--ad-primary)] rounded-lg p-2.5 text-white">
-              <FileText className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm text-[var(--ad-text-secondary)]">Total Posts</p>
-              <p className="text-2xl font-bold text-[var(--ad-text-primary)]">{posts.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)] border border-[var(--ad-border)]">
-          <div className="flex items-center gap-3">
-            <div className="bg-[var(--ad-success)] rounded-lg p-2.5 text-white">
-              <CheckCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm text-[var(--ad-text-secondary)]">Published</p>
-              <p className="text-2xl font-bold text-[var(--ad-text-primary)]">{publishedCount}</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl bg-[var(--ad-card)] p-5 shadow-[var(--ad-shadow)] border border-[var(--ad-border)]">
-          <div className="flex items-center gap-3">
-            <div className="bg-[var(--ad-warning)] rounded-lg p-2.5 text-white">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm text-[var(--ad-text-secondary)]">Drafts</p>
-              <p className="text-2xl font-bold text-[var(--ad-text-primary)]">{draftCount}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ad-text-secondary)]" />
-          <input
-            type="text"
-            placeholder="Search posts..."
-            className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] pl-10 pr-4 py-2.5 text-sm text-[var(--ad-text-primary)] outline-none focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 transition-all placeholder:text-[var(--ad-text-secondary)]"
-          />
-        </div>
-        <div className="flex gap-3">
-          <button className="inline-flex items-center gap-2 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] px-4 py-2.5 text-sm font-medium text-[var(--ad-text-primary)] hover:bg-[var(--ad-background)] transition-colors">
-            <Filter className="h-4 w-4" />
-            Filters
-          </button>
-        </div>
-      </div>
-
-      {/* Posts - Mobile Card View */}
-      <div className="lg:hidden space-y-3">
-        {posts.length === 0 ? (
-          <div className="rounded-xl bg-[var(--ad-card)] p-8 shadow-[var(--ad-shadow)] border border-[var(--ad-border)] text-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="bg-[var(--ad-background)] rounded-full p-4">
-                <FileText className="h-8 w-8 text-[var(--ad-text-secondary)]" />
-              </div>
-              <div>
-                <p className="text-[var(--ad-text-primary)] font-medium">No posts yet</p>
-                <p className="text-[var(--ad-text-secondary)] text-sm mt-1">Get started by creating your first post</p>
-              </div>
-              <Link
-                href="/admin/posts/create"
-                className="inline-flex items-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Create Post
-              </Link>
-            </div>
-          </div>
-        ) : (
-          posts.map((post) => (
-            <div key={post.id} className="rounded-xl bg-[var(--ad-card)] shadow-[var(--ad-shadow)] border border-[var(--ad-border)] overflow-hidden">
-              <div className="flex gap-3 p-3">
-                {/* Thumbnail */}
-                <div className="h-16 w-20 rounded-lg bg-[var(--ad-background)] overflow-hidden shrink-0 border border-[var(--ad-border)]">
-                  {post.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={post.imageUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-[var(--ad-text-secondary)]" />
-                    </div>
-                  )}
-                </div>
-                {/* Info */}
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-[var(--ad-text-primary)] line-clamp-2 leading-tight">
-                    {post.title}
-                  </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <span className="inline-flex items-center rounded-full bg-[var(--ad-accent)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--ad-accent)]">
-                      {post.category.name}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${post.status === "published"
-                      ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
-                      : "bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]"
-                      }`}>
-                      <span className={`h-1 w-1 rounded-full ${post.status === "published" ? "bg-[var(--ad-success)]" : "bg-[var(--ad-warning)]"}`} />
-                      {post.status === "published" ? "Published" : "Draft"}
-                    </span>
+    <TooltipProvider>
+      <AdminShell
+        title="Manage Posts"
+        description="Create, edit, publish and analyze all your articles."
+        actions={
+          <Button asChild variant="default" size="sm">
+            <Link href="/admin/posts/create">
+              <Plus className="h-4 w-4" />
+              Create Post
+            </Link>
+          </Button>
+        }
+      >
+        {/* Stats Cards */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+          {[
+            { label: "Total Posts", value: posts.length, Icon: FileText, bg: "bg-[var(--ad-breaking)]/10", fg: "text-[var(--ad-breaking)]", bar: "bg-[var(--ad-breaking)]" },
+            { label: "Published Articles", value: publishedCount, Icon: CheckCircle, bg: "bg-[var(--ad-success)]/10", fg: "text-[var(--ad-success)]", bar: "bg-[var(--ad-success)]" },
+            { label: "Draft Publications", value: draftCount, Icon: Clock, bg: "bg-[var(--ad-border)]/45", fg: "text-[var(--ad-text-secondary)]", bar: "bg-[var(--ad-text-muted)]" },
+          ].map((c) => {
+            const Icon = c.Icon;
+            return (
+              <Card key={c.label} className="relative overflow-hidden">
+                <div className={`absolute top-0 left-0 right-0 h-[3px] ${c.bar}`} />
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${c.bg} ${c.fg} border border-transparent`}>
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <p className="mt-1 text-[10px] text-[var(--ad-text-secondary)]">
-                    {post.district.name} · {format(post.updatedAt, "MMM d, yyyy")}
-                  </p>
-                </div>
-              </div>
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-1 border-t border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2">
-                <Link
-                  href={getPostPath(post)}
-                  target="_blank"
-                  className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] hover:bg-[var(--ad-primary)]/10 rounded-lg transition-all text-xs flex items-center gap-1"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>View</span>
-                </Link>
-                <Link
-                  href={`/admin/posts/edit/${post.id}`}
-                  className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] hover:bg-[var(--ad-primary)]/10 rounded-lg transition-all text-xs flex items-center gap-1"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  <span>Edit</span>
-                </Link>
-                <DeletePostButton postId={post.id} postTitle={post.title} />
-              </div>
-            </div>
-          ))
-        )}
-        {/* Mobile post count */}
-        {posts.length > 0 && (
-          <p className="text-center text-xs text-[var(--ad-text-secondary)] py-2">
-            Showing <span className="font-medium text-[var(--ad-text-primary)]">{posts.length}</span> posts
-          </p>
-        )}
-      </div>
+                  <div>
+                    <p className="text-[10px] font-bold tracking-wider uppercase text-[var(--ad-text-muted)] font-mono">{c.label}</p>
+                    <p className="text-2xl font-black text-[var(--ad-text-primary)] leading-none mt-1.5 tracking-tight">{c.value}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
-      {/* Posts - Desktop Table View */}
-      <div className="hidden lg:block rounded-xl bg-[var(--ad-card)] shadow-[var(--ad-shadow)] border border-[var(--ad-border)] overflow-hidden">
-        <div>
-          <table className="w-full table-fixed text-left text-sm">
-            <thead className="bg-[var(--ad-background)] border-b border-[var(--ad-border)]">
-              <tr>
-                <th className="w-[34%] px-4 py-4 font-semibold text-[var(--ad-text-primary)] xl:px-6">Post</th>
-                <th className="w-[14%] px-4 py-4 font-semibold text-[var(--ad-text-primary)] xl:px-6">Category</th>
-                <th className="w-[16%] px-4 py-4 font-semibold text-[var(--ad-text-primary)] xl:px-6">Location</th>
-                <th className="w-[12%] px-4 py-4 font-semibold text-[var(--ad-text-primary)] xl:px-6">Status</th>
-                <th className="w-[12%] px-4 py-4 font-semibold text-[var(--ad-text-primary)] xl:px-6">Date</th>
-                <th className="w-[12%] px-4 py-4 text-right font-semibold text-[var(--ad-text-primary)] xl:px-6">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--ad-border)]">
-              {posts.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="bg-[var(--ad-background)] rounded-full p-4">
-                        <FileText className="h-8 w-8 text-[var(--ad-text-secondary)]" />
-                      </div>
-                      <div>
-                        <p className="text-[var(--ad-text-primary)] font-medium">No posts yet</p>
-                        <p className="text-[var(--ad-text-secondary)] text-sm mt-1">Get started by creating your first post</p>
-                      </div>
-                      <Link
-                        href="/admin/posts/create"
-                        className="inline-flex items-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Create Post
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                posts.map((post) => (
-                  <tr key={post.id} className="hover:bg-[var(--ad-background)] transition-colors group">
-                    <td className="px-4 py-4 xl:px-6">
-                      <div className="flex items-start gap-3">
-                        <div className="h-12 w-16 rounded-lg bg-[var(--ad-background)] overflow-hidden shrink-0 border border-[var(--ad-border)]">
-                          {post.imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={post.imageUrl}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center">
-                              <FileText className="h-5 w-5 text-[var(--ad-text-secondary)]" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-[var(--ad-text-primary)] truncate max-w-xs group-hover:text-[var(--ad-primary)] transition-colors">
-                            {post.title}
-                          </p>
-                          <p className="text-xs text-[var(--ad-text-secondary)] mt-1 truncate max-w-xs">
-                            {post.excerpt.substring(0, 60)}...
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 xl:px-6">
-                      <span className="inline-flex items-center rounded-full bg-[var(--ad-accent)]/10 px-2.5 py-1 text-xs font-medium text-[var(--ad-accent)]">
-                        {post.category.name}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 xl:px-6">
-                      <div className="text-sm text-[var(--ad-text-secondary)]">
-                        <p>{post.district.name}</p>
-                        {post.upazila && (
-                          <p className="text-xs text-[var(--ad-text-secondary)] mt-0.5">{post.upazila.name}</p>
+        {/* Filters and Search */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ad-text-muted)] pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search posts by title or author..."
+              className="pl-10"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="h-10 text-xs font-mono font-bold uppercase tracking-wider text-[var(--ad-text-secondary)]">
+              <Filter className="h-3.5 w-3.5 mr-2" />
+              Filters
+            </Button>
+          </div>
+        </div>
+
+        {/* Posts - Mobile Card View */}
+        <div className="lg:hidden space-y-3">
+          {posts.length === 0 ? (
+            <Card className="text-center">
+              <CardContent className="p-8">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="bg-[var(--ad-background)] rounded-full p-4">
+                    <FileText className="h-8 w-8 text-[var(--ad-text-secondary)]" />
+                  </div>
+                  <div>
+                    <p className="text-[var(--ad-text-primary)] font-bold">No posts found</p>
+                    <p className="text-[var(--ad-text-secondary)] text-xs mt-1">Get started by creating your first post</p>
+                  </div>
+                  <Button asChild variant="default" size="sm">
+                    <Link href="/admin/posts/create">
+                      <Plus className="h-4 w-4" />
+                      Create Post
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            posts.map((post) => {
+              const live = post.status === PostStatus.published;
+              return (
+                <Card key={post.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="flex gap-3.5 p-4">
+                      {/* Thumbnail */}
+                      <div className="h-16 w-20 rounded-lg bg-[var(--ad-background)] overflow-hidden shrink-0 border border-[var(--ad-border)]">
+                        {post.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={post.imageUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center">
+                            <FileText className="h-5 w-5 text-[var(--ad-text-secondary)]" />
+                          </div>
                         )}
                       </div>
-                    </td>
-                    <td className="px-4 py-4 xl:px-6">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${post.status === "published"
-                        ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
-                        : "bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]"
-                        }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${post.status === "published" ? "bg-[var(--ad-success)]" : "bg-[var(--ad-warning)]"
-                          }`} />
-                        {post.status === "published" ? "Published" : "Draft"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-[var(--ad-text-secondary)] xl:px-6">
-                      {format(post.updatedAt, "MMM d, yyyy")}
-                    </td>
-                    <td className="px-4 py-4 xl:px-6">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={getPostPath(post)}
-                          target="_blank"
-                          className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] hover:bg-[var(--ad-primary)]/10 rounded-lg transition-all"
-                          title="View"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                        <Link
-                          href={`/admin/posts/edit/${post.id}`}
-                          className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] hover:bg-[var(--ad-primary)]/10 rounded-lg transition-all"
-                          title="Edit"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Link>
-                        <DeletePostButton
-                          postId={post.id}
-                          postTitle={post.title}
-                        />
+                      {/* Info */}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bangla font-bold text-sm text-[var(--ad-text-primary)] line-clamp-2 leading-snug">
+                          {post.title}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <Badge variant="success">
+                            {post.category.name}
+                          </Badge>
+                          <Badge variant={live ? "success" : "warning"}>
+                            <span className={`w-1 h-1 rounded-full mr-1 ${live ? "bg-[var(--ad-green)] animate-pulse" : "bg-[var(--ad-amber)]"}`} />
+                            {live ? "Live" : "Draft"}
+                          </Badge>
+                        </div>
+                        <p className="mt-1.5 text-[10px] text-[var(--ad-text-muted)] font-semibold uppercase tracking-wider">
+                          {post.district.name} · {format(post.updatedAt, "MMM d, yyyy")}
+                        </p>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-1.5 border-t border-[var(--ad-border)] bg-[var(--ad-background)]/50 px-3.5 py-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button asChild variant="ghost" size="sm" className="h-8 px-2">
+                            <Link href={getPostPath(post)} target="_blank">
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button asChild variant="ghost" size="sm" className="h-8 px-2">
+                            <Link href={`/admin/posts/edit/${post.id}`}>
+                              <Edit2 className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
+                      <DeletePostButton postId={post.id} postTitle={post.title} />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+          {/* Mobile post count */}
+          {posts.length > 0 && (
+            <p className="text-center text-[10.5px] font-bold uppercase tracking-wider text-[var(--ad-text-muted)] py-3 font-mono">
+              Showing <span className="text-[var(--ad-text-primary)] font-extrabold">{posts.length}</span> posts
+            </p>
+          )}
         </div>
 
-        {/* Table Footer */}
-        {posts.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-[var(--ad-border)] bg-[var(--ad-background)]">
-            <p className="text-sm text-[var(--ad-text-secondary)]">
-              Showing <span className="font-medium text-[var(--ad-text-primary)]">{posts.length}</span> posts
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                disabled
-                className="px-3 py-1.5 text-sm font-medium text-[var(--ad-text-secondary)] border border-[var(--ad-border)] rounded-lg disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                disabled
-                className="px-3 py-1.5 text-sm font-medium text-[var(--ad-text-secondary)] border border-[var(--ad-border)] rounded-lg disabled:opacity-50"
-              >
-                Next
-              </button>
+        {/* Posts - Desktop Table View */}
+        <Card className="hidden lg:block overflow-hidden">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[38%] pl-6">Article</TableHead>
+                  <TableHead className="w-[14%]">Category</TableHead>
+                  <TableHead className="w-[16%]">Location</TableHead>
+                  <TableHead className="w-[12%]">Status</TableHead>
+                  <TableHead className="w-[10%]">Updated Date</TableHead>
+                  <TableHead className="w-[10%] pr-6 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {posts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="bg-[var(--ad-background)] rounded-full p-4">
+                          <FileText className="h-8 w-8 text-[var(--ad-text-secondary)]" />
+                        </div>
+                        <div>
+                          <p className="text-[var(--ad-text-primary)] font-bold">No posts found</p>
+                          <p className="text-[var(--ad-text-secondary)] text-xs mt-1">Get started by creating your first post</p>
+                        </div>
+                        <Button asChild variant="default" size="sm">
+                          <Link href="/admin/posts/create">
+                            <Plus className="h-4 w-4" />
+                            Create Post
+                          </Link>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  posts.map((post) => {
+                    const live = post.status === PostStatus.published;
+                    return (
+                      <TableRow key={post.id} className="group">
+                        <TableCell className="pl-6">
+                          <div className="flex items-center gap-3.5">
+                            <div className="h-10 w-14 rounded-lg bg-[var(--ad-background)] overflow-hidden shrink-0 border border-[var(--ad-border)] shadow-sm">
+                              {post.imageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={post.imageUrl}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center">
+                                  <FileText className="h-4 w-4 text-[var(--ad-text-secondary)]" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bangla font-bold text-[13px] text-[var(--ad-text-primary)] truncate max-w-sm group-hover:text-[var(--ad-primary)] transition-colors leading-normal">
+                                {post.title}
+                              </p>
+                              <p className="text-[11.5px] text-[var(--ad-text-secondary)] mt-0.5 truncate max-w-xs leading-normal">
+                                {post.excerpt.substring(0, 50)}...
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="success">
+                            {post.category.name}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-[12.5px] text-[var(--ad-text-secondary)] font-medium">
+                            <p className="font-bold text-[var(--ad-text-primary)] font-bangla">{post.district.name}</p>
+                            {post.upazila && (
+                              <p className="text-[11px] text-[var(--ad-text-muted)] mt-0.5 font-bangla">{post.upazila.name}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={live ? "success" : "warning"}>
+                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${live ? "bg-[var(--ad-green)] animate-pulse" : "bg-[var(--ad-amber)]"}`} />
+                            {live ? "Live" : "Draft"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-[11px] font-bold text-[var(--ad-text-muted)]">
+                          {format(post.updatedAt, "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell className="pr-6 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button asChild variant="icon" size="icon" className="h-8 w-8 rounded-lg">
+                                  <Link href={getPostPath(post)} target="_blank">
+                                    <Eye className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>View</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button asChild variant="icon" size="icon" className="h-8 w-8 rounded-lg">
+                                  <Link href={`/admin/posts/edit/${post.id}`}>
+                                    <Edit2 className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div>
+                                  <DeletePostButton
+                                    postId={post.id}
+                                    postTitle={post.title}
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+
+          {/* Table Footer */}
+          {posts.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-[var(--ad-border)] bg-[var(--ad-background)]/50">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--ad-text-muted)] font-mono">
+                Showing <span className="text-[var(--ad-text-primary)] font-extrabold">{posts.length}</span> posts
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  disabled
+                  variant="outline"
+                  size="sm"
+                  className="text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-40 cursor-not-allowed bg-[var(--ad-card)]"
+                >
+                  Previous
+                </Button>
+                <Button
+                  disabled
+                  variant="outline"
+                  size="sm"
+                  className="text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-40 cursor-not-allowed bg-[var(--ad-card)]"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </AdminShell>
+          )}
+        </Card>
+      </AdminShell>
+    </TooltipProvider>
   );
 }
+

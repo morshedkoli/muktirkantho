@@ -1,31 +1,46 @@
 import { AdminShell } from "@/components/admin/admin-shell";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { prisma } from "@/lib/prisma";
 import { TagsClient } from "./tags-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function TagsPage() {
-  // Fetch all posts and aggregate tags server-side
-  const posts = await prisma.post.findMany({ select: { tags: true } });
+  const posts = await prisma.post.findMany({
+    select: { tags: true },
+  });
 
-  const countMap = new Map<string, number>();
-  for (const post of posts) {
-    for (const tag of post.tags) {
-      const t = tag.trim();
-      if (t) countMap.set(t, (countMap.get(t) ?? 0) + 1);
+  const tagCounts: Record<string, number> = {};
+  posts.forEach((post) => {
+    if (post.tags) {
+      post.tags.forEach((tag) => {
+        const trimmed = tag.trim();
+        if (trimmed) {
+          const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+          tagCounts[formatted] = (tagCounts[formatted] || 0) + 1;
+        }
+      });
     }
-  }
+  });
 
-  const tags = Array.from(countMap.entries())
-    .map(([name, count]) => ({ name, count }))
+  const tags = Object.entries(tagCounts)
+    .map(([name, count]) => ({
+      name,
+      count,
+      trend: "+0%",
+    }))
     .sort((a, b) => b.count - a.count);
 
   return (
-    <AdminShell
-      title="ট্যাগ"
-      description="পোস্টের ট্যাগসমূহ পর্যালোচনা করুন।"
-    >
-      <TagsClient tags={tags} totalPosts={posts.length} />
-    </AdminShell>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <AdminShell
+          title="Tags"
+          description="Manage and analyze news tags. Tags are automatically generated from your articles."
+        >
+          <TagsClient initialTags={tags} />
+        </AdminShell>
+      </div>
+    </TooltipProvider>
   );
 }

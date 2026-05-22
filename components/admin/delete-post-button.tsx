@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { deletePostAction } from "@/app/(admin)/admin/actions";
 import { useToast } from "@/components/admin/toast-provider";
 import { useConfirm } from "@/components/admin/confirm-provider";
+import { Button } from "@/components/ui/button";
 
 interface DeletePostButtonProps {
   postId: string;
@@ -47,13 +48,15 @@ export function DeletePostButton({ postId, postTitle }: DeletePostButtonProps) {
   };
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handleDelete}
-      className="p-2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-      title="Delete"
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
     >
       <Trash2 className="h-4 w-4" />
-    </button>
+    </Button>
   );
 }
+

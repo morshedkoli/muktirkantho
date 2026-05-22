@@ -31,6 +31,7 @@ model Post {
   featured        Boolean    @default(false)
   status          PostStatus @default(draft)
   publishedAt     DateTime?
+  viewCount       Int        @default(0)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -130,17 +131,18 @@ model SiteSetting {
 }
 
 model MenuItem {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  label      String
-  href       String
-  icon       String?
-  order      Int      @default(0)
-  isActive   Boolean  @default(true)
-  openNewTab Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  label       String
+  url         String
+  location    String   // "header", "footer", "footer_bottom", "social"
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  openInNewTab Boolean @default(false)
+  icon        String?  // platform name for social links
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@index([isActive, order])
+  @@index([location, isActive, order])
 }
 
 model Ad {
@@ -155,4 +157,26 @@ model Ad {
   updatedAt     DateTime @updatedAt
 
   @@index([placement, isActive, createdAt])
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  author    String
+  content   String
+  status    String   // "pending", "approved", "spam"
+  article   String
+  sentiment String   // "positive", "negative", "neutral", "spam"
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String   @unique
+  role      String   // "Super Admin", "Editor", "Reporter", "Contributor"
+  status    String   // "active", "inactive"
+  articles  Int      @default(0)
+  lastActive String
+  avatar    String
+  createdAt DateTime @default(now())
 }

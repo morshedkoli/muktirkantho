@@ -3,9 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, Search, User } from "lucide-react";
-import type { NavMenuItem } from "./nav-links";
 
-export function MobileNav({ items }: { items: NavMenuItem[] }) {
+type MenuItem = {
+  id: string;
+  label: string;
+  url: string;
+  openInNewTab: boolean;
+};
+
+type MobileNavProps = {
+  menuItems: MenuItem[];
+};
+
+export function MobileNav({ menuItems }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -28,7 +38,7 @@ export function MobileNav({ items }: { items: NavMenuItem[] }) {
       </button>
 
       {open && (
-        <>
+        <div className="lg:hidden">
           <button
             type="button"
             aria-label="Close menu"
@@ -50,18 +60,24 @@ export function MobileNav({ items }: { items: NavMenuItem[] }) {
 
             {/* Menu items */}
             <div className="space-y-0.5 px-3 py-4">
-              {items.map((item, i) => (
-                <Link
-                  key={`${item.href}-${i}`}
-                  href={item.href}
-                  target={item.openNewTab ? "_blank" : undefined}
-                  rel={item.openNewTab ? "noreferrer" : undefined}
-                  onClick={close}
-                  className="block rounded-md px-3 py-2.5 text-sm text-[var(--np-text-soft)] hover:bg-[var(--np-newsprint-2)] hover:text-[var(--np-primary)] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {menuItems.length === 0 ? (
+                <p className="px-3 py-2 text-sm text-[var(--np-text-secondary)]">
+                  No menu items configured.
+                </p>
+              ) : (
+                menuItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.url}
+                    onClick={close}
+                    target={item.openInNewTab ? "_blank" : undefined}
+                    rel={item.openInNewTab ? "noopener noreferrer" : undefined}
+                    className="block rounded-md px-3 py-2.5 text-sm text-[var(--np-text-soft)] hover:bg-[var(--np-newsprint-2)]"
+                  >
+                    {item.label}
+                  </Link>
+                ))
+              )}
             </div>
 
             {/* Login */}
@@ -75,7 +91,7 @@ export function MobileNav({ items }: { items: NavMenuItem[] }) {
               </Link>
             </div>
           </div>
-        </>
+        </div>
       )}
     </>
   );

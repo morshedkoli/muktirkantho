@@ -1,7 +1,7 @@
 "use server";
 
 import { PostStatus } from "@prisma/client";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteImage } from "@/lib/cloudinary";
 import { clearAuthCookie, getAuthUser, setAuthCookie, signAdminToken } from "@/lib/auth";
@@ -180,11 +180,12 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
     },
   });
 
-  // Auto-share to Facebook if enabled and post is published
-  if (safe.status === PostStatus.published) {
+  // Share to Facebook if the per-post toggle is on and the post is published.
+  const shareFacebook = formData.get("shareFacebook") === "on";
+  if (safe.status === PostStatus.published && shareFacebook) {
     try {
       const settings = await getSiteSettings();
-      if (settings?.facebookConnected && settings.facebookAutoPost && settings.facebookPageAccessToken) {
+      if (settings?.facebookConnected && settings.facebookPageAccessToken) {
         const { formatFacebookPost, postToFacebookPage } = await import("@/lib/facebook");
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
         const postUrl = `${siteUrl}/news/${slug}`;
@@ -206,8 +207,7 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
         );
       }
     } catch (error) {
-      // Log error but don't fail the post creation
-      console.error("Failed to auto-share to Facebook:", error);
+      console.error("Failed to share to Facebook:", error);
     }
   }
 
@@ -237,7 +237,7 @@ export async function updatePostAction(
   const safe = parsed.data;
   const existing = await prisma.post.findUnique({ where: { id: postId }, select: { publishedAt: true } });
   const slug = await resolveUniquePostSlug(safe.title, postId);
-  await prisma.post.update({
+  const updated = await prisma.post.update({
     where: { id: postId },
     data: {
       ...safe,
@@ -246,7 +246,37 @@ export async function updatePostAction(
       youtubeUrl: safe.youtubeUrl || null,
       publishedAt: safe.status === PostStatus.published ? (existing?.publishedAt ?? new Date()) : null,
     },
+    include: { category: true, district: true },
   });
+
+  // Share to Facebook if the per-post toggle is on and the post is published.
+  const shareFacebook = formData.get("shareFacebook") === "on";
+  if (safe.status === PostStatus.published && shareFacebook) {
+    try {
+      const settings = await getSiteSettings();
+      if (settings?.facebookConnected && settings.facebookPageAccessToken) {
+        const { formatFacebookPost, postToFacebookPage } = await import("@/lib/facebook");
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+        const postUrl = `${siteUrl}/news/${slug}`;
+        const message = formatFacebookPost(
+          safe.title,
+          safe.excerpt,
+          updated.category?.name ?? "News",
+          postUrl,
+          updated.district?.name
+        );
+        await postToFacebookPage(
+          settings.facebookPageId!,
+          settings.facebookPageAccessToken,
+          message,
+          postUrl,
+          safe.imageUrl
+        );
+      }
+    } catch (error) {
+      console.error("Failed to share to Facebook:", error);
+    }
+  }
 
   revalidatePath(`/news/${slug}`);
   revalidatePath("/admin/posts");
@@ -754,4 +784,136 @@ export async function shareToFacebookAction(postId: string) {
     const message = error instanceof Error ? error.message : "Failed to share to Facebook";
     return { status: "error" as const, message };
   }
+}
+
+// ─── Menu Manager ────────────────────────────────────────────────────────────
+
+export async function saveMenuItemAction(
+  _: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  await requireActionAdmin();
+
+  const id = formData.get("_itemId")?.toString().trim() ?? "";
+  const label = formData.get("label")?.toString().trim() ?? "";
+  const location = formData.get("location")?.toString().trim() ?? "";
+  const order = parseInt(formData.get("order")?.toString() ?? "0") || 0;
+  const isActive = formData.get("isActive") === "true";
+  const openInNewTab = formData.get("openInNewTab") === "true";
+  const icon = formData.get("icon")?.toString().trim() || null;
+
+  // Category-based locations derive the URL from the selected slug.
+  // Social / footer_bottom submit a raw url field instead.
+  const categorySlug = formData.get("categorySlug");
+  const url =
+    categorySlug !== null
+      ? (categorySlug as string).trim()
+        ? `/category/${(categorySlug as string).trim()}`
+        : "/"
+      : (formData.get("url")?.toString().trim() ?? "");
+
+  if (!label) return { status: "error", message: "Label is required." };
+  if (!url) return { status: "error", message: "Please select a category or enter a URL." };
+  if (!location) return { status: "error", message: "Location is required." };
+
+  if (id) {
+    await prisma.menuItem.update({
+      where: { id },
+      data: { label, url, location, order, isActive, openInNewTab, icon },
+    });
+  } else {
+    await prisma.menuItem.create({
+      data: { label, url, location, order, isActive, openInNewTab, icon },
+    });
+  }
+
+  revalidateTag("menu-items", {});
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/menus");
+  return { status: "success" };
+}
+
+export async function deleteMenuItemAction(id: string): Promise<void> {
+  await requireActionAdmin();
+  await prisma.menuItem.delete({ where: { id } });
+  revalidateTag("menu-items", {});
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/menus");
+}
+
+export async function approveCommentAction(commentId: string) {
+  await requireActionAdmin();
+  await prisma.comment.update({
+    where: { id: commentId },
+    data: { status: "approved" },
+  });
+  revalidatePath("/admin/comments");
+}
+
+export async function deleteCommentAction(commentId: string) {
+  await requireActionAdmin();
+  await prisma.comment.delete({
+    where: { id: commentId },
+  });
+  revalidatePath("/admin/comments");
+}
+
+export async function approveAllCommentsAction() {
+  await requireActionAdmin();
+  await prisma.comment.updateMany({
+    where: { status: "pending" },
+    data: { status: "approved" },
+  });
+  revalidatePath("/admin/comments");
+}
+
+export async function inviteUserAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
+  await requireActionAdmin();
+  const name = formData.get("name")?.toString().trim() ?? "";
+  const email = formData.get("email")?.toString().trim().toLowerCase() ?? "";
+  const role = formData.get("role")?.toString().trim() ?? "Reporter";
+
+  if (!name || !email) {
+    return { status: "error", message: "Name and Email are required." };
+  }
+
+  // Create user
+  const avatar = name.split(" ").map(p => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "US";
+  try {
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        role,
+        status: "active",
+        articles: 0,
+        lastActive: "Just now",
+        avatar,
+      }
+    });
+  } catch (error) {
+    return { status: "error", message: "User with this email already exists." };
+  }
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?notice=User%20invited&type=success");
+}
+
+export async function toggleUserStatusAction(userId: string) {
+  await requireActionAdmin();
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (user) {
+    const nextStatus = user.status === "active" ? "inactive" : "active";
+    await prisma.user.update({
+      where: { id: userId },
+      data: { status: nextStatus },
+    });
+  }
+  revalidatePath("/admin/users");
+}
+
+export async function removeUserAction(userId: string) {
+  await requireActionAdmin();
+  await prisma.user.delete({ where: { id: userId } });
+  revalidatePath("/admin/users");
 }

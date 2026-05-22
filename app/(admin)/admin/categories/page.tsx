@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { CategoriesManager } from "@/components/admin/categories-manager";
+import { CategoryManager } from "@/components/admin/category-manager";
 import {
   createCategoryAction,
   deleteCategoryAction,
@@ -17,12 +17,9 @@ export default async function AdminCategoriesPage() {
   });
 
   return (
-    <AdminShell
-      title="বিভাগ"
-      description="সংবাদের বিভাগ তৈরি ও পরিচালনা করুন।"
-    >
-      <CategoriesManager
-        items={categories}
+    <AdminShell title="Categories">
+      <CategoryManager
+        categories={categories}
         createAction={createCategoryAction}
         deleteAction={deleteCategoryAction}
         initialState={initialState}

@@ -1,233 +1,168 @@
+import { prisma } from "@/lib/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { Twitter, Facebook, Zap, RefreshCw, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Facebook, Zap, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { PostStatus } from "@prisma/client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { format } from "date-fns";
 
-function CameraIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
-  );
-}
+export const dynamic = "force-dynamic";
 
-function LinkedinIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-    </svg>
-  );
-}
+export default async function SocialQueuePage() {
+  const [posts, settings] = await Promise.all([
+    prisma.post.findMany({
+      select: { id: true, title: true, status: true, publishedAt: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.siteSetting.findFirst(),
+  ]);
 
-const queueItems = [
-  {
-    id: 1,
-    title: "Budget Analysis 2026: Key Takeaways",
-    platform: "twitter",
-    platformName: "X / Twitter",
-    platformIcon: Twitter,
-    platformColor: "bg-black",
-    scheduled: "2026-05-17T14:30:00",
-    status: "scheduled",
-  },
-  {
-    id: 2,
-    title: "Local Election Results: Full Coverage",
-    platform: "facebook",
-    platformName: "Facebook",
-    platformIcon: Facebook,
-    platformColor: "bg-[#1877f2]",
-    scheduled: "2026-05-17T16:00:00",
-    status: "scheduled",
-  },
-  {
-    id: 3,
-    title: "Weather Alert: Cyclone Warning",
-    platform: "twitter",
-    platformName: "X / Twitter",
-    platformIcon: Twitter,
-    platformColor: "bg-black",
-    scheduled: "2026-05-17T18:00:00",
-    status: "scheduled",
-  },
-  {
-    id: 4,
-    title: "Interview: Education Minister on Reform",
-    platform: "instagram",
-    platformName: "Instagram",
-    platformIcon: CameraIcon,
-    platformColor: "bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888]",
-    scheduled: "2026-05-18T10:00:00",
-    status: "scheduled",
-  },
-  {
-    id: 5,
-    title: "Economic Growth Projections 2026",
-    platform: "linkedin",
-    platformName: "LinkedIn",
-    platformIcon: LinkedinIcon,
-    platformColor: "bg-[#0a66c2]",
-    scheduled: "2026-05-17T15:00:00",
-    status: "failed",
-  },
-];
-
-function formatSchedule(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
-export default function SocialQueuePage() {
-  const pending = queueItems.filter((i) => i.status === "scheduled").length;
-  const sent = 47;
-  const failed = queueItems.filter((i) => i.status === "failed").length;
+  const pending = posts.filter((p) => p.status === PostStatus.draft).length;
+  const sent = posts.filter((p) => p.status === PostStatus.published).length;
+  const facebookConnected = settings?.facebookConnected ?? false;
 
   return (
-    <AdminShell
-      title="Social Queue"
-      description="Manage all scheduled, sent, and failed social posts across platforms"
-      actions={
-        <Link
-          href="/admin/social/queue"
-          className="inline-flex items-center gap-2 rounded-lg bg-[var(--ad-ink)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-ink)]/80 transition-all font-editorial-mono tracking-wider uppercase"
+    <TooltipProvider>
+      <div className="space-y-6 animate-fade-in-up">
+        <AdminShell
+          title="Social Queue"
+          description="Manage automated sharing schedules, connected accounts, and queued broadcasts."
+          actions={
+            <Button asChild size="sm" variant="default">
+              <Link href="/admin/facebook">
+                <Facebook className="h-4 w-4" />
+                Facebook Settings
+              </Link>
+            </Button>
+          }
         >
-          <Zap className="h-4 w-4" />
-          New Schedule
-        </Link>
-      }
-    >
-      {/* Status Overview */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">Pending</p>
-              <p className="font-editorial-display text-2xl font-black text-[var(--ad-text-primary)]">{pending}</p>
-            </div>
+          {/* Status Overview */}
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: "Pending (Drafts)", value: pending, icon: Clock, bg: "bg-[var(--ad-amber-light)]", fg: "text-[var(--ad-amber)]" },
+              { label: "Sent / Published", value: sent, icon: CheckCircle, bg: "bg-[var(--ad-green-light)]", fg: "text-[var(--ad-green)]" },
+              { label: "Platform Status", value: facebookConnected ? "Active" : "Disconnected", icon: facebookConnected ? CheckCircle : AlertTriangle, bg: facebookConnected ? "bg-[var(--ad-green-light)]" : "bg-[var(--ad-brand-light)]", fg: facebookConnected ? "text-[var(--ad-green)]" : "text-[var(--ad-brand)]" },
+            ].map((s) => {
+              const Icon = s.icon;
+              return (
+                <Card key={s.label} className="shadow-premium border-[var(--ad-border)] bg-[var(--ad-card)]">
+                  <CardContent className="p-5 flex items-center gap-3.5">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${s.bg} ${s.fg} border border-transparent`}>
+                      <Icon className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ad-text-muted)] font-mono">{s.label}</p>
+                      <p className="text-xl font-black text-[var(--ad-text-primary)] leading-none mt-1 tracking-tight">{s.value}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-        <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center bg-[var(--ad-success)]/10 text-[var(--ad-success)]">
-              <CheckCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">Sent Today</p>
-              <p className="font-editorial-display text-2xl font-black text-[var(--ad-text-primary)]">{sent}</p>
-            </div>
-          </div>
-        </div>
-        <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center bg-[var(--ad-error)]/10 text-[var(--ad-error)]">
-              <AlertCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-editorial-mono text-[10px] tracking-wider uppercase text-[var(--ad-text-secondary)]">Failed</p>
-              <p className="font-editorial-display text-2xl font-black text-[var(--ad-text-primary)]">{failed}</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Queue Table */}
-      <div className="border border-[var(--ad-border)] bg-[var(--ad-card)] overflow-hidden">
-        <div className="border-b border-[var(--ad-border)] px-5 py-4">
-          <h2 className="font-editorial-display text-lg font-bold text-[var(--ad-text-primary)]">Upcoming Posts</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[var(--ad-paper)] border-b border-[var(--ad-border)]">
-              <tr>
-                <th className="px-5 py-3.5 font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">Article</th>
-                <th className="px-5 py-3.5 font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">Platform</th>
-                <th className="px-5 py-3.5 font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">Scheduled</th>
-                <th className="px-5 py-3.5 font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">Status</th>
-                <th className="px-5 py-3.5 font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)]">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--ad-border)]">
-              {queueItems.map((item) => {
-                const Icon = item.platformIcon;
-                return (
-                  <tr key={item.id} className="hover:bg-[var(--ad-paper)] transition-colors">
-                    <td className="px-5 py-4">
-                      <span className="font-medium text-[var(--ad-text-primary)]">{item.title}</span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className={`${item.platformColor} flex h-7 w-7 items-center justify-center rounded-md text-white`}>
-                          <Icon className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="font-editorial-mono text-[10px] tracking-wider text-[var(--ad-text-secondary)]">{item.platformName}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 font-editorial-mono text-[11px] text-[var(--ad-text-secondary)]">
-                      {formatSchedule(item.scheduled)}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`font-editorial-mono text-[10px] tracking-wider uppercase px-2 py-0.5 ${
-                        item.status === "scheduled"
-                          ? "bg-[var(--ad-warning)]/10 text-[var(--ad-warning)]"
-                          : item.status === "failed"
-                          ? "bg-[var(--ad-error)]/10 text-[var(--ad-error)]"
-                          : "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
-                      }`}>
-                        {item.status === "scheduled" ? "Scheduled" : item.status === "failed" ? "Failed" : "Sent"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        {item.status === "failed" ? (
-                          <button className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-breaking)] hover:text-red-700 transition-colors flex items-center gap-1">
-                            <RefreshCw className="h-3 w-3" />
-                            Retry
-                          </button>
-                        ) : (
-                          <button className="font-editorial-mono text-[10px] tracking-widest uppercase text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] transition-colors">
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+          {/* Queue Table */}
+          <Card className="overflow-hidden shadow-premium border-[var(--ad-border)] bg-[var(--ad-card)] rounded-xl">
+            <div className="border-b border-[var(--ad-border)] px-5 py-3.5 bg-[var(--ad-background)]/30">
+              <h2 className="text-[13px] font-bold uppercase tracking-wider text-[var(--ad-text-primary)]">Facebook Auto-post Integration Queue</h2>
+            </div>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-6 w-[45%]">Article Title</TableHead>
+                    <TableHead className="w-[20%]">Publish Target</TableHead>
+                    <TableHead className="w-[20%]">Status Date</TableHead>
+                    <TableHead className="pr-6 w-[15%]">Transmission Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {posts.slice(0, 15).map((item) => {
+                    const isPublished = item.status === PostStatus.published;
+                    return (
+                      <TableRow key={item.id} className="group hover:bg-[var(--ad-paper)]/30">
+                        <TableCell className="pl-6 font-bangla font-bold text-[13px] text-[var(--ad-text-primary)]">
+                          {item.title}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="bg-[#1877f2] flex h-6 w-6 items-center justify-center rounded text-white shadow-sm shrink-0">
+                              <Facebook className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="font-mono text-[9.5px] font-bold uppercase tracking-wider text-[var(--ad-text-secondary)]">Facebook Page</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-[11px] font-bold text-[var(--ad-text-secondary)]">
+                          {format(new Date(item.publishedAt || item.createdAt), "MMM d, yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell className="pr-6">
+                          <span className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                            isPublished
+                              ? "bg-[var(--ad-green-light)] text-[var(--ad-green)] border-[var(--ad-green)]/15"
+                              : "bg-[var(--ad-amber-light)] text-[var(--ad-amber)] border-[var(--ad-amber)]/15"
+                          }`}>
+                            {isPublished ? "Sent / Posted" : "Pending Draft"}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {posts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-12 text-[var(--ad-text-muted)] text-sm">
+                        No articles configured in publishing queue
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-      {/* Platform Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { name: "X / Twitter", icon: Twitter, color: "bg-black", total: 23, failed: 0 },
-          { name: "Facebook", icon: Facebook, color: "bg-[#1877f2]", total: 18, failed: 1 },
-          { name: "Instagram", icon: CameraIcon, color: "bg-gradient-to-br from-[#f09433] to-[#bc1888]", total: 7, failed: 0 },
-          { name: "LinkedIn", icon: LinkedinIcon, color: "bg-[#0a66c2]", total: 12, failed: 0 },
-        ].map((p) => {
-          const Icon = p.icon;
-          return (
-            <div key={p.name} className="border border-[var(--ad-border)] bg-[var(--ad-card)] p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`${p.color} flex h-8 w-8 items-center justify-center rounded-lg text-white`}>
-                  <Icon className="h-4 w-4" />
+          {/* Connected Page Summary */}
+          <Card className="shadow-premium border-[var(--ad-border)] bg-[var(--ad-card)] rounded-xl">
+            <CardContent className="p-5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#1877f2] flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-md">
+                    <Facebook className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--ad-text-primary)] font-mono uppercase tracking-wider">
+                      {settings?.facebookPageName || "Facebook Page Integration"}
+                    </h3>
+                    <p className="text-[11.5px] text-[var(--ad-text-muted)] mt-0.5 leading-normal">
+                      {facebookConnected
+                        ? `Connected to page ID: ${settings?.facebookPageId}. Auto-sharing is active.`
+                        : "No Facebook business page linked. Auto-posting is currently inactive."}
+                    </p>
+                  </div>
                 </div>
-                <div className="font-editorial-mono text-[10px] tracking-wider text-[var(--ad-text-secondary)]">{p.name}</div>
+                <div className="shrink-0 flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${facebookConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--ad-text-secondary)]">
+                    {facebookConnected ? "Connected" : "Disconnected"}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="font-editorial-display text-xl font-black text-[var(--ad-text-primary)]">{p.total}</span>
-                <span className={`font-editorial-mono text-[10px] ${p.failed > 0 ? "text-[var(--ad-breaking)]" : "text-[var(--ad-success)]"}`}>
-                  {p.failed > 0 ? `${p.failed} failed` : "All good"}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+            </CardContent>
+          </Card>
+        </AdminShell>
       </div>
-    </AdminShell>
+    </TooltipProvider>
   );
 }

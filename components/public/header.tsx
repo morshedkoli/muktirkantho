@@ -1,25 +1,12 @@
 import Link from "next/link";
-import { unstable_cache } from "next/cache";
-import { prisma } from "@/lib/prisma";
 import { Search, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileNav } from "@/components/public/mobile-nav";
-import { NavLinks, type NavMenuItem } from "@/components/public/nav-links";
-
-const getMenuItems = unstable_cache(
-  async (): Promise<NavMenuItem[]> => {
-    const items = await prisma.menuItem.findMany({
-      where: { isActive: true },
-      orderBy: { order: "asc" },
-    });
-    return items.map((i) => ({ label: i.label, href: i.href, openNewTab: i.openNewTab }));
-  },
-  ["public-menu-items"],
-  { revalidate: 60 }
-);
+import { NavLinks } from "@/components/public/nav-links";
+import { getHeaderMenuItems } from "@/lib/menus";
 
 export async function Header() {
-  const menuItems = await getMenuItems();
+  const menuItems = await getHeaderMenuItems();
 
   return (
     <header className="sticky top-0 z-50 bg-[var(--np-card)] border-b border-[var(--np-border)] shadow-sm">
@@ -28,12 +15,12 @@ export async function Header() {
 
           {/* Mobile hamburger — visible only on mobile */}
           <div className="flex lg:hidden items-stretch">
-            <MobileNav items={menuItems} />
+            <MobileNav menuItems={menuItems} />
           </div>
 
-          {/* Desktop nav strip — hidden on mobile */}
-          <div className="hidden lg:flex flex-1 overflow-x-auto scrollbar-none">
-            <NavLinks items={menuItems} />
+          {/* Scrollable nav strip */}
+          <div className="flex flex-1 overflow-x-auto scrollbar-none">
+            <NavLinks items={menuItems.map((m) => ({ label: m.label, url: m.url }))} />
           </div>
 
           {/* Right-side utilities */}
