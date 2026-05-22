@@ -7,15 +7,15 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { label, href, openNewTab = false, icon = null } = await req.json();
-  if (!label?.trim() || !href?.trim())
-    return NextResponse.json({ error: "label and href are required" }, { status: 400 });
+  const { label, url, location = "header", openInNewTab = false, icon = null } = await req.json();
+  if (!label?.trim() || !url?.trim())
+    return NextResponse.json({ error: "label and url are required" }, { status: 400 });
 
   const agg = await prisma.menuItem.aggregate({ _max: { order: true } });
   const order = (agg._max.order ?? -1) + 1;
 
   const item = await prisma.menuItem.create({
-    data: { label: label.trim(), href: href.trim(), icon: icon?.trim() || null, openNewTab, order, isActive: true },
+    data: { label: label.trim(), url: url.trim(), location, icon: icon?.trim() || null, openInNewTab, order, isActive: true },
   });
   return NextResponse.json(item, { status: 201 });
 }
