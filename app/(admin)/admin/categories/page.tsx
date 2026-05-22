@@ -4,9 +4,11 @@ import {
   createCategoryAction,
   deleteCategoryAction,
 } from "@/app/(admin)/admin/actions";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 const initialState = { status: "idle" as const };
-import { prisma } from "@/lib/prisma";
 
 export default async function AdminCategoriesPage() {
   const categories = await prisma.category.findMany({

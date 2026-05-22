@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatBanglaDateTime, formatBanglaShortDate } from "@/lib/bangla-date";
 import { Clock, MapPin, ArrowRight } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
 import { ImageWatermark } from "./image-watermark";
@@ -59,7 +59,7 @@ export function HeroNewsCard({ post }: { post: Post }) {
             {post.publishedAt && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {format(post.publishedAt, "MMM d, yyyy · h:mm a")}
+                {formatBanglaDateTime(post.publishedAt)}
               </span>
             )}
             {post.district && (
@@ -132,7 +132,7 @@ export function SecondaryStoryCard({
         </h3>
         {post.publishedAt && (
           <p className="np-timestamp mt-1 text-[10px]">
-            {format(post.publishedAt, "MMM d · h:mm a")}
+            {formatBanglaShortDate(post.publishedAt)}
           </p>
         )}
       </div>

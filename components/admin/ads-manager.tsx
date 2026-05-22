@@ -52,31 +52,31 @@ const placementConfigs: Record<string, {
   icon: React.ReactNode;
 }> = {
   [AD_PLACEMENTS.SIDEBAR_PRIMARY]: {
-    label: "Sidebar Primary",
-    size: "300 x 250 px",
+    label: "সাইডবার",
+    size: "300 × 250 px",
     aspectRatio: "aspect-[6/5]",
-    description: "Main sidebar ad space on article pages",
+    description: "আর্টিকেল পেজের সাইডবারে বিজ্ঞাপন",
     icon: <LayoutGrid className="h-4 w-4" />,
   },
   [AD_PLACEMENTS.HOMEPAGE_BANNER]: {
-    label: "Homepage Banner",
-    size: "1200 x 220 px",
+    label: "হোমপেজ ব্যানার",
+    size: "1200 × 220 px",
     aspectRatio: "aspect-[40/7]",
-    description: "Large banner below hero section on homepage",
+    description: "হোমপেজে হিরো সেকশনের নিচে বড় ব্যানার",
     icon: <LayoutGrid className="h-4 w-4" />,
   },
   [AD_PLACEMENTS.ARTICLE_INLINE]: {
-    label: "Article Inline",
-    size: "970 x 250 px",
+    label: "আর্টিকেল ইনলাইন",
+    size: "970 × 250 px",
     aspectRatio: "aspect-[4/1]",
-    description: "Ad within article content",
+    description: "আর্টিকেল কন্টেন্টের মধ্যে বিজ্ঞাপন",
     icon: <LayoutGrid className="h-4 w-4" />,
   },
   [AD_PLACEMENTS.FOOTER_STRIP]: {
-    label: "Footer Strip",
-    size: "1200 x 160 px",
+    label: "ফুটার স্ট্রিপ",
+    size: "1200 × 160 px",
     aspectRatio: "aspect-[15/2]",
-    description: "Wide ad strip in footer area",
+    description: "ফুটার এলাকায় চওড়া বিজ্ঞাপন স্ট্রিপ",
     icon: <LayoutGrid className="h-4 w-4" />,
   },
 };
@@ -125,12 +125,12 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
             </div>
             <div>
               <h3 className="font-semibold text-[var(--ad-text-primary)]">
-                Ads System {adsEnabled ? "Enabled" : "Disabled"}
+                বিজ্ঞাপন সিস্টেম {adsEnabled ? "সক্রিয়" : "নিষ্ক্রিয়"}
               </h3>
               <p className="text-sm text-[var(--ad-text-secondary)]">
                 {adsEnabled
-                  ? "Ads are being displayed on the website"
-                  : "All ads are hidden from the website"}
+                  ? "বিজ্ঞাপনগুলো ওয়েবসাইটে প্রদর্শিত হচ্ছে"
+                  : "সব বিজ্ঞাপন ওয়েবসাইট থেকে লুকানো আছে"}
               </p>
             </div>
           </div>
@@ -152,8 +152,7 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
         {!adsEnabled && (
           <div className="mt-4 rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] p-3">
             <p className="text-sm text-[var(--ad-text-secondary)]">
-              <strong>Note:</strong> All ad placeholders are currently hidden from the website.
-              Enable ads to show placeholders and active ads.
+              <strong>নোট:</strong> সকল বিজ্ঞাপন স্লট বর্তমানে ওয়েবসাইট থেকে লুকানো। সক্রিয় করতে উপরের বোতামে ক্লিক করুন।
             </p>
           </div>
         )}
@@ -162,19 +161,19 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
       {/* Stats Overview */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
-          title="Total Ads"
+          title="মোট বিজ্ঞাপন"
           value={totalAds}
           icon={<BarChart3 className="h-5 w-5" />}
           color="blue"
         />
         <StatCard
-          title="Active Ads"
+          title="সক্রিয় বিজ্ঞাপন"
           value={activeAds}
           icon={<CheckCircle2 className="h-5 w-5" />}
           color="emerald"
         />
         <StatCard
-          title="Inactive Ads"
+          title="নিষ্ক্রিয় বিজ্ঞাপন"
           value={inactiveAds}
           icon={<XCircle className="h-5 w-5" />}
           color="amber"
@@ -189,21 +188,21 @@ export function AdsManager({ ads, adsEnabled }: AdsManagerProps) {
             onClick={() => setActiveTab("overview")}
             icon={<BarChart3 className="h-4 w-4" />}
           >
-            Overview
+            সারসংক্ষেপ
           </TabButton>
           <TabButton
             active={activeTab === "create"}
             onClick={() => setActiveTab("create")}
             icon={<Plus className="h-4 w-4" />}
           >
-            Create New
+            নতুন বিজ্ঞাপন
           </TabButton>
           <TabButton
             active={activeTab === "manage"}
             onClick={() => setActiveTab("manage")}
             icon={<Settings className="h-4 w-4" />}
           >
-            Manage Ads
+            পরিচালনা
           </TabButton>
         </div>
       </div>
@@ -294,7 +293,7 @@ function OverviewTab({ adsByPlacement }: {
     <div className="space-y-6">
       <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
         <h3 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
-          Ad Placement Overview
+          বিজ্ঞাপন স্লট সারসংক্ষেপ
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
           {adsByPlacement.map((placement) => {
@@ -326,7 +325,7 @@ function OverviewTab({ adsByPlacement }: {
                         ? "bg-[var(--ad-success)]/10 text-[var(--ad-success)]"
                         : "bg-[var(--ad-paper-2)] text-[var(--ad-muted)]"
                       }`}>
-                      {activeInPlacement} active
+                      {activeInPlacement} সক্রিয়
                     </span>
                   </div>
                 </div>
@@ -334,9 +333,9 @@ function OverviewTab({ adsByPlacement }: {
                   {config?.description}
                 </p>
                 <div className="mt-3 flex items-center gap-4 text-xs text-[var(--ad-text-secondary)]">
-                  <span>Total: {totalInPlacement}</span>
-                  <span>Active: {activeInPlacement}</span>
-                  <span>Inactive: {totalInPlacement - activeInPlacement}</span>
+                  <span>মোট: {totalInPlacement}</span>
+                  <span>সক্রিয়: {activeInPlacement}</span>
+                  <span>নিষ্ক্রিয়: {totalInPlacement - activeInPlacement}</span>
                 </div>
               </div>
             );
@@ -344,19 +343,6 @@ function OverviewTab({ adsByPlacement }: {
         </div>
       </div>
 
-      {/* Quick Tips */}
-      <div className="rounded-xl border border-[var(--ad-primary)]/20 bg-[var(--ad-primary)]/10 p-5">
-        <h4 className="font-semibold text-[var(--ad-text-primary)] flex items-center gap-2">
-          <AlertCircle className="h-4 w-4" />
-          Ad Management Tips
-        </h4>
-        <ul className="mt-3 space-y-2 text-sm text-[var(--ad-text-primary)]">
-          <li>• Each placement can have multiple ads, but only one will be shown at a time</li>
-          <li>• Active ads are rotated randomly when multiple exist in the same placement</li>
-          <li>• Use high-quality images for better engagement</li>
-          <li>• Include target URLs to track ad performance</li>
-        </ul>
-      </div>
     </div>
   );
 }
@@ -400,7 +386,7 @@ function CreateAdTab() {
       <form action={formAction} className="space-y-5 order-1">
         <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
           <h3 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-5">
-            Create New Advertisement
+            নতুন বিজ্ঞাপন তৈরি করুন
           </h3>
 
           {state.status === "error" && state.message && (
@@ -428,24 +414,24 @@ function CreateAdTab() {
             {/* Ad Title */}
             <div>
               <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-1.5">
-                Ad Title <span className="text-[var(--ad-error)]">*</span>
+                বিজ্ঞাপনের শিরোনাম <span className="text-[var(--ad-error)]">*</span>
               </label>
               <input
                 name="title"
                 type="text"
-                placeholder="e.g., Summer Sale 2024"
+                placeholder="যেমন: গ্রীষ্মকালীন অফার ২০২৬"
                 className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2.5 text-sm text-[var(--ad-text-primary)] focus:border-[var(--ad-primary)] focus:ring-2 focus:ring-[var(--ad-primary)]/20 outline-none transition-all"
                 required
               />
               <p className="mt-1 text-xs text-[var(--ad-text-secondary)]">
-                Internal name to identify this ad
+                বিজ্ঞাপন চেনার জন্য অভ্যন্তরীণ নাম
               </p>
             </div>
 
             {/* Placement Selection */}
             <div>
               <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-1.5">
-                Ad Placement <span className="text-[var(--ad-error)]">*</span>
+                বিজ্ঞাপন স্লট <span className="text-[var(--ad-error)]">*</span>
               </label>
               <select
                 name="placement"
@@ -461,7 +447,7 @@ function CreateAdTab() {
               </select>
               <div className="mt-2 p-3 rounded-lg bg-[var(--ad-background)] border border-[var(--ad-border)]">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium text-[var(--ad-text-primary)]">Size:</span>
+                  <span className="font-medium text-[var(--ad-text-primary)]">সাইজ:</span>
                   <span className="text-[var(--ad-text-secondary)]">{config?.size}</span>
                 </div>
                 <p className="text-xs text-[var(--ad-text-secondary)] mt-1">
@@ -473,7 +459,7 @@ function CreateAdTab() {
             {/* Target URL */}
             <div>
               <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-1.5">
-                Target URL
+                টার্গেট URL
               </label>
               <div className="relative">
                 <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ad-text-secondary)]" />
@@ -485,14 +471,14 @@ function CreateAdTab() {
                 />
               </div>
               <p className="mt-1 text-xs text-[var(--ad-text-secondary)]">
-                Where users will go when they click the ad (optional)
+                ক্লিক করলে ব্যবহারকারী কোথায় যাবেন (ঐচ্ছিক)
               </p>
             </div>
 
             {/* Image Upload */}
             <div>
               <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-1.5">
-                Ad Image <span className="text-[var(--ad-error)]">*</span>
+                বিজ্ঞাপনের ছবি <span className="text-[var(--ad-error)]">*</span>
               </label>
               <div className="border-2 border-dashed border-[var(--ad-border)] rounded-lg p-6 text-center hover:border-[var(--ad-primary)] transition-colors">
                 <ImageIcon className="h-8 w-8 mx-auto text-[var(--ad-text-secondary)] mb-2" />
@@ -506,7 +492,7 @@ function CreateAdTab() {
                   className="block w-full text-xs text-[var(--ad-text-secondary)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--ad-primary)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white file:cursor-pointer hover:file:bg-[var(--ad-primary-hover)]"
                 />
                 <p className="mt-2 text-xs text-[var(--ad-text-secondary)]">
-                  Recommended: {config?.size} • Max 2MB • JPG, PNG, WebP
+                  প্রস্তাবিত: {config?.size} • সর্বোচ্চ ২MB • JPG, PNG, WebP
                 </p>
               </div>
             </div>
@@ -521,7 +507,7 @@ function CreateAdTab() {
                 className="h-4 w-4 rounded border-[var(--ad-border)] text-[var(--ad-primary)] focus:ring-[var(--ad-primary)]"
               />
               <label htmlFor="isActive" className="text-sm font-medium text-[var(--ad-text-primary)] cursor-pointer">
-                Activate ad immediately
+                তাৎক্ষণিকভাবে সক্রিয় করুন
               </label>
             </div>
 
@@ -535,7 +521,7 @@ function CreateAdTab() {
                 disabled={pending || !imageUrl}
                 className="flex-1 rounded-lg bg-[var(--ad-primary)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--ad-primary)]/20"
               >
-                {pending ? "Creating..." : "Create Ad"}
+                {pending ? "তৈরি হচ্ছে..." : "বিজ্ঞাপন তৈরি করুন"}
               </button>
               <button
                 type="button"
@@ -543,7 +529,7 @@ function CreateAdTab() {
                 disabled={!imageUrl}
                 className="rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-5 py-2.5 text-sm font-semibold text-[var(--ad-text-primary)] hover:bg-[var(--ad-card)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {previewMode ? "Hide Preview" : "Preview"}
+                {previewMode ? "প্রিভিউ লুকান" : "প্রিভিউ"}
               </button>
             </div>
           </div>
@@ -554,7 +540,7 @@ function CreateAdTab() {
       <div className="space-y-4">
         <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
           <h3 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
-            Preview
+            প্রিভিউ
           </h3>
 
           {imageUrl ? (
@@ -568,8 +554,8 @@ function CreateAdTab() {
                 />
               </div>
               <div className="text-sm text-[var(--ad-text-secondary)]">
-                <p><span className="font-medium">Size:</span> {config?.size}</p>
-                <p><span className="font-medium">Placement:</span> {config?.label}</p>
+                <p><span className="font-medium">সাইজ:</span> {config?.size}</p>
+                <p><span className="font-medium">স্লট:</span> {config?.label}</p>
               </div>
             </div>
           ) : (
@@ -577,7 +563,7 @@ function CreateAdTab() {
               <div className="text-center">
                 <ImageIcon className="h-12 w-12 mx-auto text-[var(--ad-text-secondary)] mb-2" />
                 <p className="text-sm text-[var(--ad-text-secondary)]">
-                  Upload an image to see preview
+                  ছবি আপলোড করুন
                 </p>
               </div>
             </div>
@@ -587,7 +573,7 @@ function CreateAdTab() {
         {/* Placement Preview */}
         <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
           <h4 className="font-semibold text-[var(--ad-text-primary)] mb-3">
-            Placement Preview
+            স্লট প্রিভিউ
           </h4>
           <div className={`relative overflow-hidden rounded-lg border border-[var(--ad-border)] bg-[var(--ad-paper-2)] ${config?.aspectRatio || "aspect-video"}`}>
             <div className="absolute inset-0 flex items-center justify-center">
@@ -633,7 +619,7 @@ function ManageAdsTab({
     <div className="space-y-4">
       {/* Filter */}
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-medium text-[var(--ad-text-primary)]">Filter by placement:</span>
+        <span className="text-sm font-medium text-[var(--ad-text-primary)]">স্লট অনুযায়ী ফিল্টার:</span>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => onPlacementChange("all")}
@@ -664,11 +650,11 @@ function ManageAdsTab({
         {ads.length === 0 ? (
           <div className="p-8 text-center">
             <ImageIcon className="h-12 w-12 mx-auto text-[var(--ad-text-secondary)] mb-3" />
-            <h3 className="text-lg font-semibold text-[var(--ad-text-primary)]">No ads found</h3>
+            <h3 className="text-lg font-semibold text-[var(--ad-text-primary)]">কোনো বিজ্ঞাপন নেই</h3>
             <p className="text-sm text-[var(--ad-text-secondary)] mt-1">
               {selectedPlacement === "all"
-                ? "Create your first advertisement to get started."
-                : "No ads in this placement."}
+                ? "নতুন বিজ্ঞাপন ট্যাব থেকে প্রথম বিজ্ঞাপন তৈরি করুন।"
+                : "এই স্লটে কোনো বিজ্ঞাপন নেই।"}
             </p>
           </div>
         ) : (
@@ -736,9 +722,9 @@ function AdListItem({ ad }: { ad: AdItem }) {
                 : "bg-[var(--ad-paper-2)] text-[var(--ad-muted)]"
               }`}>
               {ad.isActive ? (
-                <><Eye className="h-3 w-3" /> Active</>
+                <><Eye className="h-3 w-3" /> সক্রিয়</>
               ) : (
-                <><EyeOff className="h-3 w-3" /> Inactive</>
+                <><EyeOff className="h-3 w-3" /> নিষ্ক্রিয়</>
               )}
             </span>
           </div>
@@ -755,9 +741,9 @@ function AdListItem({ ad }: { ad: AdItem }) {
                 }`}
             >
               {ad.isActive ? (
-                <><EyeOff className="h-3.5 w-3.5" /> Pause</>
+                <><EyeOff className="h-3.5 w-3.5" /> বন্ধ করুন</>
               ) : (
-                <><Eye className="h-3.5 w-3.5" /> Activate</>
+                <><Eye className="h-3.5 w-3.5" /> সক্রিয় করুন</>
               )}
             </button>
           </form>
@@ -767,7 +753,7 @@ function AdListItem({ ad }: { ad: AdItem }) {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--ad-error)]/10 text-[var(--ad-error)] hover:bg-[var(--ad-error)]/20 border border-[var(--ad-error)]/20 transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Delete
+              মুছুন
             </button>
           </form>
         </div>

@@ -11,8 +11,9 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-50 bg-[var(--np-card)] border-b border-[var(--np-border)] shadow-sm">
       <div className="mx-auto max-w-7xl">
-        <nav className="flex items-stretch">
-          {/* Mobile hamburger */}
+        <nav className="flex items-stretch min-h-[48px]">
+
+          {/* Mobile hamburger — visible only on mobile */}
           <div className="flex lg:hidden items-stretch">
             <MobileNav menuItems={menuItems} />
           </div>
@@ -23,7 +24,7 @@ export async function Header() {
           </div>
 
           {/* Right-side utilities */}
-          <div className="flex items-stretch border-l border-l-[var(--np-border)]">
+          <div className="flex items-stretch border-l border-l-[var(--np-border)] ml-auto lg:ml-0">
             <div className="flex items-center px-1.5">
               <ThemeToggle variant="minimal" size="sm" />
             </div>
@@ -34,18 +35,6 @@ export async function Header() {
               <Search className="h-4 w-4" />
             </Link>
             <Link
-              href="/e-paper"
-              className="hidden sm:flex items-center px-3 text-xs font-label text-[var(--np-text-secondary)] hover:text-[var(--np-primary)] hover:bg-[var(--np-newsprint)] transition-colors tracking-wider uppercase"
-            >
-              ই-পেপার
-            </Link>
-            <Link
-              href="/en"
-              className="flex items-center px-2.5 sm:px-3 text-xs font-label text-[var(--np-text-secondary)] hover:text-[var(--np-primary)] hover:bg-[var(--np-newsprint)] transition-colors uppercase tracking-wider"
-            >
-              Eng
-            </Link>
-            <Link
               href="/admin/login"
               className="hidden sm:flex items-center gap-1 px-3 text-[var(--np-text-secondary)] hover:text-[var(--np-primary)] hover:bg-[var(--np-newsprint)] transition-colors"
             >
@@ -53,6 +42,7 @@ export async function Header() {
               <span className="text-xs">লগইন</span>
             </Link>
           </div>
+
         </nav>
       </div>
     </header>

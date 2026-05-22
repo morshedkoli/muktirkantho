@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { Eye, Clock, ArrowUp, Download, BarChart2, BookOpen, ThumbsUp } from "lucide-react";
+import { Eye, ArrowUp, Download, BarChart2, BookOpen, ThumbsUp } from "lucide-react";
 import { subDays, format, startOfDay } from "date-fns";
 import { PostStatus } from "@prisma/client";
 
@@ -42,7 +42,6 @@ export default async function AnalyticsPage() {
   const maxPostViews = viewAggregation._max.viewCount ?? 0;
   const avgViews = postsCount > 0 ? Math.round(totalViews / postsCount) : 0;
 
-  // Build 14-day view activity bins
   const dayBins = Array.from({ length: 14 }, (_, i) => {
     const d = subDays(today, 13 - i);
     return { date: startOfDay(d), views: 0 };
@@ -58,10 +57,9 @@ export default async function AnalyticsPage() {
 
   const maxBinViews = Math.max(...dayBins.map((b) => b.views), 100);
 
-  // Programmatic Traffic Distribution
   const facebookConnected = siteSettings?.facebookConnected ?? false;
   const fbPct = facebookConnected ? 35 : 12;
-  const searchPct = 48; // SEO meta tag visibility
+  const searchPct = 48;
   const directPct = 100 - fbPct - searchPct;
 
   return (
@@ -78,10 +76,10 @@ export default async function AnalyticsPage() {
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Aggregate Page Views", value: totalViews.toLocaleString(), sub: "Total read telemetry", icon: Eye, up: true },
-          { label: "Avg Views per Post", value: avgViews.toLocaleString(), sub: "Across all articles", icon: BookOpen, up: true },
-          { label: "Highest Readership", value: maxPostViews.toLocaleString(), sub: "Single post max views", icon: BarChart2, up: true },
-          { label: "Published Articles", value: publishedCount.toLocaleString(), sub: "Live content library", icon: ThumbsUp, up: true },
+          { label: "Aggregate Page Views", value: totalViews.toLocaleString(), sub: "Total read telemetry", icon: Eye },
+          { label: "Avg Views per Post", value: avgViews.toLocaleString(), sub: "Across all articles", icon: BookOpen },
+          { label: "Highest Readership", value: maxPostViews.toLocaleString(), sub: "Single post max views", icon: BarChart2 },
+          { label: "Published Articles", value: publishedCount.toLocaleString(), sub: "Live content library", icon: ThumbsUp },
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (

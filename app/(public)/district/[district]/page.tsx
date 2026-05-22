@@ -19,10 +19,10 @@ export default async function DistrictPage({ params, searchParams }: Props) {
   if (!data) notFound();
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
       <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
         <section>
-          <h1 className="np-headline-lg text-[var(--np-text-primary)]">District: {data.district.name}</h1>
+          <h1 className="np-headline-lg text-[var(--np-text-primary)]">{data.district.name}</h1>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {data.items.map((post) => (
               <NewsCard key={post.id} post={post} />

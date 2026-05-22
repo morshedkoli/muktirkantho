@@ -1,11 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   Facebook, Twitter, Youtube, Mail, MapPin, Phone,
   Instagram, Linkedin, Apple, Monitor,
 } from "lucide-react";
-import { AdSlot } from "@/components/public/ad-slot";
-import { AD_PLACEMENTS } from "@/lib/ads";
 import { getSiteSettings } from "@/lib/site-settings";
 import { SiteLogo } from "./site-logo";
 import { getFooterMenuItems, getFooterBottomMenuItems, getSocialMenuItems } from "@/lib/menus";
@@ -56,7 +53,6 @@ export async function Footer() {
     getSocialMenuItems(),
   ]);
 
-  const contactAddress = settings?.contactAddress || "123 News Street, Dhaka-1200, Bangladesh";
   const contactPhone = settings?.contactPhone || "+880 1234-567890";
   const contactEmail = settings?.contactEmail || "editor@muktirkantho.com";
 
@@ -64,26 +60,30 @@ export async function Footer() {
   const displayBottomLinks = bottomItems.length > 0 ? bottomItems : DEFAULT_BOTTOM_LINKS;
 
   return (
-    <footer className="mt-16 border-t border-[var(--np-border)] bg-[var(--np-card)] text-[var(--np-text-primary)]">
-      {/* Footer Strip Ad */}
-      <div className="mx-auto max-w-7xl px-4 pt-6">
-        <AdSlot placement={AD_PLACEMENTS.FOOTER_STRIP} showPlaceholder={false} />
-      </div>
+    <footer className="mt-8 border-t border-[var(--np-border)] bg-[var(--np-newsprint-2)]">
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="grid gap-8 sm:grid-cols-2">
 
-      {/* Main footer */}
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand column */}
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              {settings?.logoUrl ? (
-                <Image src={settings.logoUrl} alt="Muktir Kantho" width={160} height={48} className="h-auto w-[160px]" />
-              ) : (
-                <SiteLogo width={160} height={48} />
-              )}
-            </div>
-            <p className="text-sm leading-relaxed text-[var(--np-text-secondary)]">
-              Voice of Freedom — Your trusted source for regional news, local reporting, and verified journalism from across Bangladesh.
+          {/* Brand */}
+          <div className="space-y-4">
+            {settings?.logoUrl && settings?.iconUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={settings.logoUrl} alt="মুক্তির কণ্ঠ" className="block dark:hidden h-8 w-auto" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={settings.iconUrl} alt="মুক্তির কণ্ঠ" className="hidden dark:block h-8 w-auto" />
+              </>
+            ) : settings?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings.logoUrl} alt="মুক্তির কণ্ঠ" className="h-8 w-auto" />
+            ) : settings?.iconUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings.iconUrl} alt="মুক্তির কণ্ঠ" className="h-8 w-auto" />
+            ) : (
+              <SiteLogo width={120} height={32} />
+            )}
+            <p className="text-xs leading-relaxed text-[var(--np-text-secondary)]">
+              বাংলাদেশের জেলা-উপজেলা পর্যায়ের বিশ্বস্ত আঞ্চলিক সংবাদমাধ্যম।
             </p>
             {socialItems.length > 0 && (
               <div className="flex gap-2">
@@ -174,19 +174,22 @@ export async function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="mb-4 font-label text-xs uppercase tracking-wider text-[var(--np-muted)]">যোগাযোগ</h4>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3 text-[var(--np-text-secondary)]">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--np-primary)]" />
-                <span>{contactAddress}</span>
+            <h4 className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--np-muted)]">যোগাযোগ</h4>
+            <ul className="space-y-2.5 text-xs text-[var(--np-text-secondary)]">
+              <li className="flex items-center gap-2">
+                <Phone className="h-3.5 w-3.5 shrink-0 text-[var(--np-primary)]" />
+                {contactPhone}
               </li>
-              <li className="flex items-center gap-3 text-[var(--np-text-secondary)]">
-                <Phone className="h-4 w-4 shrink-0 text-[var(--np-primary)]" />
-                <span>{contactPhone}</span>
+              <li className="flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5 shrink-0 text-[var(--np-primary)]" />
+                {contactEmail}
               </li>
-              <li className="flex items-center gap-3 text-[var(--np-text-secondary)]">
-                <Mail className="h-4 w-4 shrink-0 text-[var(--np-primary)]" />
-                <span>{contactEmail}</span>
+              <li className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--np-primary)]" />
+                <a href="mailto:ads@muktirkantho.com"
+                  className="hover:text-[var(--np-primary)] transition-colors">
+                  বিজ্ঞাপন: ads@muktirkantho.com
+                </a>
               </li>
             </ul>
             <div className="mt-5 rounded-lg border border-[var(--np-border)] p-4">
@@ -198,6 +201,7 @@ export async function Footer() {
               </p>
             </div>
           </div>
+
         </div>
       </div>
 

@@ -112,14 +112,14 @@ export async function loginAdminAction(_: AdminActionState, formData: FormData):
   });
 
   if (!parsed.success) {
-    return { status: "error", message: "Enter a valid email and password." };
+    return { status: "error", message: "সঠিক ইমেইল ও পাসওয়ার্ড দিন।" };
   }
 
   const { email, password } = parsed.data;
 
   const rl = checkRateLimit(email.toLowerCase());
   if (!rl.allowed) {
-    return { status: "error", message: `Too many login attempts. Try again in ${rl.retryAfterSeconds}s.` };
+    return { status: "error", message: `অনেকবার চেষ্টা করা হয়েছে। ${rl.retryAfterSeconds} সেকেন্ড পর আবার চেষ্টা করুন।` };
   }
 
   const settings = await getSiteSettings();
@@ -129,11 +129,11 @@ export async function loginAdminAction(_: AdminActionState, formData: FormData):
   if (configuredEmail && configuredPasswordHash) {
     const matches = email.toLowerCase() === configuredEmail && verifyPassword(password, configuredPasswordHash);
     if (!matches) {
-      return { status: "error", message: "Invalid credentials." };
+      return { status: "error", message: "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" };
     }
   } else {
     if (email !== env.ADMIN_EMAIL || password !== env.ADMIN_PASSWORD) {
-      return { status: "error", message: "Invalid credentials." };
+      return { status: "error", message: "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" };
     }
     // First login with env credentials  hash and store password so it is no longer plaintext
     await saveSiteSettings({

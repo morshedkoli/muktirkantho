@@ -1,5 +1,4 @@
 import { PostStatus } from "@prisma/client";
-import Link from "next/link";
 import { format, subDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import {
@@ -17,6 +16,7 @@ import {
   Pencil,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -30,7 +30,6 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  // Aggregate data — single Promise.all
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const sevenDaysAgo = subDays(startOfToday, 6);
@@ -69,15 +68,12 @@ export default async function AdminDashboardPage() {
     prisma.post.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
     prisma.post.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.post.findMany({
-      take: 5,
-      orderBy: { updatedAt: "desc" },
+      take: 5, orderBy: { updatedAt: "desc" },
       include: { category: true, district: true },
     }),
     prisma.post.groupBy({
-      by: ["categoryId"],
-      _count: true,
-      orderBy: { _count: { categoryId: "desc" } },
-      take: 5,
+      by: ["categoryId"], _count: true,
+      orderBy: { _count: { categoryId: "desc" } }, take: 5,
     }),
     prisma.post.findMany({
       where: { createdAt: { gte: sevenDaysAgo } },
@@ -94,7 +90,6 @@ export default async function AdminDashboardPage() {
     prisma.division.count(),
   ]);
 
-  // Build 7-day chart bins
   const dayBins = Array.from({ length: 7 }, (_, i) => {
     const d = subDays(startOfToday, 6 - i);
     return { date: d, count: 0, label: format(d, "EEE")[0] };
@@ -107,7 +102,6 @@ export default async function AdminDashboardPage() {
   }
   const maxDay = Math.max(...dayBins.map((b) => b.count), 1);
 
-  // Resolve category names for the grouped result
   const catIds = postsByCategory.map((c) => c.categoryId);
   const catRecords = await prisma.category.findMany({ where: { id: { in: catIds } } });
   const catName = (id: string) => catRecords.find((c) => c.id === id)?.name ?? "—";
@@ -200,7 +194,7 @@ export default async function AdminDashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="h-9 w-9 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{ background: bg }}>
                 <Icon className="h-4.5 w-4.5" style={{ color: accent }} />
-               </div>
+              </div>
               <span
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                   neutral
@@ -240,7 +234,6 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
 
-          {/* Filter tabs */}
           <div className="flex gap-1.5 px-5 py-3 border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50">
             {["All", "Live", "Draft", "Scheduled"].map((t, i) => (
               <button
@@ -256,7 +249,6 @@ export default async function AdminDashboardPage() {
             ))}
           </div>
 
-          {/* Article rows */}
           <div className="divide-y divide-[var(--ad-border)]">
             {recentPosts.length === 0 ? (
               <div className="px-5 py-12 text-center">
@@ -277,17 +269,15 @@ export default async function AdminDashboardPage() {
                     className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[var(--ad-background)]/40 transition-colors"
                   >
                     <div className="min-w-0 flex-1 flex items-center gap-3">
-                      {/* Status Badge */}
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shrink-0 ${
-                        live 
-                          ? "bg-[var(--ad-green-light)] text-[var(--ad-green)] border-[var(--ad-green)]/10" 
+                        live
+                          ? "bg-[var(--ad-green-light)] text-[var(--ad-green)] border-[var(--ad-green)]/10"
                           : "bg-[var(--ad-amber-light)] text-[var(--ad-amber)] border-[var(--ad-amber)]/10"
                       }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${live ? "bg-[var(--ad-green)] animate-pulse" : "bg-[var(--ad-amber)]"}`} />
                         {live ? "Live" : "Draft"}
                       </span>
 
-                      {/* Info */}
                       <div className="min-w-0 flex-1">
                         <p className="font-bangla text-[13.5px] font-bold text-[var(--ad-text-primary)] truncate leading-normal">
                           {post.title}
@@ -306,7 +296,6 @@ export default async function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Edit Button */}
                     <Link
                       href={`/admin/posts/edit/${post.id}`}
                       className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-[var(--ad-text-secondary)] hover:text-[var(--ad-green)] bg-[var(--ad-background)] hover:bg-[var(--ad-green-light)] border border-[var(--ad-border)] hover:border-[var(--ad-green)]/20 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1"
@@ -323,7 +312,6 @@ export default async function AdminDashboardPage() {
         {/* Right column: Quick Actions + Channel Activity */}
         <div className="flex flex-col gap-5">
 
-          {/* Quick Actions */}
           <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-premium overflow-hidden">
             <div className="px-5 py-4 border-b border-[var(--ad-border)]">
               <h3 className="text-[14px] font-bold uppercase tracking-wider text-[var(--ad-text-primary)]">Quick Actions</h3>
@@ -351,9 +339,8 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Social / Channel Activity */}
           <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-premium overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border(--ad-border)]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--ad-border)]">
               <h3 className="text-[14px] font-bold uppercase tracking-wider text-[var(--ad-text-primary)]">Channel Telemetry</h3>
               <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-500/10">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -392,7 +379,6 @@ export default async function AdminDashboardPage() {
       {/* BOTTOM ROW: Chart + Top Categories + Recent Publishing Log */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Publishing Activity (7-day bars) */}
         <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-premium overflow-hidden">
           <div className="flex items-start justify-between px-5 py-4 border-b border-[var(--ad-border)]">
             <div>
@@ -413,8 +399,8 @@ export default async function AdminDashboardPage() {
                   <div key={i} className="flex-1 flex flex-col items-center gap-2">
                     <div
                       className={`w-full rounded-t-lg transition-all duration-300 ${
-                        isToday 
-                          ? "bg-gradient-to-t from-[var(--ad-green)]/70 to-[var(--ad-green)] shadow-[0_0_12px_rgba(16,185,129,0.2)]" 
+                        isToday
+                          ? "bg-gradient-to-t from-[var(--ad-green)]/70 to-[var(--ad-green)] shadow-[0_0_12px_rgba(16,185,129,0.2)]"
                           : "bg-gradient-to-t from-[var(--ad-green-light)] to-[var(--ad-green)]/55 hover:to-[var(--ad-green)]"
                       }`}
                       style={{ height: h }}
@@ -434,7 +420,6 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Top Categories */}
         <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-premium overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--ad-border)]">
             <h3 className="text-[14px] font-bold uppercase tracking-wider text-[var(--ad-text-primary)]">Top Categories</h3>
@@ -467,7 +452,6 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Dynamic Publishing Log */}
         <div className="bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-xl shadow-premium overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--ad-border)] bg-[var(--ad-card)]">
             <div className="flex items-center gap-2">
@@ -527,4 +511,3 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
-

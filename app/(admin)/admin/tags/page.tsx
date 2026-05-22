@@ -16,7 +16,6 @@ export default async function TagsPage() {
       post.tags.forEach((tag) => {
         const trimmed = tag.trim();
         if (trimmed) {
-          // Normalize tag by capitalizing first letter
           const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
           tagCounts[formatted] = (tagCounts[formatted] || 0) + 1;
         }
@@ -45,4 +44,3 @@ export default async function TagsPage() {
     </TooltipProvider>
   );
 }
-

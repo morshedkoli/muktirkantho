@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatBanglaDate } from "@/lib/bangla-date";
 import { Clock, MapPin } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
 import { ImageWatermark, ImageWatermarkSimple } from "./image-watermark";
@@ -52,7 +52,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           </h3>
           {post.publishedAt && (
             <p className="mt-1 np-timestamp">
-              {format(post.publishedAt, "MMM d, yyyy")}
+              {formatBanglaDate(post.publishedAt)}
             </p>
           )}
         </div>
@@ -88,7 +88,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
             {post.publishedAt && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {format(post.publishedAt, "MMM d, yyyy")}
+                {formatBanglaDate(post.publishedAt)}
               </span>
             )}
             {post.district && (
@@ -137,7 +137,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           {post.publishedAt && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {format(post.publishedAt, "MMM d, yyyy")}
+              {formatBanglaDate(post.publishedAt)}
             </span>
           )}
           {post.district && (

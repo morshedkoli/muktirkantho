@@ -51,7 +51,7 @@ export function LocationFilter({ divisions }: LocationFilterProps) {
   return (
     <div className="rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-5 shadow-[var(--np-shadow)]">
       <h3 className="np-headline-sm text-[var(--np-text-primary)]">Filter by Location</h3>
-      <p className="mt-1 text-xs text-[var(--np-text-secondary)]">Browse division, district and upazila specific news.</p>
+      <p className="mt-1 text-xs text-[var(--np-text-secondary)]">Browse news by division, district and upazila.</p>
 
       <div className="mt-4 space-y-3">
         <select

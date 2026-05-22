@@ -114,25 +114,25 @@
   --radius: 0.75rem;
 }
 
-/* Editorial Admin Dark Mode */
+/* Editorial Admin Dark Mode — soft slate */
 [data-theme="dark"] {
-  --ed-ink: #f5f0e8;
-  --ed-deep: #e0d8c8;
-  --ed-paper: #0d0d0d;
-  --ed-paper-2: #1a1a1a;
-  --ed-breaking: #e74c3c;
-  --ed-alert: #f39c12;
-  --ed-gold: #f1c40f;
-  --ed-muted: #9e9480;
-  --ed-border: #2a2a2a;
-  --ed-success: #2ecc71;
+  --ed-ink: #c8c4bc;
+  --ed-deep: #a0988c;
+  --ed-paper: #1c1c22;
+  --ed-paper-2: #22222a;
+  --ed-breaking: #c05050;
+  --ed-alert: #c8882a;
+  --ed-gold: #c8a830;
+  --ed-muted: #807868;
+  --ed-border: #32323a;
+  --ed-success: #3a9060;
   --ed-facebook: #1877f2;
-  --ed-twitter: #000;
-  --ed-instagram: #e4405f;
+  --ed-twitter: #444;
+  --ed-instagram: #c04060;
   --ed-linkedin: #0a66c2;
-  --ed-blue: #3498db;
-  --ed-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
+  --ed-blue: #4880b8;
+  --ed-shadow: 0 1px 3px rgba(0,0,0,0.22);
+  --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.32);
 
   /* Admin Dark Mode */
   --ad-background: #080b11;
@@ -230,31 +230,31 @@
   --np-newsprint-2: #eeece8;
 }
 
-/* Newspaper Dark Mode */
+/* Newspaper Dark Mode — soft slate palette */
 [data-theme="dark"] {
-  --np-primary: #e03030;
-  --np-primary-hover: #ff4444;
-  --np-secondary: #d4a020;
-  --np-secondary-hover: #e0b030;
-  --np-background: #1a1a1a;
-  --np-card: #222222;
-  --np-border: #333333;
-  --np-text-primary: #e8e0d0;
-  --np-text-secondary: #888880;
-  --np-text-soft: #b0a898;
-  --np-breaking: #e03030;
-  --np-accent: #d4a020;
-  --np-success: #30a050;
-  --np-warning: #d4a020;
-  --np-error: #e03030;
-  --np-blue: #5090d0;
-  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
-  --np-shadow-lg: 0 10px 30px -6px rgb(0 0 0 / 0.4);
-  --np-ink: #e8e0d0;
-  --np-ink-soft: #b0a898;
-  --np-muted: #888880;
-  --np-newsprint: #1a1a1a;
-  --np-newsprint-2: #252525;
+  --np-primary: #c0403a;
+  --np-primary-hover: #d45550;
+  --np-secondary: #b8902a;
+  --np-secondary-hover: #c8a040;
+  --np-background: #1c1c22;
+  --np-card: #25252d;
+  --np-border: #38383f;
+  --np-text-primary: #cbc7be;
+  --np-text-secondary: #848078;
+  --np-text-soft: #a09890;
+  --np-breaking: #c0403a;
+  --np-accent: #b8902a;
+  --np-success: #3a9060;
+  --np-warning: #b8902a;
+  --np-error: #c0403a;
+  --np-blue: #4a80b8;
+  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.25);
+  --np-shadow-lg: 0 10px 30px -6px rgb(0 0 0 / 0.35);
+  --np-ink: #cbc7be;
+  --np-ink-soft: #a09890;
+  --np-muted: #848078;
+  --np-newsprint: #1c1c22;
+  --np-newsprint-2: #222228;
 }
 
 /* Theme Transition - Disable for instant theme switch */

@@ -240,7 +240,7 @@ export default async function NewsDetailPage({ params }: Props) {
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {related.map((item) => (
                     <Link key={item.id} href={getPostPath(item)}
-                      className="group border border-[var(--np-border)] bg-white hover:border-[var(--np-primary)] transition-colors">
+                      className="group border border-[var(--np-border)] bg-[var(--np-card)] hover:border-[var(--np-primary)] transition-colors">
                       {item.imageUrl && (
                         <div className="relative aspect-[16/10] overflow-hidden bg-[var(--np-newsprint)]">
                           <Image src={item.imageUrl} alt={item.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -263,13 +263,13 @@ export default async function NewsDetailPage({ params }: Props) {
         {/* ── RIGHT SIDEBAR ── */}
         <aside className="hidden lg:block w-[300px] shrink-0 space-y-4">
           {/* Ad Zone 2 */}
-          <div className="border border-[var(--np-border)] bg-white p-4">
+          <div className="border border-[var(--np-border)] bg-[var(--np-card)] p-4">
             <AdSlot placement={AD_PLACEMENTS.SIDEBAR_PRIMARY} showPlaceholder={false} />
           </div>
 
           {/* আরও পড়ুন — compact sidebar list */}
           {related.length > 0 && (
-            <div className="border border-[var(--np-border)] bg-white p-5">
+            <div className="border border-[var(--np-border)] bg-[var(--np-card)] p-5">
               <h3 className="font-label text-xs uppercase tracking-wider text-[var(--np-primary)] mb-4">আরও পড়ুন</h3>
               <div className="space-y-4">
                 {related.slice(0, 4).map((item) => (
@@ -290,7 +290,7 @@ export default async function NewsDetailPage({ params }: Props) {
           )}
 
           {/* Sticky Ad (Zone 5) */}
-          <div className="sticky top-14 border border-[var(--np-border)] bg-white">
+          <div className="sticky top-14 border border-[var(--np-border)] bg-[var(--np-card)]">
             <div className="p-4 text-center font-label text-xs text-[var(--np-muted)] uppercase tracking-wider">
               — বিজ্ঞাপন —
             </div>

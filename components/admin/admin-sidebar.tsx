@@ -81,7 +81,6 @@ const navSections: NavSection[] = [
     label: "Analytics",
     items: [
       { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
-      { name: "SEO", href: "/admin/seo", icon: Search },
       { name: "Ads", href: "/admin/ads", icon: Megaphone },
     ],
   },
@@ -97,10 +96,10 @@ const navSections: NavSection[] = [
 
 const mobileNavItems: NavItem[] = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { name: "Posts", href: "/admin/posts", icon: FileText },
-  { name: "Media", href: "/admin/media", icon: Image },
-  { name: "Comments", href: "/admin/comments", icon: MessageSquare },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Posts",     href: "/admin/posts",     icon: FileText },
+  { name: "Media",     href: "/admin/media",     icon: Image },
+  { name: "Comments",  href: "/admin/comments",  icon: MessageSquare },
+  { name: "Settings",  href: "/admin/settings",  icon: Settings },
 ];
 
 interface AdminSidebarProps {
@@ -296,11 +295,9 @@ export function AdminSidebar({
     </TooltipProvider>
   );
 
-  // Desktop user controls (avatar + tooltip dropdowns/forms, or expand/collapse UI)
+  // Desktop user controls
   const userCardDesktop = (
     <div className={`border-t border-[var(--ad-border)] py-4 flex flex-col shrink-0 bg-[var(--ad-sidebar)] transition-all duration-300 ${expanded ? "px-4 items-stretch gap-3" : "items-center gap-3.5"}`}>
-      
-      {/* Collapse/Expand Toggle Button */}
       <button
         onClick={onToggleExpand}
         className={`group flex items-center justify-center rounded-xl text-[var(--ad-text-secondary)] hover:bg-[var(--ad-border)]/50 hover:text-[var(--ad-text-primary)] transition-all cursor-pointer ${expanded ? "h-9 px-3 gap-2.5 justify-start text-[13px] font-medium w-full" : "h-9 w-9"}`}
@@ -317,14 +314,12 @@ export function AdminSidebar({
     </div>
   );
 
-  // Shared icon fallback (collapsed desktop & no-logo states)
   const brandIcon = (
     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[var(--ad-brand)] to-[#ff6b8b] text-white text-[17px] font-bold font-bangla shrink-0 shadow-sm active:scale-95 transition-transform duration-200">
       ম
     </div>
   );
 
-  // Desktop brand logo
   const logoDesktop = (
     <Link href="/admin/dashboard" className={`flex h-16 items-center border-b border-[var(--ad-border)] shrink-0 transition-all duration-300 overflow-hidden ${expanded ? "px-4 gap-3 justify-start" : "justify-center px-0"}`}>
       {expanded ? (
@@ -354,7 +349,6 @@ export function AdminSidebar({
     </Link>
   );
 
-  // Mobile brand logo
   const logoMobile = (
     <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--ad-border)]">
       {logoUrl ? (

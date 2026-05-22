@@ -28,7 +28,6 @@ export default async function MediaPage() {
 
   const mediaItems: MediaItem[] = [];
 
-  // Parse post images
   posts.forEach((p) => {
     if (p.imageUrl && p.imageUrl.trim() !== "") {
       mediaItems.push({
@@ -41,7 +40,6 @@ export default async function MediaPage() {
     }
   });
 
-  // Parse ad images
   ads.forEach((a) => {
     if (a.imageUrl && a.imageUrl.trim() !== "") {
       mediaItems.push({
@@ -54,7 +52,6 @@ export default async function MediaPage() {
     }
   });
 
-  // Parse branding settings
   if (settings) {
     if (settings.logoUrl && settings.logoUrl.trim() !== "") {
       mediaItems.push({
@@ -85,7 +82,6 @@ export default async function MediaPage() {
     }
   }
 
-  // Sort by newest first
   mediaItems.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   const postImagesCount = mediaItems.filter((i) => i.source === "post").length;

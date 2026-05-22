@@ -47,7 +47,7 @@ export function LoginForm({ logoUrl, logoHeight, siteName }: LoginFormProps) {
                   </span>
                 </h1>
               )}
-              <p className="text-sm text-[var(--ad-text-secondary)] mt-1">Admin Portal</p>
+              <p className="text-sm text-[var(--ad-text-secondary)] mt-1">অ্যাডমিন পোর্টাল</p>
             </div>
           </Link>
         </div>
@@ -55,8 +55,8 @@ export function LoginForm({ logoUrl, logoHeight, siteName }: LoginFormProps) {
         {/* Login Card */}
         <div className="rounded-2xl bg-[var(--ad-card)] shadow-xl border border-[var(--ad-border)] overflow-hidden">
           <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
-            <h2 className="text-xl font-semibold text-[var(--ad-text-primary)]">Welcome back</h2>
-            <p className="text-sm text-[var(--ad-text-secondary)] mt-1">Sign in to access the admin dashboard</p>
+            <h2 className="text-xl font-semibold text-[var(--ad-text-primary)]">স্বাগতম</h2>
+            <p className="text-sm text-[var(--ad-text-secondary)] mt-1">অ্যাডমিন ড্যাশবোর্ডে প্রবেশ করুন</p>
           </div>
 
           <div className="px-5 sm:px-8 pb-6 sm:pb-8">
@@ -64,7 +64,7 @@ export function LoginForm({ logoUrl, logoHeight, siteName }: LoginFormProps) {
               {/* Email Field */}
               <div>
                 <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2">
-                  Email Address
+                  ইমেইল ঠিকানা
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--ad-text-secondary)]" />
@@ -81,7 +81,7 @@ export function LoginForm({ logoUrl, logoHeight, siteName }: LoginFormProps) {
               {/* Password Field */}
               <div>
                 <label className="block text-sm font-medium text-[var(--ad-text-primary)] mb-2">
-                  Password
+                  পাসওয়ার্ড
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--ad-text-secondary)]" />
@@ -121,11 +121,11 @@ export function LoginForm({ logoUrl, logoHeight, siteName }: LoginFormProps) {
                 {pending ? (
                   <>
                     <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Signing in...
+                    প্রবেশ হচ্ছে...
                   </>
                 ) : (
                   <>
-                    Sign In
+                    প্রবেশ করুন
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -140,7 +140,7 @@ export function LoginForm({ logoUrl, logoHeight, siteName }: LoginFormProps) {
             href="/"
             className="text-sm text-[var(--ad-text-secondary)] hover:text-[var(--ad-primary)] transition-colors"
           >
-            ← Back to website
+            ← ওয়েবসাইটে ফিরুন
           </Link>
         </div>
       </div>

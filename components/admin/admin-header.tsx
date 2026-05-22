@@ -50,10 +50,10 @@ type Notification = {
 };
 
 const sampleNotifications: Notification[] = [
-  { id: "1", type: "breaking", title: "Breaking News Alert", description: "New article flagged as breaking ready for review", time: "2m ago", unread: true },
-  { id: "2", type: "social", title: "Facebook Post Failed", description: "Scheduled post 'Budget Analysis 2026' failed to publish", time: "15m ago", unread: true },
-  { id: "3", type: "comment", title: "Comment Spike Detected", description: "45 new comments on 'Local Election Results'", time: "1h ago", unread: false },
-  { id: "4", type: "system", title: "Sitemap Updated", description: "XML sitemap regenerated successfully", time: "2h ago", unread: false },
+  { id: "1", type: "breaking", title: "Breaking News Alert", description: "New breaking story published and live", time: "2m", unread: true },
+  { id: "2", type: "social",   title: "Facebook Auto-Share", description: "Latest post shared to Facebook page", time: "15m", unread: true },
+  { id: "3", type: "comment",  title: "New Comment Pending", description: "A comment is awaiting moderation", time: "1h", unread: false },
+  { id: "4", type: "system",   title: "Sitemap Updated", description: "XML sitemap regenerated successfully", time: "2h", unread: false },
 ];
 
 const notificationIcons: Record<string, React.ElementType> = {
@@ -72,6 +72,7 @@ function getBreadcrumb(pathname: string): { root: string; sub: string } {
 
 export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
   const pathname = usePathname();
+  const crumb = getBreadcrumb(pathname);
   const [user, setUser] = useState<AdminUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -79,7 +80,6 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
   const notifRef = useRef<HTMLDivElement | null>(null);
   const [notifications] = useState<Notification[]>(sampleNotifications);
   const unreadCount = notifications.filter((n) => n.unread).length;
-  const crumb = getBreadcrumb(pathname);
 
   useEffect(() => {
     fetch("/api/admin/me", { cache: "no-store" })
@@ -109,7 +109,7 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
   return (
     <header className="sticky top-0 z-30 h-[56px] border-b border-[var(--ad-border)] glass-panel shadow-sm shrink-0">
       <div className="h-full flex items-center justify-between px-4 sm:px-6 lg:px-7">
-        
+
         {/* Left Side: Mobile Hamburger & Breadcrumb */}
         <div className="flex items-center gap-3">
           <button
@@ -244,7 +244,7 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
               )}
             </div>
 
-            {/* User avatar dropdown (slim version with minimal text) */}
+            {/* User avatar dropdown */}
             <div ref={menuRef} className="relative">
               <button
                 type="button"

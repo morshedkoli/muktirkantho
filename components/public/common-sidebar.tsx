@@ -9,7 +9,7 @@ export async function CommonSidebar() {
   const { categories, divisions } = await getSidebarData();
 
   return (
-    <aside className="space-y-6">
+    <aside className="hidden lg:block space-y-6">
       {/* Categories */}
       <section>
         <div className="border border-[var(--np-border)] bg-[var(--np-card)] p-5">

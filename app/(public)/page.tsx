@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { format } from "date-fns";
+import { formatBanglaTime, formatBanglaShortDate, formatBanglaDate } from "@/lib/bangla-date";
 import { BreakingTicker } from "@/components/public/breaking-ticker";
 import { AdSlot } from "@/components/public/ad-slot";
 import { HeroNewsCard, SecondaryStoryCard } from "@/components/public/hero-news-card";
@@ -63,7 +63,7 @@ export default async function HomePage() {
                           className="flex flex-col gap-1 px-3 py-2.5 hover:bg-[var(--np-newsprint)] transition-colors"
                         >
                           <span className="font-label text-[10px] text-[var(--np-primary)]">
-                            {post.publishedAt ? format(post.publishedAt, "hh:mm a") : ""}
+                            {post.publishedAt ? formatBanglaTime(post.publishedAt) : ""}
                           </span>
                           <span className="line-clamp-2 text-[12.5px] leading-snug text-[var(--np-text-primary)]">
                             {post.title}
@@ -150,7 +150,7 @@ export default async function HomePage() {
                     সবগুলো <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-8">
                   {latestStories.map((post) => (
                     <Link
                       key={post.id}
@@ -178,7 +178,7 @@ export default async function HomePage() {
                         {post.publishedAt && (
                           <p className="np-timestamp mt-1 flex items-center gap-1 text-[10px]">
                             <Clock className="h-2.5 w-2.5" />
-                            {format(post.publishedAt, "MMM d · h:mm a")}
+                            {formatBanglaShortDate(post.publishedAt)}
                           </p>
                         )}
                       </div>
@@ -230,7 +230,7 @@ export default async function HomePage() {
                                 </h3>
                                 {post.publishedAt && (
                                   <p className="np-timestamp mt-1 text-[10px]">
-                                    {format(post.publishedAt, "MMM d, yyyy")}
+                                    {formatBanglaDate(post.publishedAt)}
                                   </p>
                                 )}
                               </div>
@@ -283,7 +283,7 @@ export default async function HomePage() {
           {/* ═══════════════════════════════════
               RIGHT SIDEBAR
           ═══════════════════════════════════ */}
-          <aside className="flex flex-col gap-6">
+          <aside className="hidden md:flex flex-col gap-6">
 
             {/* Sidebar ad */}
             <AdSlot placement={AD_PLACEMENTS.SIDEBAR_PRIMARY} showPlaceholder={false} />
