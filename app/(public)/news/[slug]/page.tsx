@@ -12,6 +12,8 @@ import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import { AdSlot } from "@/components/public/ad-slot";
 import { CopyLinkButton } from "@/components/public/copy-link-button";
 import { ImageWatermark } from "@/components/public/image-watermark";
+import { CommonSidebar } from "@/components/public/common-sidebar";
+import { PrintButton } from "@/components/public/print-button";
 import { Facebook, Twitter, MessageCircle } from "lucide-react";
 
 export const revalidate = 60;
@@ -66,7 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: post.metaDescription || post.excerpt,
       url: canonical, type: "article",
       ...(post.imageUrl ? { images: [post.imageUrl] } : {}),
-      section: post.category.name,
+      section: post.category?.name,
       publishedTime: post.publishedAt?.toISOString(),
     },
     twitter: {
@@ -91,7 +93,8 @@ export default async function NewsDetailPage({ params }: Props) {
 
   const related = await prisma.post.findMany({
     where: { id: { not: post.id }, status: PostStatus.published, OR: [{ categoryId: post.categoryId }, { tags: { hasSome: post.tags } }] },
-    take: 4, orderBy: { publishedAt: "desc" },
+    take: 3, orderBy: { publishedAt: "desc" },
+    include: { category: true },
   });
 
   const html = await renderContent(post.content);
@@ -104,7 +107,6 @@ export default async function NewsDetailPage({ params }: Props) {
   const jsonLd = {
     "@context": "https://schema.org", "@type": "NewsArticle",
     headline: post.title,
-    // imageUrl is required by schema.org; omit the field entirely if missing
     ...(post.imageUrl ? { image: [post.imageUrl] } : {}),
     datePublished: post.publishedAt?.toISOString(), dateModified: post.updatedAt.toISOString(),
     author: [{ "@type": "Person", name: post.author }],
@@ -118,71 +120,119 @@ export default async function NewsDetailPage({ params }: Props) {
     <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="flex gap-0 lg:gap-8">
+      {/* Breadcrumb */}
+      <nav className="mb-4 flex flex-wrap items-center gap-1 np-category text-[var(--np-text-secondary)]">
+        <Link href="/" className="hover:text-[var(--np-primary)]">হোম</Link>
+        <span className="text-[var(--np-border)]">/</span>
+        <Link href={`/category/${post.category?.slug}`} className="hover:text-[var(--np-primary)]">
+          {post.category?.name}
+        </Link>
+        {post.district && (
+          <>
+            <span className="text-[var(--np-border)]">/</span>
+            <Link href={`/district/${post.district.slug}`} className="hover:text-[var(--np-primary)]">
+              {post.district.name}
+            </Link>
+          </>
+        )}
+        {post.upazila && post.district && (
+          <>
+            <span className="text-[var(--np-border)]">/</span>
+            <Link href={`/district/${post.district.slug}/${post.upazila.slug}`} className="hover:text-[var(--np-primary)]">
+              {post.upazila.name}
+            </Link>
+          </>
+        )}
+        <span className="text-[var(--np-border)]">/</span>
+        <span className="text-[var(--np-muted)] line-clamp-1 max-w-[200px]">{post.title}</span>
+      </nav>
+
+      <div className="flex gap-8">
         {/* ── ARTICLE CONTENT ── */}
-        <div className="flex-1 min-w-0 max-w-[760px] mx-auto lg:mx-0">
+        <div className="flex-1 min-w-0">
           <article className="border border-[var(--np-border)] bg-[var(--np-card)]">
-            {/* Breadcrumb */}
-            <div className="flex flex-wrap items-center gap-1 px-5 sm:px-8 pt-5 sm:pt-8 np-category text-[var(--np-text-secondary)]">
-              <Link href={`/category/${post.category.slug}`} className="hover:text-[var(--np-primary)]">{post.category.name}</Link>
-              {post.district && (
-                <><span className="text-[var(--np-border)]">→</span>
-                <Link href={`/district/${post.district.slug}`} className="hover:text-[var(--np-primary)]">{post.district.name}</Link></>
+            {/* Article Header */}
+            <div className="px-5 sm:px-8 pt-6 sm:pt-8">
+              {/* Category badge — red pill */}
+              <Link
+                href={`/category/${post.category?.slug}`}
+                className="inline-block mb-3 rounded-full bg-red-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-red-700 transition-colors"
+              >
+                {post.category?.name}
+              </Link>
+
+              {/* Title */}
+              <h1 className="np-headline-lg text-2xl sm:text-[28px] md:text-[32px] leading-tight text-[var(--np-text-primary)]">
+                {post.title}
+              </h1>
+
+              {/* Excerpt / lead paragraph */}
+              {post.excerpt && (
+                <p className="mt-3 text-base sm:text-[17px] leading-relaxed text-[var(--np-text-secondary)]">
+                  {post.excerpt}
+                </p>
               )}
-              {post.upazila && (
-                <><span className="text-[var(--np-border)]">→</span>
-                <Link href={`/district/${post.district.slug}/${post.upazila.slug}`} className="hover:text-[var(--np-primary)]">{post.upazila.name}</Link></>
-              )}
-            </div>
 
-            {/* Headline */}
-            <h1 className="np-headline-lg px-5 sm:px-8 mt-3 text-2xl sm:text-[28px] md:text-[32px] leading-tight">{post.title}</h1>
-
-            {/* Byline + Timestamp + Share */}
-            <div className="flex flex-wrap items-center gap-4 px-5 sm:px-8 mt-4 pb-4 border-b border-[var(--np-border)]">
-              {/* Avatar + Author */}
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-[var(--np-newsprint-2)] flex items-center justify-center text-xs font-bold text-[var(--np-muted)]">
-                  {post.author?.charAt(0)?.toUpperCase() || "M"}
+              {/* Byline + Timestamp + Share */}
+              <div className="flex flex-wrap items-center gap-4 mt-4 pb-5 border-b border-[var(--np-border)]">
+                {/* Avatar + Author */}
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-[var(--np-newsprint-2)] flex items-center justify-center text-xs font-bold text-[var(--np-muted)]">
+                    {post.author?.charAt(0)?.toUpperCase() || "M"}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--np-text-primary)]">{post.author || "Muktir Kantho"}</div>
+                    <div className="np-timestamp">{relativeTime}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-[var(--np-text-primary)]">{post.author || "Muktir Kantho"}</div>
-                  <div className="np-timestamp">{relativeTime}</div>
-                </div>
-              </div>
 
-              {/* Share buttons - right side */}
-              <div className="flex items-center gap-1.5 ml-auto">
-                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`} target="_blank" rel="noreferrer"
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1877f2] text-white hover:opacity-90 transition-opacity">
-                  <Facebook className="h-4 w-4" />
-                </a>
-                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(post.title)}`} target="_blank" rel="noreferrer"
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:opacity-90 transition-opacity">
-                  <Twitter className="h-4 w-4" />
-                </a>
-                <a href={`https://wa.me/?text=${encodeURIComponent(post.title + " " + postUrl)}`} target="_blank" rel="noreferrer"
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-[#25D366] text-white hover:opacity-90 transition-opacity">
-                  <MessageCircle className="h-4 w-4" />
-                </a>
-                <CopyLinkButton url={postUrl} />
-              </div>
-            </div>
+                {/* District label */}
+                {post.district && (
+                  <Link
+                    href={`/district/${post.district.slug}`}
+                    className="text-xs text-[var(--np-muted)] hover:text-[var(--np-primary)] transition-colors"
+                  >
+                    📍 {post.district.name}
+                    {post.upazila && `, ${post.upazila.name}`}
+                  </Link>
+                )}
 
-            {/* Featured Image */}
-            <div className="relative mt-0">
-              <div className="relative w-full">
-                <Image
-                  src={post.imageUrl} alt={post.title}
-                  width={1200} height={675}
-                  className="h-auto w-full object-cover"
-                  priority
-                />
-                <div className="absolute right-3 bottom-3 z-10">
-                  <ImageWatermark size="md" showText={true} />
+                {/* Share buttons — right side */}
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`} target="_blank" rel="noreferrer" aria-label="ফেসবুকে শেয়ার করুন"
+                    className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1877f2] text-white hover:opacity-90 transition-opacity">
+                    <Facebook className="h-4 w-4" />
+                  </a>
+                  <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(post.title)}`} target="_blank" rel="noreferrer" aria-label="টুইটারে শেয়ার করুন"
+                    className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:opacity-90 transition-opacity">
+                    <Twitter className="h-4 w-4" />
+                  </a>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(post.title + " " + postUrl)}`} target="_blank" rel="noreferrer" aria-label="হোয়াটসঅ্যাপে শেয়ার করুন"
+                    className="flex items-center justify-center w-8 h-8 rounded-full bg-[#25D366] text-white hover:opacity-90 transition-opacity">
+                    <MessageCircle className="h-4 w-4" />
+                  </a>
+                  <CopyLinkButton url={postUrl} />
+                  <PrintButton />
                 </div>
               </div>
             </div>
+
+            {/* Hero Image — full width */}
+            {post.imageUrl && (
+              <div className="relative mt-0">
+                <div className="relative w-full">
+                  <Image
+                    src={post.imageUrl} alt={post.title}
+                    width={1200} height={675}
+                    className="h-auto w-full object-cover"
+                    priority
+                  />
+                  <div className="absolute right-3 bottom-3 z-10">
+                    <ImageWatermark size="md" showText={true} />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Article Body */}
             <div className="prose-news px-5 sm:px-8 mt-6 min-h-[100px] max-w-none">
@@ -196,16 +246,20 @@ export default async function NewsDetailPage({ params }: Props) {
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
                     </div>
                   </div>
+                  {/* Mid-article Ad — ARTICLE_INLINE at ~50% content */}
+                  <div className="my-6 py-4 border-t border-b border-[var(--np-border)]">
+                    <AdSlot placement={AD_PLACEMENTS.ARTICLE_INLINE} className="w-full" showPlaceholder={false} />
+                  </div>
                   {htmlAfterEmbed && <div dangerouslySetInnerHTML={{ __html: htmlAfterEmbed }} />}
                 </>
               ) : (
                 <>
                   <div dangerouslySetInnerHTML={{ __html: htmlBeforeEmbed }} />
-                  {/* In-article Ad (Zone 7) */}
+                  {/* Mid-article Ad — ARTICLE_INLINE at ~50% content */}
                   <div className="my-6 py-4 border-t border-b border-[var(--np-border)]">
                     <AdSlot placement={AD_PLACEMENTS.ARTICLE_INLINE} className="w-full" showPlaceholder={false} />
                   </div>
-                  <div dangerouslySetInnerHTML={{ __html: htmlAfterEmbed }} />
+                  {htmlAfterEmbed && <div dangerouslySetInnerHTML={{ __html: htmlAfterEmbed }} />}
                 </>
               )}
             </div>
@@ -213,6 +267,7 @@ export default async function NewsDetailPage({ params }: Props) {
             {/* Tags */}
             {post.tags.length > 0 && (
               <div className="px-5 sm:px-8 mt-6 pb-6 border-b border-[var(--np-border)]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--np-muted)] mb-2">ট্যাগ:</p>
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
                     <Link key={tag} href={`/tag/${tag}`}
@@ -224,10 +279,10 @@ export default async function NewsDetailPage({ params }: Props) {
               </div>
             )}
 
-            {/* Comments Section — public comment system not yet available */}
+            {/* Comments Section — coming soon */}
             <div className="px-5 sm:px-8 py-6 border-b border-[var(--np-border)]">
               <div className="rounded-sm bg-[var(--np-newsprint-2)] p-5 text-center">
-                <p className="text-sm text-[var(--np-muted)]">মন্তব্য বিভাগটি近く শীঘ্রই চালু হবে।</p>
+                <p className="text-sm text-[var(--np-muted)]">মন্তব্য বিভাগটি শীঘ্রই চালু হবে।</p>
               </div>
             </div>
 
@@ -247,6 +302,11 @@ export default async function NewsDetailPage({ params }: Props) {
                         </div>
                       )}
                       <div className="p-3">
+                        {item.category && (
+                          <span className="inline-block mb-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                            {item.category.name}
+                          </span>
+                        )}
                         <h3 className="np-headline-sm text-sm leading-snug group-hover:text-[var(--np-primary)] transition-colors line-clamp-2">{item.title}</h3>
                         {item.publishedAt && (
                           <p className="np-timestamp mt-1">{getBanglaRelativeTime(item.publishedAt)}</p>
@@ -261,41 +321,7 @@ export default async function NewsDetailPage({ params }: Props) {
         </div>
 
         {/* ── RIGHT SIDEBAR ── */}
-        <aside className="hidden lg:block w-[300px] shrink-0 space-y-4">
-          {/* Ad Zone 2 */}
-          <div className="border border-[var(--np-border)] bg-[var(--np-card)] p-4">
-            <AdSlot placement={AD_PLACEMENTS.SIDEBAR_PRIMARY} showPlaceholder={false} />
-          </div>
-
-          {/* আরও পড়ুন — compact sidebar list */}
-          {related.length > 0 && (
-            <div className="border border-[var(--np-border)] bg-[var(--np-card)] p-5">
-              <h3 className="font-label text-xs uppercase tracking-wider text-[var(--np-primary)] mb-4">আরও পড়ুন</h3>
-              <div className="space-y-4">
-                {related.slice(0, 4).map((item) => (
-                  <Link key={item.id} href={getPostPath(item)} className="flex gap-3 group">
-                    {item.imageUrl && (
-                      <div className="relative w-[72px] h-[54px] shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
-                        <Image src={item.imageUrl} alt="" fill sizes="72px" className="object-cover" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-semibold leading-snug text-[var(--np-text-primary)] group-hover:text-[var(--np-primary)] transition-colors line-clamp-2">{item.title}</h4>
-                      {item.publishedAt && <p className="np-timestamp mt-0.5">{getBanglaRelativeTime(item.publishedAt)}</p>}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Sticky Ad (Zone 5) */}
-          <div className="sticky top-14 border border-[var(--np-border)] bg-[var(--np-card)]">
-            <div className="p-4 text-center font-label text-xs text-[var(--np-muted)] uppercase tracking-wider">
-              — বিজ্ঞাপন —
-            </div>
-          </div>
-        </aside>
+        <CommonSidebar />
       </div>
     </main>
   );

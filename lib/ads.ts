@@ -29,6 +29,82 @@ export function getAdPlacementLabel(placement: string) {
   return AD_PLACEMENT_OPTIONS.find((item) => item.value === placement)?.label ?? placement;
 }
 
+export interface AdPlacementMeta {
+  key: string;
+  label: string;
+  dimensions: string;
+  description: string;
+  aspectClass: string;
+}
+
+export function getAdPlacementMeta(placement: string): AdPlacementMeta {
+  const map: Record<string, AdPlacementMeta> = {
+    [AD_PLACEMENTS.HOMEPAGE_BANNER]: {
+      key: AD_PLACEMENTS.HOMEPAGE_BANNER,
+      label: "হোমপেজ ব্যানার",
+      dimensions: "728×90",
+      description: "হোমপেজের শীর্ষে বড় ব্যানার বিজ্ঞাপন",
+      aspectClass: "h-[90px]",
+    },
+    [AD_PLACEMENTS.SIDEBAR_PRIMARY]: {
+      key: AD_PLACEMENTS.SIDEBAR_PRIMARY,
+      label: "সাইডবার (প্রাথমিক)",
+      dimensions: "300×250",
+      description: "সাইডবারের মধ্যবর্তী বিজ্ঞাপন",
+      aspectClass: "h-[250px]",
+    },
+    [AD_PLACEMENTS.ARTICLE_INLINE]: {
+      key: AD_PLACEMENTS.ARTICLE_INLINE,
+      label: "নিবন্ধ (ইনলাইন)",
+      dimensions: "970×250",
+      description: "নিবন্ধের মাঝখানে বিজ্ঞাপন",
+      aspectClass: "h-[120px]",
+    },
+    [AD_PLACEMENTS.FOOTER_STRIP]: {
+      key: AD_PLACEMENTS.FOOTER_STRIP,
+      label: "ফুটার স্ট্রিপ",
+      dimensions: "728×90",
+      description: "ফুটারের উপরে বিজ্ঞাপন",
+      aspectClass: "h-[90px]",
+    },
+    [AD_PLACEMENTS.BILLBOARD]: {
+      key: AD_PLACEMENTS.BILLBOARD,
+      label: "বিলবোর্ড",
+      dimensions: "970×250",
+      description: "বড় বিলবোর্ড বিজ্ঞাপন",
+      aspectClass: "h-[120px]",
+    },
+    [AD_PLACEMENTS.SIDEBAR_STICKY]: {
+      key: AD_PLACEMENTS.SIDEBAR_STICKY,
+      label: "সাইডবার (স্টিকি)",
+      dimensions: "300×600",
+      description: "লম্বা স্টিকি সাইডবার বিজ্ঞাপন",
+      aspectClass: "h-[300px]",
+    },
+    [AD_PLACEMENTS.INFEED_NATIVE]: {
+      key: AD_PLACEMENTS.INFEED_NATIVE,
+      label: "ইনফিড নেটিভ",
+      dimensions: "Native",
+      description: "কন্টেন্টের মধ্যে নেটিভ বিজ্ঞাপন",
+      aspectClass: "h-[120px]",
+    },
+    [AD_PLACEMENTS.MOBILE_ANCHOR]: {
+      key: AD_PLACEMENTS.MOBILE_ANCHOR,
+      label: "মোবাইল অ্যাঙ্কর",
+      dimensions: "320×50",
+      description: "মোবাইলে নিচে ভাসমান বিজ্ঞাপন",
+      aspectClass: "h-[50px]",
+    },
+  };
+  return map[placement] ?? {
+    key: placement,
+    label: placement,
+    dimensions: "—",
+    description: "",
+    aspectClass: "h-[90px]",
+  };
+}
+
 type AdRecord = {
   id: string;
   title: string;

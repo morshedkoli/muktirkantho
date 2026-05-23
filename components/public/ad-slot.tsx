@@ -1,6 +1,8 @@
-import { AD_PLACEMENTS, getActiveAdsByPlacement } from "@/lib/ads";
+import { AD_PLACEMENTS, getActiveAdsByPlacement, getAdPlacementMeta } from "@/lib/ads";
 import { getSiteSettings } from "@/lib/site-settings";
+import { cn } from "@/lib/cn";
 import Image from "next/image";
+import { Megaphone } from "lucide-react";
 
 type AdSlotProps = {
   placement?: (typeof AD_PLACEMENTS)[keyof typeof AD_PLACEMENTS];
@@ -27,74 +29,28 @@ export async function AdSlot({
   if (!ads || ads.length === 0) {
     if (!showPlaceholder) return null;
 
-    const placementLabels: Record<string, { label: string; size: string; aspectRatio: string }> = {
-      [AD_PLACEMENTS.SIDEBAR_PRIMARY]: { 
-        label: "Sidebar Ad", 
-        size: "300x250",
-        aspectRatio: "aspect-[6/5]"
-      },
-      [AD_PLACEMENTS.HOMEPAGE_BANNER]: { 
-        label: "Homepage Banner", 
-        size: "728x90",
-        aspectRatio: "aspect-[8/1]"
-      },
-      [AD_PLACEMENTS.ARTICLE_INLINE]: { 
-        label: "Article Inline Ad", 
-        size: "970x250",
-        aspectRatio: "aspect-[4/1]"
-      },
-      [AD_PLACEMENTS.FOOTER_STRIP]: { 
-        label: "Footer Strip Ad", 
-        size: "728x90",
-        aspectRatio: "aspect-[8/1]"
-      },
-      [AD_PLACEMENTS.BILLBOARD]: { 
-        label: "Billboard Ad", 
-        size: "970x250",
-        aspectRatio: "aspect-[4/1]"
-      },
-      [AD_PLACEMENTS.SIDEBAR_STICKY]: { 
-        label: "Sticky Sidebar Ad", 
-        size: "300x600",
-        aspectRatio: "aspect-[1/2]"
-      },
-      [AD_PLACEMENTS.INFEED_NATIVE]: { 
-        label: "In-feed Ad", 
-        size: "Native",
-        aspectRatio: "aspect-[3/1]"
-      },
-      [AD_PLACEMENTS.MOBILE_ANCHOR]: { 
-        label: "Mobile Ad", 
-        size: "320x50",
-        aspectRatio: "aspect-[6/1]"
-      },
-    };
-
-    const config = placementLabels[placement] || { 
-      label: "Advertisement", 
-      size: "Flexible",
-      aspectRatio: "aspect-video"
-    };
+    const meta = getAdPlacementMeta(placement);
 
     return (
-      <div className={`rounded-xl border-2 border-dashed border-[var(--np-border)] bg-[var(--np-background)] p-4 text-center ${className}`}>
-        <div className={`relative ${config.aspectRatio} mb-3 flex items-center justify-center rounded-lg border border-[var(--np-border)] bg-[var(--np-card)]`}>
-          <span className="text-xs font-medium text-[var(--np-text-secondary)]">
-            {config.label}
-          </span>
-        </div>
-        <p className="text-xs text-[var(--np-text-secondary)]">{config.size} • Available for rent</p>
-        <a 
-          href="mailto:ads@muktirkantho.com" 
-          className="mt-2 inline-block text-xs font-medium text-[var(--np-primary)] hover:underline"
+      <div className={cn("w-full", className)}>
+        <div
+          className={cn(
+            "w-full flex flex-col items-center justify-center gap-2",
+            "border-2 border-dashed border-zinc-200 rounded-lg bg-zinc-50",
+            meta.aspectClass,
+          )}
         >
-          Contact for advertising
-        </a>
+          <Megaphone className="h-6 w-6 text-zinc-300" />
+          <div className="text-center">
+            <p className="text-xs font-medium text-zinc-400">{meta.label}</p>
+            <p className="text-xs text-zinc-300">{meta.dimensions}</p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Select first active ad (rotation handled at display time)
+  // Select first active ad
   const selectedAd = ads[0];
 
   const content = (
@@ -112,7 +68,10 @@ export async function AdSlot({
   );
 
   return (
-    <div className={`rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-3 shadow-[var(--np-shadow)] hover:shadow-[var(--np-shadow-lg)] transition-shadow ${className}`}>
+    <div className={cn(
+      "rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-3 shadow-[var(--np-shadow)] hover:shadow-[var(--np-shadow-lg)] transition-shadow",
+      className,
+    )}>
       <div className="flex items-center justify-between mb-2 px-1">
         <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--np-text-secondary)]">
           Sponsored
@@ -122,9 +81,9 @@ export async function AdSlot({
         </span>
       </div>
       {selectedAd.targetUrl ? (
-        <a 
-          href={selectedAd.targetUrl} 
-          target="_blank" 
+        <a
+          href={selectedAd.targetUrl}
+          target="_blank"
           rel="noreferrer sponsored"
           className="block"
         >

@@ -7,12 +7,13 @@ import { ImageWatermark, ImageWatermarkSimple } from "./image-watermark";
 
 type NewsCardProps = {
   post: {
-    id?: string;
+    id: string;
     title: string;
     slug: string;
     excerpt: string;
     imageUrl: string;
     publishedAt: Date | null;
+    author?: string | null;
     category?: { name: string; slug: string } | null;
     district?: { name: string; slug: string } | null;
   };
@@ -25,22 +26,21 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
   if (variant === "compact") {
     return (
       <article className="group flex gap-4">
-        <Link href={postPath} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-[var(--np-background)]">
+        <Link href={postPath} className="relative h-20 w-20 shrink-0 overflow-hidden bg-[var(--np-background)]" aria-hidden="true" tabIndex={-1}>
           <Image
-            src={post.imageUrl}
+            src={post.imageUrl || "/images/placeholder.jpg"}
             alt={post.title}
             fill
             sizes="80px"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          {/* Logo watermark - bottom right (compact - icon only) */}
           <div className="absolute right-1 bottom-1 z-10">
             <ImageWatermarkSimple size={16} />
           </div>
         </Link>
         <div className="flex flex-col justify-center">
           {post.category && (
-            <Link 
+            <Link
               href={`/category/${post.category.slug}`}
               className="np-category hover:underline"
             >
@@ -63,9 +63,9 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
   if (variant === "horizontal") {
     return (
       <article className="group flex flex-col gap-4 sm:flex-row sm:gap-6">
-        <Link href={postPath} className="relative aspect-video sm:aspect-[4/3] sm:w-1/3 overflow-hidden rounded-lg bg-[var(--np-background)]">
+        <Link href={postPath} className="relative aspect-video sm:aspect-[4/3] sm:w-1/3 overflow-hidden bg-[var(--np-background)]" aria-hidden="true" tabIndex={-1}>
           <Image
-            src={post.imageUrl}
+            src={post.imageUrl || "/images/placeholder.jpg"}
             alt={post.title}
             fill
             sizes="(max-width: 640px) 100vw, 33vw"
@@ -73,12 +73,11 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           />
           {post.category && (
             <div className="absolute left-3 top-3">
-              <span className="rounded bg-[var(--np-primary)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+              <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
                 {post.category.name}
               </span>
             </div>
           )}
-          {/* Logo watermark - bottom right with name */}
           <div className="absolute right-2 bottom-2 z-10">
             <ImageWatermark size="sm" showText={true} />
           </div>
@@ -109,31 +108,45 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
     );
   }
 
-  // Default vertical card
+  // Default vertical card — clean newspaper style
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl bg-[var(--np-card)] shadow-[var(--np-shadow)] transition-all hover:shadow-[var(--np-shadow-lg)] border border-[var(--np-border)]">
-      <Link href={postPath} className="relative aspect-[16/10] overflow-hidden bg-[var(--np-background)]">
+    <article className="group flex flex-col overflow-hidden bg-[var(--np-card)] border border-[var(--np-border)] shadow-sm hover:shadow-md transition-shadow">
+      {/* Image — 16/9 ratio */}
+      <Link href={postPath} className="relative aspect-video overflow-hidden bg-[var(--np-newsprint)]">
         <Image
-          src={post.imageUrl}
+          src={post.imageUrl || "/images/placeholder.jpg"}
           alt={post.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        {post.category && (
-          <div className="absolute left-4 top-4">
-            <span className="rounded-md bg-[var(--np-primary)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
-              {post.category.name}
-            </span>
-          </div>
-        )}
-        {/* Logo watermark - bottom right with name */}
-        <div className="absolute right-3 bottom-3 z-10">
-          <ImageWatermark size="md" showText={true} />
+        {/* Logo watermark */}
+        <div className="absolute right-2 bottom-2 z-10">
+          <ImageWatermark size="sm" showText={false} />
         </div>
       </Link>
-      <div className="flex flex-1 flex-col p-4">
-        <div className="np-timestamp mb-2 flex flex-wrap items-center gap-3">
+
+      <div className="flex flex-1 flex-col p-3.5">
+        {/* Category badge — red pill below image */}
+        {post.category && (
+          <Link
+            href={`/category/${post.category.slug}`}
+            className="mb-2 self-start rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-red-700 transition-colors"
+          >
+            {post.category.name}
+          </Link>
+        )}
+
+        {/* Title — 2-line clamp, underline on hover */}
+        <h3 className="np-headline-sm line-clamp-2 leading-snug text-[var(--np-text-primary)] group-hover:underline decoration-[var(--np-primary)] decoration-1 underline-offset-2 transition-colors">
+          <Link href={postPath}>{post.title}</Link>
+        </h3>
+
+        {/* Author + time — small gray */}
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--np-text-secondary)]">
+          {post.author && (
+            <span className="font-medium">{post.author}</span>
+          )}
           {post.publishedAt && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -141,18 +154,15 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
             </span>
           )}
           {post.district && (
-            <Link href={`/district/${post.district.slug}`} className="flex items-center gap-1 hover:text-[var(--np-primary)] transition-colors">
+            <Link
+              href={`/district/${post.district.slug}`}
+              className="flex items-center gap-1 hover:text-[var(--np-primary)] transition-colors"
+            >
               <MapPin className="h-3 w-3" />
               {post.district.name}
             </Link>
           )}
         </div>
-        <h3 className="np-headline-sm leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)] line-clamp-2">
-          <Link href={postPath}>{post.title}</Link>
-        </h3>
-        <p className="mt-2 line-clamp-2 text-sm text-[var(--np-text-secondary)]">
-          {post.excerpt}
-        </p>
       </div>
     </article>
   );

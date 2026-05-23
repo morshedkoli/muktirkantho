@@ -1,50 +1,78 @@
 import Link from "next/link";
-import { AlertCircle, ChevronRight } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { PostStatus } from "@prisma/client";
 import { getPostPath } from "@/lib/post-url";
 
 type BreakingTickerProps = {
   items: { id: string; title: string; slug: string }[];
 };
 
+/** Self-contained async server component — fetches its own breaking news data. */
+export async function BreakingTickerServer() {
+  let items: { id: string; title: string; slug: string }[] = [];
+  try {
+    items = await prisma.post.findMany({
+      where: { status: PostStatus.published },
+      select: { id: true, title: true, slug: true },
+      take: 5,
+      orderBy: { publishedAt: "desc" },
+    });
+  } catch {
+    // fall through — render nothing if DB is unavailable
+  }
+  return <BreakingTicker items={items} />;
+}
+
 export function BreakingTicker({ items }: BreakingTickerProps) {
   if (!items.length) return null;
 
-  const tickerItems = items.length > 1 ? [...items, ...items] : items;
+  // Duplicate items so the scroll loop is seamless (even a single item needs duplication)
+  const tickerItems = [...items, ...items];
 
   return (
-    <div className="border-y-2 border-[var(--np-breaking)] bg-[var(--np-card)]">
+    <div className="bg-[#b91c1c] overflow-hidden">
       <div className="mx-auto max-w-7xl">
-        <div className="flex items-stretch">
-          {/* Breaking label */}
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-[var(--np-breaking)] px-2.5 sm:px-4 py-2.5 sm:py-3 text-white shrink-0">
-            <AlertCircle className="h-4 w-4 animate-pulse" />
-            <span className="hidden min-[400px]:inline text-xs sm:text-sm font-bold uppercase tracking-wider">ব্রেকিং</span>
+        <div className="flex items-stretch min-h-[40px]">
+
+          {/* "ব্রেকিং" badge */}
+          <div className="flex items-center gap-2 bg-[#7f1d1d] px-3 sm:px-5 shrink-0 border-r border-[#991b1b]">
+            {/* Pulsing dot */}
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+            </span>
+            <span className="text-white text-xs sm:text-sm font-bold tracking-wider uppercase select-none">
+              ব্রেকিং
+            </span>
           </div>
 
-          {/* Ticker content */}
-          <div className="flex-1 overflow-hidden">
-            <div className="breaking-ticker-track flex w-max items-center">
+          {/* Scrolling ticker */}
+          <div className="flex-1 overflow-hidden relative">
+            {/* Fade-out gradient on the right */}
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-[#b91c1c] to-transparent z-10" />
+            <div className="breaking-ticker-track flex items-center w-max h-full">
               {tickerItems.map((item, index) => (
                 <Link
                   key={`${item.id}-${index}`}
                   href={getPostPath(item)}
                   aria-hidden={index >= items.length}
                   tabIndex={index >= items.length ? -1 : 0}
-                  className="group flex items-center gap-2 px-4 py-3 whitespace-nowrap hover:bg-[var(--np-background)] transition-colors border-r border-[var(--np-border)] last:border-r-0"
+                  className="flex items-center gap-2 px-5 py-2 whitespace-nowrap text-white hover:text-yellow-200 transition-colors"
                 >
-                  <span className="text-sm font-medium text-[var(--np-text-primary)] group-hover:text-[var(--np-primary)] transition-colors line-clamp-1">
+                  <span className="text-yellow-300 select-none font-bold" aria-hidden="true">
+                    ▸
+                  </span>
+                  <span className="text-sm font-medium leading-snug">
                     {item.title}
                   </span>
-                  <ChevronRight className="h-4 w-4 text-[var(--np-text-secondary)] group-hover:text-[var(--np-primary)] shrink-0" />
+                  <span className="text-white/30 mx-1 select-none" aria-hidden="true">
+                    ●
+                  </span>
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Time indicator */}
-          <div className="hidden md:flex items-center px-4 border-l border-[var(--np-border)] text-xs text-[var(--np-text-secondary)] shrink-0">
-            <span>সরাসরি আপডেট</span>
-          </div>
         </div>
       </div>
     </div>

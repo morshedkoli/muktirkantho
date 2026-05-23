@@ -4,58 +4,78 @@ import { formatBanglaDateTime, formatBanglaShortDate } from "@/lib/bangla-date";
 import { Clock, MapPin, ArrowRight } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
 import { ImageWatermark } from "./image-watermark";
+import { cn } from "@/lib/cn";
 
 type Post = {
-  id?: string;
+  id: string;
   title: string;
   slug: string;
   excerpt: string;
   imageUrl: string;
   publishedAt: Date | null;
+  author?: string | null;
   category?: { name: string; slug: string } | null;
   district?: { name: string; slug: string } | null;
 };
 
+type HeroNewsCardProps = {
+  post: Post;
+  /** "large" = ~500px tall (full-width hero), "medium" = ~350px tall (half-width) */
+  size?: "large" | "medium";
+};
+
 /** Hero card — full-bleed image with bottom-gradient overlay for text */
-export function HeroNewsCard({ post }: { post: Post }) {
+export function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) {
   const postPath = getPostPath(post);
 
   return (
     <Link
       href={postPath}
-      className="group relative block w-full overflow-hidden bg-[var(--np-background)]"
+      className="group relative block w-full overflow-hidden bg-neutral-900"
     >
-      <div className="relative aspect-[16/10] w-full overflow-hidden sm:aspect-[16/9]">
+      <div
+        className={cn(
+          "relative w-full overflow-hidden",
+          size === "large" ? "h-[340px] sm:h-[420px] md:h-[500px]" : "h-[240px] sm:h-[300px] md:h-[350px]"
+        )}
+      >
         <Image
-          src={post.imageUrl}
+          src={post.imageUrl || "/images/placeholder.jpg"}
           alt={post.title}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 65vw, 800px"
+          sizes={
+            size === "large"
+              ? "(max-width: 640px) 100vw, (max-width: 1280px) 65vw, 800px"
+              : "(max-width: 640px) 100vw, (max-width: 1280px) 35vw, 450px"
+          }
           className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-          priority
+          priority={size === "large"}
         />
 
-        {/* Gradient overlay for legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
         {/* Watermark */}
         <div className="absolute right-3 top-3 z-10">
           <ImageWatermark size="sm" showText={false} />
         </div>
 
-        {/* Category badge */}
+        {/* Category badge — top left, red pill */}
         {post.category && (
           <div className="absolute left-4 top-4 z-10">
-            <span className="inline-block bg-[var(--np-primary)] px-2.5 py-1 font-label text-[10px] font-semibold uppercase tracking-[1.5px] text-white">
+            <span className="inline-block rounded-full bg-red-600 px-3 py-1 text-[10px] font-bold uppercase tracking-[1.5px] text-white shadow-md">
               {post.category.name}
             </span>
           </div>
         )}
 
-        {/* Bottom content */}
+        {/* Bottom content over gradient */}
         <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6">
-          {/* Meta */}
+          {/* Author + time metadata */}
           <div className="mb-2 flex flex-wrap items-center gap-3 text-[10.5px] font-mono uppercase tracking-[1.5px] text-white/70">
+            {post.author && (
+              <span>{post.author}</span>
+            )}
             {post.publishedAt && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -71,17 +91,24 @@ export function HeroNewsCard({ post }: { post: Post }) {
           </div>
 
           {/* Title */}
-          <h2 className="np-headline-lg text-balance leading-tight text-white text-xl sm:text-2xl md:text-[28px] group-hover:underline decoration-2 underline-offset-[6px]">
+          <h2
+            className={cn(
+              "text-balance font-bold leading-tight text-white group-hover:underline decoration-2 underline-offset-[6px]",
+              size === "large" ? "text-xl sm:text-2xl md:text-[28px]" : "text-lg sm:text-xl md:text-2xl"
+            )}
+          >
             {post.title}
           </h2>
 
-          {/* Excerpt (sm+) */}
-          <p className="mt-2 hidden max-w-2xl text-[13.5px] leading-relaxed text-white/80 line-clamp-2 sm:block">
-            {post.excerpt}
-          </p>
+          {/* Excerpt — only on large hero, sm+ screens */}
+          {size === "large" && (
+            <p className="mt-2 hidden max-w-2xl text-[13.5px] leading-relaxed text-white/80 line-clamp-2 sm:block">
+              {post.excerpt}
+            </p>
+          )}
 
           {/* CTA */}
-          <div className="mt-3 inline-flex items-center gap-1.5 font-label text-[10px] uppercase tracking-[2px] text-[var(--np-secondary)] group-hover:text-white transition-colors">
+          <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[2px] text-red-400 group-hover:text-white transition-colors">
             বিস্তারিত পড়ুন
             <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
           </div>
@@ -114,7 +141,7 @@ export function SecondaryStoryCard({
       {post.imageUrl && (
         <div className="relative h-16 w-[88px] shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
           <Image
-            src={post.imageUrl}
+            src={post.imageUrl || "/images/placeholder.jpg"}
             alt=""
             fill
             sizes="88px"

@@ -1,22 +1,40 @@
-import { AdSlot } from "@/components/public/ad-slot";
-import { AD_PLACEMENTS } from "@/lib/ads";
+"use client";
 
-export async function MobileAnchorAd() {
+import { useState } from "react";
+import { X } from "lucide-react";
+
+interface MobileAnchorAdProps {
+  children?: React.ReactNode;
+}
+
+export function MobileAnchorAd({ children }: MobileAnchorAdProps) {
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed) return null;
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--np-border)] bg-[var(--np-card)] shadow-[0_-2px_10px_rgba(0,0,0,0.1)] lg:hidden">
-      <div className="flex items-center justify-center py-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] font-label uppercase tracking-wider text-[var(--np-muted)]">Ad</span>
-          <AdSlot placement={AD_PLACEMENTS.MOBILE_ANCHOR} showPlaceholder={false} />
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.08)] lg:hidden">
+      <div className="relative flex items-center px-3 py-1.5">
+        {/* Label */}
+        <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wider text-zinc-400 mr-2">
+          বিজ্ঞাপন
+        </span>
+
+        {/* Ad content */}
+        <div className="flex-1 flex items-center justify-center overflow-hidden">
+          {children}
         </div>
+
+        {/* Dismiss button */}
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="বিজ্ঞাপন বন্ধ করুন"
+          className="shrink-0 ml-2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
-      <style>{`
-        @media (min-width: 1024px) {
-          .fixed.bottom-0.left-0.right-0.z-40 {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

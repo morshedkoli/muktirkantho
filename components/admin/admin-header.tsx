@@ -4,24 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  Search,
   Bell,
   Menu,
   LogOut,
   Settings as SettingsIcon,
   AlertCircle,
-  X,
   MessageSquare,
   ExternalLink,
+  ChevronDown,
 } from "lucide-react";
 import { AdminThemeToggle } from "@/components/theme-toggle";
 import { logoutAdminAction } from "@/app/(admin)/admin/actions";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { cn } from "@/lib/cn";
 
 type AdminUser = { name: string; email: string; role: string };
 
@@ -34,6 +28,55 @@ function initials(name?: string) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+}
+
+// Bangla breadcrumb label map
+const pathLabelMap: Record<string, string> = {
+  dashboard: "ড্যাশবোর্ড",
+  posts: "পোস্টসমূহ",
+  create: "নতুন পোস্ট",
+  categories: "ক্যাটাগরি",
+  tags: "ট্যাগ",
+  media: "মিডিয়া",
+  comments: "মন্তব্য",
+  divisions: "বিভাগ",
+  districts: "জেলা",
+  upazilas: "উপজেলা",
+  ads: "বিজ্ঞাপন",
+  facebook: "ফেসবুক",
+  social: "সোশ্যাল",
+  queue: "সোশ্যাল কিউ",
+  analytics: "অ্যানালিটিক্স",
+  menus: "মেনু",
+  branding: "ব্র্যান্ডিং",
+  seo: "এসইও",
+  settings: "সেটিংস",
+  users: "ব্যবহারকারী",
+  user: "প্রোফাইল",
+  login: "লগইন",
+};
+
+function getBanglaLabel(segment: string): string {
+  return pathLabelMap[segment.toLowerCase()] ?? segment;
+}
+
+function getBreadcrumb(pathname: string): { root: string; sub: string } {
+  const seg = pathname.split("/").filter(Boolean);
+  // seg[0] = "admin", seg[1] = section, seg[2] = subsection (optional)
+  if (seg.length < 2) return { root: "অ্যাডমিন", sub: "ড্যাশবোর্ড" };
+
+  // Special case: social/queue
+  if (seg[1] === "social" && seg[2] === "queue") {
+    return { root: "অ্যাডমিন", sub: "সোশ্যাল কিউ" };
+  }
+
+  // Special case: posts/create
+  if (seg[1] === "posts" && seg[2] === "create") {
+    return { root: "পোস্টসমূহ", sub: "নতুন পোস্ট" };
+  }
+
+  const sub = getBanglaLabel(seg[1]);
+  return { root: "অ্যাডমিন", sub };
 }
 
 interface AdminHeaderProps {
@@ -50,25 +93,46 @@ type Notification = {
 };
 
 const sampleNotifications: Notification[] = [
-  { id: "1", type: "breaking", title: "Breaking News Alert", description: "New breaking story published and live", time: "2m", unread: true },
-  { id: "2", type: "social",   title: "Facebook Auto-Share", description: "Latest post shared to Facebook page", time: "15m", unread: true },
-  { id: "3", type: "comment",  title: "New Comment Pending", description: "A comment is awaiting moderation", time: "1h", unread: false },
-  { id: "4", type: "system",   title: "Sitemap Updated", description: "XML sitemap regenerated successfully", time: "2h", unread: false },
+  {
+    id: "1",
+    type: "breaking",
+    title: "ব্রেকিং নিউজ",
+    description: "নতুন ব্রেকিং স্টোরি প্রকাশিত হয়েছে",
+    time: "২ মি",
+    unread: true,
+  },
+  {
+    id: "2",
+    type: "social",
+    title: "ফেসবুক শেয়ার",
+    description: "সর্বশেষ পোস্ট ফেসবুকে শেয়ার করা হয়েছে",
+    time: "১৫ মি",
+    unread: true,
+  },
+  {
+    id: "3",
+    type: "comment",
+    title: "নতুন মন্তব্য",
+    description: "একটি মন্তব্য অনুমোদনের অপেক্ষায়",
+    time: "১ ঘ",
+    unread: false,
+  },
+  {
+    id: "4",
+    type: "system",
+    title: "সাইটম্যাপ আপডেট",
+    description: "XML সাইটম্যাপ পুনরায় তৈরি হয়েছে",
+    time: "২ ঘ",
+    unread: false,
+  },
 ];
 
 const notificationIcons: Record<string, React.ElementType> = {
   breaking: AlertCircle,
-  social: X,
+  social: ExternalLink,
   comment: MessageSquare,
   system: Bell,
 };
-
-function getBreadcrumb(pathname: string): { root: string; sub: string } {
-  const seg = pathname.split("/").filter(Boolean);
-  if (seg.length < 2) return { root: "Admin", sub: "Dashboard" };
-  const sub = seg[1].charAt(0).toUpperCase() + seg[1].slice(1).replace(/-/g, " ");
-  return { root: "Admin", sub };
-}
 
 export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
   const pathname = usePathname();
@@ -107,190 +171,182 @@ export function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
   }, [notifOpen]);
 
   return (
-    <header className="sticky top-0 z-30 h-[56px] border-b border-[var(--ad-border)] glass-panel shadow-sm shrink-0">
-      <div className="h-full flex items-center justify-between px-4 sm:px-6 lg:px-7">
+    <header className="sticky top-0 z-30 h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm shrink-0">
+      <div className="h-full flex items-center justify-between px-4 sm:px-6">
 
-        {/* Left Side: Mobile Hamburger & Breadcrumb */}
+        {/* Left: hamburger + breadcrumb */}
         <div className="flex items-center gap-3">
           <button
             onClick={onMobileMenuToggle}
-            className="lg:hidden p-1.5 -ml-1 rounded-full text-[var(--ad-text-secondary)] hover:bg-[var(--ad-border)]/60 transition-colors cursor-pointer"
-            aria-label="Toggle menu"
+            className="lg:hidden p-1.5 -ml-1 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            aria-label="মেনু খুলুন"
           >
-            <Menu className="h-4.5 w-4.5" />
+            <Menu className="h-5 w-5" />
           </button>
 
           {/* Breadcrumb */}
-          <div className="hidden sm:flex items-center gap-2 text-[10.5px] font-bold tracking-wider text-[var(--ad-text-muted)] uppercase">
-            <Link href="/admin/dashboard" className="hover:text-[var(--ad-text-primary)] transition-colors">
+          <nav className="hidden sm:flex items-center gap-1.5 text-sm">
+            <Link
+              href="/admin/dashboard"
+              className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors font-medium text-xs"
+            >
               {crumb.root}
             </Link>
-            <span className="opacity-30 text-xs font-light">/</span>
-            <span className="text-[var(--ad-text-primary)] font-extrabold">{crumb.sub}</span>
-          </div>
+            <span className="text-zinc-300 dark:text-zinc-700 text-xs">/</span>
+            <span className="text-zinc-800 dark:text-zinc-100 font-bold text-xs">
+              {crumb.sub}
+            </span>
+          </nav>
         </div>
 
-        {/* Search pill — center */}
-        <div className="flex-1 max-w-[280px] mx-auto hidden md:block">
-          <div className="flex items-center gap-2 h-8.5 bg-[var(--ad-border)]/40 border border-transparent rounded-full px-3.5 hover:bg-[var(--ad-border)]/70 focus-within:bg-[var(--ad-card)] focus-within:border-[var(--ad-green)] focus-within:ring-2 focus-within:ring-[var(--ad-green)]/10 transition-all duration-200 cursor-text">
-            <Search className="h-3.5 w-3.5 text-[var(--ad-text-muted)] shrink-0" />
-            <input
-              type="text"
-              placeholder="Search console..."
-              className="flex-1 bg-transparent border-none outline-none text-[12px] text-[var(--ad-text-primary)] placeholder:text-[var(--ad-text-muted)] min-w-0"
-            />
-            <kbd className="inline-flex font-mono text-[8px] font-bold text-[var(--ad-text-muted)] bg-[var(--ad-background)] px-1.5 py-0.5 rounded border border-[var(--ad-border)]">
-              ⌘K
-            </kbd>
+        {/* Right: actions */}
+        <div className="flex items-center gap-2">
+
+          {/* View Site */}
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all border border-zinc-200 dark:border-zinc-700 shrink-0"
+          >
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            <span>সাইট দেখুন</span>
+          </a>
+
+          {/* Theme toggle */}
+          <div className="h-9 w-9 flex items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+            <AdminThemeToggle size="sm" />
           </div>
-        </div>
 
-        {/* Actions — Right Side */}
-        <TooltipProvider>
-          <div className="flex items-center gap-3">
-
-            {/* View Site */}
-            <Tooltip delayDuration={50}>
-              <TooltipTrigger asChild>
-                <a
-                  href="/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl text-[11px] font-semibold text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] hover:bg-[var(--ad-border)]/40 transition-all border border-[var(--ad-border)] shrink-0"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                  <span>View Site</span>
-                </a>
-              </TooltipTrigger>
-              <TooltipContent className="shadow-premium py-1 px-2.5">
-                Open front-end site
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Theme toggle */}
-            <Tooltip delayDuration={50}>
-              <TooltipTrigger asChild>
-                <div className="h-8.5 w-8.5 flex items-center justify-center rounded-xl text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] hover:bg-[var(--ad-border)]/40 transition-all cursor-pointer">
-                  <AdminThemeToggle variant="minimal" size="sm" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="shadow-premium py-1 px-2.5">
-                Toggle Theme
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Notifications */}
-            <div ref={notifRef} className="relative">
-              <Tooltip delayDuration={50}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setNotifOpen((o) => !o)}
-                    className="h-8.5 w-8.5 flex items-center justify-center rounded-xl text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] hover:bg-[var(--ad-border)]/40 transition-all cursor-pointer relative"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="h-4.5 w-4.5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-[6px] right-[6px] w-2 h-2 bg-[var(--ad-brand)] rounded-full ring-2 ring-[var(--ad-card)]" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="shadow-premium py-1 px-2.5">
-                  Notifications
-                </TooltipContent>
-              </Tooltip>
-
-              {notifOpen && (
-                <div className="absolute right-0 top-10 z-50 w-80 sm:w-96 rounded-2xl border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-premium overflow-hidden animate-in fade-in duration-200">
-                  <div className="border-b border-[var(--ad-border)] px-4 py-3 flex items-center justify-between bg-[var(--ad-background)]/50">
-                    <h3 className="text-[10px] font-bold text-[var(--ad-text-primary)] uppercase tracking-wider font-mono">Notifications</h3>
-                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--ad-green)] bg-[var(--ad-green-light)] px-2.5 py-0.5 rounded-full border border-[var(--ad-green)]/10">{unreadCount} new</span>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto divide-y divide-[var(--ad-border)]">
-                    {notifications.map((n) => {
-                      const Icon = notificationIcons[n.type];
-                      return (
-                        <div
-                          key={n.id}
-                          className={`px-4 py-3.5 transition-colors hover:bg-[var(--ad-background)]/40 ${
-                            n.unread ? "bg-[var(--ad-green-light)]/10" : ""
-                          }`}
-                        >
-                          <div className="flex gap-3">
-                            <div
-                              className={`mt-0.5 flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-lg ${
-                                n.type === "breaking"
-                                  ? "bg-[var(--ad-brand-light)] text-[var(--ad-brand)] border border-[var(--ad-brand)]/10"
-                                  : n.type === "social"
-                                  ? "bg-[var(--ad-blue-light)] text-[var(--ad-blue)] border border-[var(--ad-blue)]/10"
-                                  : n.type === "comment"
-                                  ? "bg-[var(--ad-green-light)] text-[var(--ad-green)] border border-[var(--ad-green)]/10"
-                                  : "bg-[var(--ad-amber-light)] text-[var(--ad-amber)] border border-[var(--ad-amber)]/10"
-                              }`}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-[var(--ad-text-primary)]">{n.title}</p>
-                              <p className="text-[11px] text-[var(--ad-text-secondary)] mt-0.5 line-clamp-1 leading-normal font-medium">{n.description}</p>
-                              <p className="text-[9px] font-semibold text-[var(--ad-text-muted)] mt-1 font-mono">{n.time}</p>
-                            </div>
-                            {n.unread && <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[var(--ad-brand)] shrink-0" />}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+          {/* Notifications */}
+          <div ref={notifRef} className="relative">
+            <button
+              onClick={() => setNotifOpen((o) => !o)}
+              className="h-9 w-9 flex items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer relative"
+              aria-label="বিজ্ঞপ্তি"
+            >
+              <Bell className="h-[18px] w-[18px]" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-zinc-950" />
               )}
-            </div>
+            </button>
 
-            {/* User avatar dropdown */}
-            <div ref={menuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((o) => !o)}
-                className="h-8.5 w-8.5 rounded-full flex items-center justify-center text-white text-[11px] font-bold bg-gradient-to-br from-[var(--ad-green)] to-[var(--ad-green-mid)] hover:shadow-md hover:scale-105 transition-all cursor-pointer border border-emerald-500/10 shrink-0"
-                aria-label="User menu"
-              >
-                {initials(user?.name)}
-              </button>
-
-              {menuOpen && (
-                <div className="absolute right-0 top-10 z-50 w-52 rounded-2xl border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-premium overflow-hidden animate-in fade-in duration-200">
-                  <div className="px-4 py-3.5 flex items-center gap-2.5 border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs font-bold bg-gradient-to-br from-[var(--ad-green)] to-[var(--ad-green-mid)]">
-                      {initials(user?.name)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-[var(--ad-text-primary)] truncate">{user?.name || "Admin"}</p>
-                      <p className="text-[9.5px] text-[var(--ad-text-muted)] truncate font-mono mt-0.5">{user?.role || "Super Admin"}</p>
-                    </div>
-                  </div>
-                  <div className="p-1.5 space-y-0.5">
-                    <Link
-                      href="/admin/user"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[var(--ad-text-secondary)] hover:bg-[var(--ad-border)]/40 hover:text-[var(--ad-text-primary)] transition-colors"
-                    >
-                      <SettingsIcon className="h-3.5 w-3.5 text-[var(--ad-text-secondary)]" />
-                      Profile Settings
-                    </Link>
-                    <form action={logoutAdminAction}>
-                      <button
-                        type="submit"
-                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[var(--ad-brand)] hover:bg-[var(--ad-brand-light)] transition-colors cursor-pointer"
+            {notifOpen && (
+              <div className="absolute right-0 top-11 z-50 w-80 sm:w-96 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden animate-in fade-in duration-200">
+                <div className="border-b border-zinc-100 dark:border-zinc-800 px-4 py-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
+                  <h3 className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                    বিজ্ঞপ্তি
+                  </h3>
+                  {unreadCount > 0 && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-red-500 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-900">
+                      {unreadCount} নতুন
+                    </span>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {notifications.map((n) => {
+                    const Icon = notificationIcons[n.type];
+                    return (
+                      <div
+                        key={n.id}
+                        className={cn(
+                          "px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                          n.unread ? "bg-red-50/30 dark:bg-red-950/10" : ""
+                        )}
                       >
-                        <LogOut className="h-3.5 w-3.5" />
-                        Sign Out
-                      </button>
-                    </form>
+                        <div className="flex gap-3">
+                          <div
+                            className={cn(
+                              "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                              n.type === "breaking"
+                                ? "bg-red-100 dark:bg-red-950/40 text-red-500"
+                                : n.type === "social"
+                                ? "bg-blue-100 dark:bg-blue-950/40 text-blue-500"
+                                : n.type === "comment"
+                                ? "bg-green-100 dark:bg-green-950/40 text-green-500"
+                                : "bg-amber-100 dark:bg-amber-950/40 text-amber-500"
+                            )}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100">
+                              {n.title}
+                            </p>
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1 leading-normal">
+                              {n.description}
+                            </p>
+                            <p className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-600 mt-1">
+                              {n.time} আগে
+                            </p>
+                          </div>
+                          {n.unread && (
+                            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User avatar dropdown */}
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="flex items-center gap-2 h-9 px-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+              aria-label="ইউজার মেনু"
+            >
+              <div className="h-7 w-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold bg-gradient-to-br from-red-500 to-red-700 shrink-0">
+                {initials(user?.name)}
+              </div>
+              <span className="hidden md:block text-xs font-semibold text-zinc-700 dark:text-zinc-300 max-w-[80px] truncate">
+                {user?.name ?? "অ্যাডমিন"}
+              </span>
+              <ChevronDown className="hidden md:block h-3.5 w-3.5 text-zinc-400 shrink-0" />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-11 z-50 w-52 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden animate-in fade-in duration-200">
+                <div className="px-4 py-3 flex items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs font-bold bg-gradient-to-br from-red-500 to-red-700">
+                    {initials(user?.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100 truncate">
+                      {user?.name || "অ্যাডমিন"}
+                    </p>
+                    <p className="text-[9.5px] text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
+                      {user?.role || "Super Admin"}
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
-
+                <div className="p-1.5 space-y-0.5">
+                  <Link
+                    href="/admin/user"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    <SettingsIcon className="h-3.5 w-3.5" />
+                    প্রোফাইল সেটিংস
+                  </Link>
+                  <form action={logoutAdminAction}>
+                    <button
+                      type="submit"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      লগআউট
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
-        </TooltipProvider>
+        </div>
       </div>
     </header>
   );

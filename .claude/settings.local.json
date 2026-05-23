@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"D:\\\\Muktirkantho\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Muktirkantho\\\\app\" -Recurse -Force | Where-Object {$_.PSIsContainer -or $_.Extension -in @\\('.ts', '.tsx', '.js', '.jsx', '.json'\\)} | Select-Object FullName | Sort-Object)",
+      "Bash(npx tsc *)",
+      "Bash(Get-Content components/public/header.tsx)",
+      "Bash(Get-Content components/public/header-client.tsx)",
+      "Bash(git *)",
+      "Bash(cd /d D:\\\\Muktirkantho)",
+      "Bash(npx prisma *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('dependencies',{}\\).get\\('prisma'\\) or d.get\\('devDependencies',{}\\).get\\('prisma','not found'\\)\\)\")",
+      "Bash(npm run *)",
+      "Bash(npm install *)"
+    ]
+  }
+}
