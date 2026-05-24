@@ -7,10 +7,10 @@ export const loginSchema = z.object({
 
 export const postSchema = z.object({
   title: z.string().min(5).max(180),
-  excerpt: z.string().min(20).max(500),
+  excerpt: z.string().min(20).max(500).optional(),
   content: z.string().min(50),
-  imageUrl: z.string().url(),
-  imagePublicId: z.string().min(1),
+  imageUrl: z.union([z.string().url(), z.literal("")]).optional(),
+  imagePublicId: z.string().optional(),
   categoryId: z.string().min(1),
   districtId: z.string().min(1),
   upazilaId: z.string().optional(),

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { postSchema } from "@/lib/validators";
 import { makeSlug } from "@/lib/utils";
 import { requireAdmin } from "@/lib/route-auth";
-import { generatePostSeo } from "@/lib/seo";
+import { generatePostSeo, getPlainTextFromContent } from "@/lib/seo";
 import { getAuthUser } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -71,9 +71,26 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const author = await resolveCurrentAuthor();
-  const seo = generatePostSeo(body?.title ?? "", body?.content ?? "");
+  const title = (body?.title ?? "").toString();
+  const content = (body?.content ?? "").toString();
+  const seo = generatePostSeo(title, content);
+
+  // Derive excerpt from content if the client didn't supply one
+  const rawExcerpt = (body?.excerpt ?? "").toString().trim();
+  let derivedExcerpt = rawExcerpt;
+  if (!derivedExcerpt && content) {
+    const plain = getPlainTextFromContent(content);
+    derivedExcerpt = plain.slice(0, 280).trim();
+    if (derivedExcerpt.length < 20) {
+      derivedExcerpt = `${title} ${plain}`.trim().slice(0, 280);
+    }
+  }
+
   const parsed = postSchema.safeParse({
     ...body,
+    excerpt: derivedExcerpt || undefined,
+    imageUrl: (body?.imageUrl ?? "").toString().trim() || undefined,
+    imagePublicId: (body?.imagePublicId ?? "").toString().trim() || undefined,
     author: (body?.author ?? "").toString().trim() || author,
     youtubeUrl: (body?.youtubeUrl ?? "").toString().trim() || undefined,
     metaTitle: seo.metaTitle,
@@ -90,6 +107,9 @@ export async function POST(request: Request) {
     data: {
       ...payload,
       slug,
+      excerpt: payload.excerpt ?? payload.metaDescription,
+      imageUrl: payload.imageUrl || null,
+      imagePublicId: payload.imagePublicId || null,
       upazilaId: payload.upazilaId || null,
       youtubeUrl: payload.youtubeUrl || null,
       publishedAt: payload.status === PostStatus.published ? new Date() : null,

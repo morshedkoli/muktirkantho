@@ -3,6 +3,7 @@
 import { PostStatus } from "@prisma/client";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { deleteImage } from "@/lib/cloudinary";
 import { clearAuthCookie, getAuthUser, setAuthCookie, signAdminToken } from "@/lib/auth";
 import { AD_PLACEMENTS } from "@/lib/ads";
@@ -11,7 +12,7 @@ import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings, saveSiteSettings } from "@/lib/site-settings";
 import { hashPassword, verifyPassword } from "@/lib/password";
-import { generatePostSeo } from "@/lib/seo";
+import { generatePostSeo, getPlainTextFromContent } from "@/lib/seo";
 import { makeSlug } from "@/lib/utils";
 import { loginSchema, postSchema, taxonomySchema } from "@/lib/validators";
 import { verifyCsrf } from "@/lib/csrf";
@@ -51,23 +52,25 @@ function normalizePostPayload(formData: FormData) {
   const title = formData.get("title")?.toString() ?? "";
   const seo = generatePostSeo(title, content);
 
-  // Generate excerpt from content: take first 160 chars or up to first period if shorter
-  let excerpt = formData.get("excerpt")?.toString() ?? "";
-  if (!excerpt && content) {
-    const plainText = content.replace(/[#*`]/g, ""); // Simple markdown strip
-    excerpt = plainText.substring(0, 160).trim();
-    if (excerpt.length < 20) {
-      // Pad if too short to satisfy validator
-      excerpt = plainText.substring(0, 50).padEnd(20, ".");
-    }
+  // Excerpt isn't a form field — always derive it server-side from the cleaned
+  // plain text. Fall back to the title so the validator's min length holds even
+  // when content is short.
+  const plainContent = getPlainTextFromContent(content);
+  let excerpt = plainContent.slice(0, 280).trim();
+  if (excerpt.length < 20) {
+    const fallback = `${title} ${plainContent}`.trim();
+    excerpt = fallback.slice(0, 280).trim();
   }
+
+  const imageUrl = formData.get("imageUrl")?.toString().trim() ?? "";
+  const imagePublicId = formData.get("imagePublicId")?.toString().trim() ?? "";
 
   return {
     title,
-    excerpt,
+    excerpt: excerpt || undefined,
     content,
-    imageUrl: formData.get("imageUrl")?.toString() ?? "",
-    imagePublicId: formData.get("imagePublicId")?.toString() ?? "",
+    imageUrl: imageUrl || undefined,
+    imagePublicId: imagePublicId || undefined,
     categoryId: formData.get("categoryId")?.toString() ?? "",
     districtId: formData.get("districtId")?.toString() ?? "",
     upazilaId: formData.get("upazilaId")?.toString() ?? undefined,
@@ -79,6 +82,77 @@ function normalizePostPayload(formData: FormData) {
     featured: formData.get("featured") === "on",
     status: (formData.get("status")?.toString() ?? "draft") as "draft" | "published",
   };
+}
+
+const POST_FIELD_LABELS: Record<string, string> = {
+  title: "Title",
+  content: "Content",
+  excerpt: "Excerpt",
+  imageUrl: "Featured Image URL",
+  imagePublicId: "Featured Image",
+  categoryId: "Category",
+  districtId: "District",
+  upazilaId: "Upazila",
+  tags: "Tags",
+  author: "Author",
+  youtubeUrl: "YouTube URL",
+  metaTitle: "Meta Title",
+  metaDescription: "Meta Description",
+  featured: "Featured",
+  status: "Status",
+};
+
+function describeZodIssue(issue: z.core.$ZodIssue): string {
+  switch (issue.code) {
+    case "too_small": {
+      const min = Number(issue.minimum);
+      if (issue.origin === "string") {
+        return min <= 1 ? "is required" : `must be at least ${min} characters long`;
+      }
+      if (issue.origin === "array") {
+        return `must have at least ${min} item${min === 1 ? "" : "s"}`;
+      }
+      return `must be at least ${min}`;
+    }
+    case "too_big": {
+      const max = Number(issue.maximum);
+      if (issue.origin === "string") return `must be at most ${max} characters long`;
+      if (issue.origin === "array") return `must have at most ${max} item${max === 1 ? "" : "s"}`;
+      return `must be at most ${max}`;
+    }
+    case "invalid_type":
+      // Zod 4 doesn't expose `received` directly; the message includes "received undefined" for missing fields.
+      return /received undefined|received null/i.test(issue.message)
+        ? "is required"
+        : `must be a ${issue.expected}`;
+    case "invalid_format":
+      if (issue.format === "url") return "must be a valid URL (https://...)";
+      if (issue.format === "email") return "must be a valid email address";
+      return "is not in a valid format";
+    case "invalid_value":
+      return `must be one of: ${(issue.values ?? []).map((v) => String(v)).join(", ")}`;
+    case "invalid_union":
+      return "is not in a valid format";
+    default:
+      return issue.message || "is invalid";
+  }
+}
+
+function formatPostValidationError(error: z.ZodError): string {
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const issue of error.issues) {
+    const field = issue.path[0]?.toString() ?? "";
+    if (seen.has(field)) continue;
+    seen.add(field);
+    const label = POST_FIELD_LABELS[field] ?? (field || "Form");
+    parts.push(`${label} ${describeZodIssue(issue)}`);
+  }
+  if (parts.length === 0) {
+    return "Some fields are invalid. Please review the form.";
+  }
+  const prefix = parts.length === 1 ? "Please fix this field:" : "Please fix these fields:";
+  return `${prefix} ${parts.join(" · ")}`;
 }
 
 async function resolveUniquePostSlug(title: string, excludePostId?: string) {
@@ -161,7 +235,7 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
   const payloadWithAuthor = { ...payload, author };
   const parsed = postSchema.safeParse(payloadWithAuthor);
   if (!parsed.success) {
-    return { status: "error", message: "Please fix the post fields and try again." };
+    return { status: "error", message: formatPostValidationError(parsed.error) };
   }
 
   const safe = parsed.data;
@@ -170,6 +244,9 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
     data: {
       ...safe,
       slug,
+      excerpt: safe.excerpt ?? safe.metaDescription,
+      imageUrl: safe.imageUrl || null,
+      imagePublicId: safe.imagePublicId || null,
       upazilaId: safe.upazilaId || null,
       youtubeUrl: safe.youtubeUrl || null,
       publishedAt: safe.status === PostStatus.published ? new Date() : null,
@@ -192,7 +269,7 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
 
         const message = formatFacebookPost(
           safe.title,
-          safe.excerpt,
+          post.excerpt,
           post.category?.name ?? "News",
           postUrl,
           post.district?.name
@@ -203,7 +280,7 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
           settings.facebookPageAccessToken,
           message,
           postUrl,
-          safe.imageUrl
+          safe.imageUrl || undefined
         );
       }
     } catch (error) {
@@ -231,7 +308,7 @@ export async function updatePostAction(
   };
   const parsed = postSchema.safeParse(payloadWithAuthor);
   if (!parsed.success) {
-    return { status: "error", message: "Please fix the post fields and try again." };
+    return { status: "error", message: formatPostValidationError(parsed.error) };
   }
 
   const safe = parsed.data;
@@ -242,6 +319,9 @@ export async function updatePostAction(
     data: {
       ...safe,
       slug,
+      excerpt: safe.excerpt ?? safe.metaDescription,
+      imageUrl: safe.imageUrl || null,
+      imagePublicId: safe.imagePublicId || null,
       upazilaId: safe.upazilaId || null,
       youtubeUrl: safe.youtubeUrl || null,
       publishedAt: safe.status === PostStatus.published ? (existing?.publishedAt ?? new Date()) : null,
@@ -260,7 +340,7 @@ export async function updatePostAction(
         const postUrl = `${siteUrl}/news/${slug}`;
         const message = formatFacebookPost(
           safe.title,
-          safe.excerpt,
+          updated.excerpt,
           updated.category?.name ?? "News",
           postUrl,
           updated.district?.name
@@ -270,7 +350,7 @@ export async function updatePostAction(
           settings.facebookPageAccessToken,
           message,
           postUrl,
-          safe.imageUrl
+          safe.imageUrl || undefined
         );
       }
     } catch (error) {
@@ -776,7 +856,7 @@ export async function shareToFacebookAction(postId: string) {
       settings.facebookPageAccessToken,
       message,
       postUrl,
-      post.imageUrl
+      post.imageUrl ?? undefined
     );
 
     return { status: "success" as const, message: "Shared to Facebook successfully" };

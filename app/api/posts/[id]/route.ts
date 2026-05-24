@@ -6,7 +6,7 @@ import { makeSlug } from "@/lib/utils";
 import { requireAdmin } from "@/lib/route-auth";
 import { deleteImage } from "@/lib/cloudinary";
 import { isObjectId } from "@/lib/object-id";
-import { generatePostSeo } from "@/lib/seo";
+import { generatePostSeo, getPlainTextFromContent } from "@/lib/seo";
 import { getAuthUser } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
 import { env } from "@/lib/env";
@@ -46,9 +46,25 @@ export async function PATCH(request: Request, { params }: Context) {
 
   const body = await request.json();
   const author = await resolveCurrentAuthor();
-  const seo = generatePostSeo(body?.title ?? "", body?.content ?? "");
+  const title = (body?.title ?? "").toString();
+  const content = (body?.content ?? "").toString();
+  const seo = generatePostSeo(title, content);
+
+  const rawExcerpt = (body?.excerpt ?? "").toString().trim();
+  let derivedExcerpt = rawExcerpt;
+  if (!derivedExcerpt && content) {
+    const plain = getPlainTextFromContent(content);
+    derivedExcerpt = plain.slice(0, 280).trim();
+    if (derivedExcerpt.length < 20) {
+      derivedExcerpt = `${title} ${plain}`.trim().slice(0, 280);
+    }
+  }
+
   const parsed = postSchema.safeParse({
     ...body,
+    excerpt: derivedExcerpt || undefined,
+    imageUrl: (body?.imageUrl ?? "").toString().trim() || undefined,
+    imagePublicId: (body?.imagePublicId ?? "").toString().trim() || undefined,
     author: (body?.author ?? "").toString().trim() || author,
     youtubeUrl: (body?.youtubeUrl ?? "").toString().trim() || undefined,
     metaTitle: seo.metaTitle,
@@ -64,6 +80,9 @@ export async function PATCH(request: Request, { params }: Context) {
     data: {
       ...payload,
       slug: makeSlug(payload.title),
+      excerpt: payload.excerpt ?? payload.metaDescription,
+      imageUrl: payload.imageUrl || null,
+      imagePublicId: payload.imagePublicId || null,
       upazilaId: payload.upazilaId || null,
       youtubeUrl: payload.youtubeUrl || null,
       publishedAt: payload.status === PostStatus.published ? new Date() : null,

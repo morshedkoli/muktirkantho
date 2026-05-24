@@ -11,7 +11,7 @@ type Post = {
   title: string;
   slug: string;
   excerpt: string;
-  imageUrl: string;
+  imageUrl: string | null;
   publishedAt: Date | null;
   author?: string | null;
   category?: { name: string; slug: string } | null;
