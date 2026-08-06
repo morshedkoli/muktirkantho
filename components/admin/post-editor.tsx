@@ -1,14 +1,56 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { Fragment, useActionState, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
-import { ImagePlus, X, Save, Eye, Loader2, Check, AlertCircle, Image, Video, Facebook, Share2 } from "lucide-react";
+import { ImagePlus, X, Save, Eye, Loader2, Check, AlertCircle, Image as ImageIcon, Facebook, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { generatePostSeo } from "@/lib/seo";
+import { applyMarkdown, isBlockCommandActive, type MarkdownCommand } from "@/lib/markdown-commands";
+
+type ToolbarButton = {
+  command: MarkdownCommand;
+  label: React.ReactNode;
+  title: string;
+  className?: string;
+};
+
+/**
+ * Toolbar layout — each inner array renders as a group with a divider between.
+ *
+ * There is no video button: the sanitiser in `renderContent` strips iframes, so
+ * the body can't embed a player. The dedicated YouTube field below handles that,
+ * and a "video" button that only produced a plain link would duplicate Link.
+ */
+const TOOLBAR_GROUPS: ToolbarButton[][] = [
+  [
+    { command: "bold", label: "B", title: "Bold", className: "font-bold" },
+    { command: "italic", label: <span className="italic">I</span>, title: "Italic" },
+  ],
+  [
+    { command: "h1", label: "H1", title: "Heading 1", className: "font-bold" },
+    { command: "h2", label: "H2", title: "Heading 2", className: "font-bold" },
+  ],
+  [
+    { command: "quote", label: "“ ”", title: "Blockquote", className: "font-serif" },
+    { command: "link", label: "Link", title: "Insert link", className: "underline" },
+    { command: "bullet", label: "•", title: "Bulleted list" },
+    { command: "ordered", label: "1.", title: "Numbered list" },
+  ],
+  [
+    {
+      command: "image",
+      label: <ImageIcon className="h-3.5 w-3.5" />,
+      title: "Insert image",
+      className: "flex items-center justify-center p-1.5",
+    },
+    { command: "code", label: "</>", title: "Code block" },
+  ],
+];
 
 type Option = { id: string; name: string; slug: string; districtId?: string | null; divisionId?: string | null };
 type Division = { id: string; name: string };
@@ -19,6 +61,7 @@ const PLATFORM_META: Record<string, { icon: React.ComponentType<{ className?: st
 };
 type PostForm = {
   id?: string;
+  slug?: string;
   title: string;
   excerpt?: string;
   content: string;
@@ -78,6 +121,10 @@ export function PostEditor({
 }: Props) {
   const [form, setForm] = useState<PostForm>(initial ?? empty);
 
+  // The status as persisted, which is what decides whether the public route
+  // will actually serve this post. `form.status` tracks the unsaved dropdown.
+  const isPublished = initial?.status === "published";
+
   // Per-post social sharing toggles, seeded from each platform's defaultEnabled.
   const [socialToggles, setSocialToggles] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(socialPlatforms.map((p) => [p.id, p.defaultEnabled]))
@@ -86,6 +133,54 @@ export function PostEditor({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [state, formAction, pending] = useActionState(action, initialState);
+
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const pendingSelection = useRef<{ start: number; end: number } | null>(null);
+
+  // Mirrored into state (not just the ref) because the toolbar's active badges
+  // are derived from it and have to re-render when the caret moves.
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
+
+  const syncSelection = useCallback(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    setSelection({ start: el.selectionStart, end: el.selectionEnd });
+  }, []);
+
+  /**
+   * Restore the selection a toolbar command asked for.
+   *
+   * This has to wait for the commit that writes the new value: the textarea is
+   * controlled, so React overwrites `value` — and with it the caret — on
+   * re-render. A layout effect runs after that write but before paint, so the
+   * caret never visibly jumps to the end of the text first.
+   */
+  useLayoutEffect(() => {
+    const target = pendingSelection.current;
+    if (!target) return;
+    pendingSelection.current = null;
+
+    const el = contentRef.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(target.start, target.end);
+  });
+
+  const runCommand = useCallback((command: MarkdownCommand) => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+
+    const next = applyMarkdown(
+      textarea.value,
+      textarea.selectionStart,
+      textarea.selectionEnd,
+      command,
+    );
+
+    pendingSelection.current = { start: next.selectionStart, end: next.selectionEnd };
+    setSelection({ start: next.selectionStart, end: next.selectionEnd });
+    setForm((prev) => ({ ...prev, content: next.value }));
+  }, []);
 
   // Derive initial division from the post's district (edit mode).
   const [divisionId, setDivisionId] = useState<string>(() => {
@@ -182,29 +277,41 @@ export function PostEditor({
 
           {/* Editor Toolbar & Text Body */}
           <Card className="overflow-hidden">
-            <div className="flex items-center gap-1.5 p-3 border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50 flex-wrap">
-              <button type="button" className="ed-tb-btn active font-bold">B</button>
-              <button type="button" className="ed-tb-btn"><span className="italic">I</span></button>
-              <span className="w-px h-5 bg-[var(--ad-border)]" />
-              <button type="button" className="ed-tb-btn font-bold">H1</button>
-              <button type="button" className="ed-tb-btn font-bold">H2</button>
-              <span className="w-px h-5 bg-[var(--ad-border)]" />
-              <button type="button" className="ed-tb-btn font-serif">“ ”</button>
-              <button type="button" className="ed-tb-btn underline">Link</button>
-              <button type="button" className="ed-tb-btn">•</button>
-              <button type="button" className="ed-tb-btn">1.</button>
-              <span className="w-px h-5 bg-[var(--ad-border)]" />
-              <button type="button" className="ed-tb-btn flex items-center justify-center p-1.5">
-                <Image className="h-3.5 w-3.5" />
-              </button>
-              <button type="button" className="ed-tb-btn flex items-center justify-center p-1.5">
-                <Video className="h-3.5 w-3.5" />
-              </button>
-              <span className="w-px h-5 bg-[var(--ad-border)]" />
-              <button type="button" className="ed-tb-btn">{"<"}/{">"}</button>
-              <button type="button" className="ed-tb-btn ml-auto font-mono text-[9.5px] uppercase tracking-wider text-[var(--ad-text-secondary)]">
-                More...
-              </button>
+            <div
+              role="toolbar"
+              aria-label="Formatting"
+              aria-controls="post-content"
+              className="flex items-center gap-1.5 p-3 border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50 flex-wrap"
+            >
+              {TOOLBAR_GROUPS.map((group, groupIndex) => (
+                <Fragment key={group[0].command}>
+                  {groupIndex > 0 && <span className="w-px h-5 bg-[var(--ad-border)]" aria-hidden="true" />}
+                  {group.map(({ command, label, title, className }) => {
+                    const active = isBlockCommandActive(
+                      form.content,
+                      selection.start,
+                      selection.end,
+                      command,
+                    );
+                    return (
+                      <button
+                        key={command}
+                        type="button"
+                        title={title}
+                        aria-label={title}
+                        aria-pressed={active}
+                        onClick={() => runCommand(command)}
+                        className={`ed-tb-btn ${className ?? ""} ${active ? "active" : ""}`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </Fragment>
+              ))}
+              <span className="ml-auto font-mono text-[9.5px] uppercase tracking-wider text-[var(--ad-text-muted)]">
+                Markdown
+              </span>
             </div>
 
             {/* Basic Info */}
@@ -229,20 +336,21 @@ export function PostEditor({
                   Content <span className="text-[var(--ad-error)]">*</span>
                 </label>
                 <Textarea
+                  id="post-content"
+                  ref={contentRef}
                   name="content"
                   rows={14}
                   className="font-mono min-h-[400px] leading-relaxed resize-y font-bangla"
-                  placeholder="Write your content here... (Markdown supported)&#10;&#10;Use / for commands or @ to mention..."
+                  placeholder="Write your content here... (Markdown supported)"
                   value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, content: e.target.value });
+                    syncSelection();
+                  }}
+                  onSelect={syncSelection}
+                  onFocus={syncSelection}
                   required
                 />
-              </div>
-
-              {/* Callout Block */}
-              <div className="border-l-4 border-[var(--ad-primary)] bg-[var(--ad-primary)]/5 p-4 rounded-r-xl flex items-center gap-3">
-                <span className="text-[10px] font-mono tracking-wider uppercase text-[var(--ad-primary)] font-extrabold shrink-0">Breaking</span>
-                <span className="text-xs text-[var(--ad-text-secondary)] font-semibold">This content will be highlighted as a callout block in the article</span>
               </div>
 
               {/* YouTube */}
@@ -338,13 +446,12 @@ export function PostEditor({
           <Card className="overflow-hidden">
             <CardHeader className="border-b border-[var(--ad-border)] bg-[var(--ad-background)]/50 px-5 py-3.5 flex flex-row items-center justify-between">
               <CardTitle className="text-xs uppercase tracking-wider text-[var(--ad-text-secondary)] font-mono font-bold">SEO Settings</CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 bg-[var(--ad-green-light)] px-2.5 py-0.5 rounded-full border border-[var(--ad-green)]/10 text-[var(--ad-green)]">
-                  <span className="text-xs font-black font-mono">87</span>
-                  <span className="text-[9px] tracking-wider font-mono">/100</span>
-                </div>
-              </div>
+              <span className="text-[9px] font-mono tracking-wider uppercase text-[var(--ad-text-muted)] font-semibold">Auto-generated</span>
             </CardHeader>
+            {/* Read-only preview only. These fields are never submitted — the
+                server recomputes them from title and content in
+                `normalizePostPayload`, so posting them would be ignored at best
+                and misleading at worst. */}
             <CardContent className="p-5 space-y-4">
               <div>
                 <label className="block text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-secondary)] font-bold mb-2">Meta Title</label>
@@ -353,7 +460,6 @@ export function PostEditor({
                   value={generatedSeo.metaTitle}
                   readOnly
                 />
-                <input type="hidden" name="metaTitle" value={generatedSeo.metaTitle} />
               </div>
               <div>
                 <label className="block text-[10.5px] font-mono tracking-wider uppercase text-[var(--ad-text-secondary)] font-bold mb-2">Meta Description</label>
@@ -363,7 +469,6 @@ export function PostEditor({
                   value={generatedSeo.metaDescription}
                   readOnly
                 />
-                <input type="hidden" name="metaDescription" value={generatedSeo.metaDescription} />
               </div>
             </CardContent>
           </Card>
@@ -423,14 +528,32 @@ export function PostEditor({
                   )}
                 </Button>
                 {mode === "edit" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full py-6 font-bold uppercase tracking-wider text-xs"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Preview
-                  </Button>
+                  /* Gated on the *saved* status, not `form.status`: the public
+                     route serves published posts only, so linking off an unsaved
+                     dropdown change would land on a 404. */
+                  isPublished && form.slug ? (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full py-6 font-bold uppercase tracking-wider text-xs"
+                    >
+                      <a href={`/news/${form.slug}`} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-4 w-4" />
+                        Preview
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled
+                      title="Publish and save this post to view it on the site."
+                      className="w-full py-6 font-bold uppercase tracking-wider text-xs"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Preview
+                    </Button>
+                  )
                 )}
               </div>
             </CardContent>
@@ -460,6 +583,10 @@ export function PostEditor({
                 </div>
               ) : (
                 <div className="space-y-1">
+                  {/* Marks that the editor rendered these controls at all, so the
+                      server can tell "unticked on purpose" from "never shown"
+                      — an unchecked checkbox submits nothing either way. */}
+                  <input type="hidden" name="shareFacebookPresent" value="1" />
                   {socialPlatforms.map((platform) => {
                     const meta = PLATFORM_META[platform.id];
                     const Icon = meta?.icon;
@@ -592,10 +719,4 @@ export function PostEditor({
   );
 }
 
-function generatePostSeo(title: string, content: string) {
-  const metaTitle = title || "{Untitled Article}";
-  const plainText = content.replace(/[#*`\[\]()>_-]/g, " ").replace(/\s+/g, " ").trim();
-  const metaDescription = plainText.substring(0, 155).trim() + (plainText.length > 155 ? "..." : "");
-  return { metaTitle, metaDescription };
-}
 

@@ -1,36 +1,24 @@
 import { NextResponse } from "next/server";
-import { PostStatus } from "@prisma/client";
+import { PostStatus, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { postSchema } from "@/lib/validators";
 import { makeSlug } from "@/lib/utils";
-import { requireAdmin } from "@/lib/route-auth";
-import { generatePostSeo, getPlainTextFromContent } from "@/lib/seo";
+import { limitPublicRequest, requireAdmin } from "@/lib/route-auth";
+import { parsePostBody } from "@/lib/post-payload";
 import { getAuthUser } from "@/lib/auth";
-import { getSiteSettings } from "@/lib/site-settings";
-import { checkRateLimit } from "@/lib/rate-limit";
-import { env } from "@/lib/env";
 
-async function resolveCurrentAuthor() {
-  const [authUser, settings] = await Promise.all([getAuthUser(), getSiteSettings()]);
-  return (
-    settings?.adminName?.trim() ||
-    settings?.adminEmail?.trim() ||
-    authUser?.email?.trim() ||
-    env.ADMIN_EMAIL ||
-    "Admin"
-  );
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 50;
+
+function toPositiveInt(value: string | null, fallback: number, max = Number.MAX_SAFE_INTEGER) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
 }
 
 export async function GET(request: Request) {
   // Basic IP-based rate limiting to prevent scraping/enumeration
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = checkRateLimit(`api:posts:${ip}`);
-  if (!rl.allowed) {
-    return NextResponse.json(
-      { error: "Too many requests" },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
-    );
-  }
+  const limited = limitPublicRequest(request, "api:posts");
+  if (limited) return limited;
 
   const { searchParams } = new URL(request.url);
 
@@ -38,16 +26,28 @@ export async function GET(request: Request) {
   const district = searchParams.get("district");
   const upazila = searchParams.get("upazila");
   const tag = searchParams.get("tag");
-  const status = searchParams.get("status");
-  const page = Number.parseInt(searchParams.get("page") ?? "1", 10);
-  const limit = Math.min(Number.parseInt(searchParams.get("limit") ?? "20", 10), 50);
+  const page = toPositiveInt(searchParams.get("page"), 1);
+  const limit = toPositiveInt(searchParams.get("limit"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
 
-  const where = {
+  // Drafts are admin-only. Anonymous callers are pinned to published posts no
+  // matter what `status` they ask for, so this endpoint can't leak unpublished
+  // work. An authenticated admin may filter by any valid status.
+  const requestedStatus = searchParams.get("status");
+  const isAdmin = Boolean(await getAuthUser());
+  let status: PostStatus | undefined = PostStatus.published;
+  if (isAdmin) {
+    status =
+      requestedStatus && requestedStatus in PostStatus
+        ? (requestedStatus as PostStatus)
+        : undefined;
+  }
+
+  const where: Prisma.PostWhereInput = {
     ...(category ? { category: { slug: category } } : {}),
     ...(district ? { district: { slug: district } } : {}),
     ...(upazila ? { upazila: { slug: upazila } } : {}),
     ...(tag ? { tags: { has: tag } } : {}),
-    ...(status ? { status: status as PostStatus } : {}),
+    ...(status ? { status } : {}),
   };
 
   try {
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       where,
       include: { category: true, district: true, upazila: true },
       orderBy: { publishedAt: "desc" },
-      skip: (Math.max(page, 1) - 1) * limit,
+      skip: (page - 1) * limit,
       take: limit,
     });
     return NextResponse.json(items);
@@ -66,55 +66,39 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
-  const body = await request.json();
-  const author = await resolveCurrentAuthor();
-  const title = (body?.title ?? "").toString();
-  const content = (body?.content ?? "").toString();
-  const seo = generatePostSeo(title, content);
-
-  // Derive excerpt from content if the client didn't supply one
-  const rawExcerpt = (body?.excerpt ?? "").toString().trim();
-  let derivedExcerpt = rawExcerpt;
-  if (!derivedExcerpt && content) {
-    const plain = getPlainTextFromContent(content);
-    derivedExcerpt = plain.slice(0, 280).trim();
-    if (derivedExcerpt.length < 20) {
-      derivedExcerpt = `${title} ${plain}`.trim().slice(0, 280);
-    }
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = postSchema.safeParse({
-    ...body,
-    excerpt: derivedExcerpt || undefined,
-    imageUrl: (body?.imageUrl ?? "").toString().trim() || undefined,
-    imagePublicId: (body?.imagePublicId ?? "").toString().trim() || undefined,
-    author: (body?.author ?? "").toString().trim() || author,
-    youtubeUrl: (body?.youtubeUrl ?? "").toString().trim() || undefined,
-    metaTitle: seo.metaTitle,
-    metaDescription: seo.metaDescription,
-  });
+  const parsed = await parsePostBody(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const payload = parsed.data;
-  const slug = makeSlug(payload.title);
 
-  const created = await prisma.post.create({
-    data: {
-      ...payload,
-      slug,
-      excerpt: payload.excerpt ?? payload.metaDescription,
-      imageUrl: payload.imageUrl || null,
-      imagePublicId: payload.imagePublicId || null,
-      upazilaId: payload.upazilaId || null,
-      youtubeUrl: payload.youtubeUrl || null,
-      publishedAt: payload.status === PostStatus.published ? new Date() : null,
-    },
-  });
-
-  return NextResponse.json(created, { status: 201 });
+  try {
+    const created = await prisma.post.create({
+      data: {
+        ...payload,
+        slug: makeSlug(payload.title),
+        excerpt: payload.excerpt ?? payload.metaDescription,
+        imageUrl: payload.imageUrl || null,
+        imagePublicId: payload.imagePublicId || null,
+        upazilaId: payload.upazilaId || null,
+        youtubeUrl: payload.youtubeUrl || null,
+        publishedAt: payload.status === PostStatus.published ? new Date() : null,
+      },
+    });
+    return NextResponse.json(created, { status: 201 });
+  } catch (err) {
+    console.error("[POST /api/posts] DB create failed:", err);
+    return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
+  }
 }

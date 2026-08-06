@@ -14,17 +14,19 @@ import { headers } from "next/headers";
  *   hostnames (apex, www, branch preview URLs, vercel.app). Hard-coding
  *   one canonical origin means every other host fails CSRF and the site
  *   crashes on form submit. The request's own Host header is authoritative.
+ *
+ * The comparison is on host, not scheme: `x-forwarded-proto` is absent in local
+ * dev and behind some proxies, and guessing wrong there would reject every
+ * legitimate admin request. Accepting either scheme for *our own host* costs
+ * nothing — an attacker's page is on a different host either way.
  */
 export async function verifyCsrf() {
     const hdrs = await headers();
     const origin = hdrs.get("origin");
     const referer = hdrs.get("referer");
-    const host = hdrs.get("host");
-    const forwardedHost = hdrs.get("x-forwarded-host");
-    const forwardedProto = hdrs.get("x-forwarded-proto") ?? "https";
 
     // The request's true host (Vercel/edge proxies use x-forwarded-host)
-    const expectedHost = forwardedHost || host;
+    const expectedHost = hdrs.get("x-forwarded-host") || hdrs.get("host");
     if (!expectedHost) {
         // If we can't determine our own host, fail safe and reject
         if (origin || referer) {
@@ -33,31 +35,37 @@ export async function verifyCsrf() {
         return; // no headers at all — same-origin fetch
     }
 
-    const expectedOrigin = `${forwardedProto}://${expectedHost}`;
+    const allowedHosts = new Set<string>([expectedHost.toLowerCase()]);
     // Also accept the env-configured site URL as a fallback
     const configured = process.env.NEXT_PUBLIC_SITE_URL;
-    const allowedOrigins = new Set<string>([expectedOrigin]);
     if (configured) {
-        try { allowedOrigins.add(new URL(configured).origin); } catch { /* ignore */ }
+        try {
+            allowedHosts.add(new URL(configured).host.toLowerCase());
+        } catch {
+            /* ignore a malformed NEXT_PUBLIC_SITE_URL */
+        }
     }
 
+    const matches = (value: string) => {
+        try {
+            return allowedHosts.has(new URL(value).host.toLowerCase());
+        } catch {
+            return false;
+        }
+    };
+
     if (origin) {
-        if (!allowedOrigins.has(origin)) {
-            throw new Error(`CSRF check failed: origin mismatch (got ${origin}, expected ${expectedOrigin})`);
+        if (!matches(origin)) {
+            throw new Error(`CSRF check failed: origin mismatch (got ${origin}, expected ${expectedHost})`);
         }
         return;
     }
 
     if (referer) {
-        try {
-            const refOrigin = new URL(referer).origin;
-            if (!allowedOrigins.has(refOrigin)) {
-                throw new Error(`CSRF check failed: referer mismatch (got ${refOrigin}, expected ${expectedOrigin})`);
-            }
-            return;
-        } catch {
-            throw new Error("CSRF check failed: invalid referer");
+        if (!matches(referer)) {
+            throw new Error(`CSRF check failed: referer mismatch (got ${referer}, expected ${expectedHost})`);
         }
+        return;
     }
 
     // Neither header — allow (same-origin fetch can legitimately omit both).

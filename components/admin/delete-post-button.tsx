@@ -1,49 +1,56 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Trash2 } from "lucide-react";
 import { deletePostAction } from "@/app/(admin)/admin/actions";
 import { useToast } from "@/components/admin/toast-provider";
 import { useConfirm } from "@/components/admin/confirm-provider";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 interface DeletePostButtonProps {
   postId: string;
   postTitle: string;
+  className?: string;
 }
 
-// Helper to check if error is a Next.js redirect
+/** A server-action redirect throws — that is success, not failure. */
 function isRedirectError(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) return false;
+  if (typeof error !== "object" || error === null) return false;
   const err = error as { digest?: string; message?: string };
-  return err.digest?.startsWith('NEXT_REDIRECT') === true ||
-    err.message?.includes('NEXT_REDIRECT') === true;
+  return (
+    err.digest?.startsWith("NEXT_REDIRECT") === true ||
+    err.message?.includes("NEXT_REDIRECT") === true
+  );
 }
 
-export function DeletePostButton({ postId, postTitle }: DeletePostButtonProps) {
+export function DeletePostButton({ postId, postTitle, className }: DeletePostButtonProps) {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
+  const [pending, setPending] = useState(false);
 
   const handleDelete = async () => {
-    const isConfirmed = await confirm({
-      title: "Delete Post",
-      message: `Are you sure you want to delete "${postTitle}"? This action cannot be undone.`,
-      confirmText: "Delete",
-      cancelText: "Cancel",
+    const confirmed = await confirm({
+      title: "পোস্ট মুছে ফেলবেন?",
+      message: `“${postTitle}” স্থায়ীভাবে মুছে যাবে। এই কাজটি ফেরানো যাবে না।`,
+      confirmText: "মুছে ফেলুন",
+      cancelText: "বাতিল",
       type: "danger",
     });
+    if (!confirmed) return;
 
-    if (!isConfirmed) return;
-
+    setPending(true);
     try {
       await deletePostAction(postId);
-      showToast("Post deleted successfully", "success");
+      showToast("পোস্ট মুছে ফেলা হয়েছে", "success");
     } catch (error) {
-      // Don't show error for redirects - the action succeeded
       if (isRedirectError(error)) {
-        showToast("Post deleted successfully", "success");
+        showToast("পোস্ট মুছে ফেলা হয়েছে", "success");
         return;
       }
-      showToast("Failed to delete post", "error");
+      showToast("পোস্ট মুছে ফেলা যায়নি", "error");
+    } finally {
+      setPending(false);
     }
   };
 
@@ -51,12 +58,17 @@ export function DeletePostButton({ postId, postTitle }: DeletePostButtonProps) {
     <Button
       type="button"
       onClick={handleDelete}
-      variant="ghost"
+      disabled={pending}
+      variant="icon"
       size="icon"
-      className="h-8 w-8 text-[var(--ad-text-secondary)] hover:text-[var(--ad-error)] hover:bg-[var(--ad-error)]/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+      aria-label="মুছে ফেলুন"
+      className={cn("hover:bg-[var(--ad-error-tint)] hover:text-[var(--ad-error)]", className)}
     >
-      <Trash2 className="h-4 w-4" />
+      {pending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Trash2 className="h-4 w-4" />
+      )}
     </Button>
   );
 }
-

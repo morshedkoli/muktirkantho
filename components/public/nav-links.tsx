@@ -45,7 +45,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
           className={cn(
             "flex items-center px-3 py-1.5 my-auto rounded-full text-xs sm:text-[13px] whitespace-nowrap font-medium transition-all duration-150",
             isActive(item.url)
-              ? "bg-[var(--np-primary)] text-white shadow-sm"
+              ? "bg-[var(--np-primary)] text-[var(--np-on-primary)] shadow-sm"
               : "text-[var(--np-text-secondary)] hover:text-[var(--np-primary)] hover:bg-[var(--np-newsprint)]"
           )}
         >
@@ -60,7 +60,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
             className={cn(
               "flex items-center px-3 py-1.5 my-auto rounded-full text-xs sm:text-[13px] whitespace-nowrap font-medium transition-all duration-150",
               open
-                ? "bg-[var(--np-primary)] text-white shadow-sm"
+                ? "bg-[var(--np-primary)] text-[var(--np-on-primary)] shadow-sm"
                 : "text-[var(--np-text-secondary)] hover:text-[var(--np-primary)] hover:bg-[var(--np-newsprint)]"
             )}
             aria-expanded={open}

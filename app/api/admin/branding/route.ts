@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/route-auth";
 import { getSiteSettings } from "@/lib/site-settings";
 
-export async function GET() {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
+export async function GET(request: Request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
   const settings = await getSiteSettings();
 

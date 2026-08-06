@@ -148,9 +148,12 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
 
     return (
       <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-4 sm:p-6 shadow-[var(--ad-shadow)]">
-        <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-2">
+        <h2 className="text-lg font-semibold text-[var(--ad-text-primary)]">
           {title}
         </h2>
+        <p className="mt-1 mb-4 max-w-prose text-sm text-[var(--ad-text-secondary)]">
+          {description}
+        </p>
         {/* Upload Area */}
         <div className="mb-4">
           <div className="border-2 border-dashed border-[var(--ad-border)] rounded-lg p-6 text-center hover:border-[var(--ad-primary)] transition-colors bg-[var(--ad-background)]">
@@ -202,7 +205,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
               <button
                 type="button"
                 onClick={() => handleRemoveImage(type)}
-                className="absolute -top-2 -right-2 p-1 rounded-full bg-[var(--ad-error)] text-white hover:bg-[var(--ad-error)]/80 transition-colors shadow-md"
+                className="absolute -top-2 -right-2 p-1 rounded-full bg-[var(--ad-error)] text-[var(--ad-on-error)] hover:bg-[var(--ad-error)]/80 transition-colors shadow-md"
                 title="Remove image"
               >
                 <X className="h-3 w-3" />
@@ -413,7 +416,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg bg-[var(--ad-primary)] px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--ad-primary)]/20 hover:bg-[var(--ad-primary-hover)] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+            className="rounded-lg bg-[var(--ad-primary)] px-6 py-2.5 text-sm font-semibold text-[var(--ad-on-primary)] shadow-lg shadow-[var(--ad-primary)]/20 hover:bg-[var(--ad-primary-hover)] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
           >
             {pending ? "Saving..." : "Save Branding Settings"}
           </button>

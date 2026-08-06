@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
+import { useStoredValue } from "@/lib/use-stored-value";
 
 export type Lang = "en" | "bn";
 
@@ -284,19 +285,15 @@ const LangContext = createContext<LangContextType>({
   t: (key) => translations.en[key],
 });
 
+const LANG_KEY = "admin-lang";
+
+const parseLang = (raw: string): Lang | null =>
+  raw === "en" || raw === "bn" ? raw : null;
+
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useStoredValue<Lang>(LANG_KEY, "en", parseLang);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("admin-lang") as Lang | null;
-    if (stored === "en" || stored === "bn") setLang(stored);
-  }, []);
-
-  const toggleLang = () => {
-    const next: Lang = lang === "en" ? "bn" : "en";
-    setLang(next);
-    localStorage.setItem("admin-lang", next);
-  };
+  const toggleLang = () => setLang(lang === "en" ? "bn" : "en");
 
   const t = (key: TranslationKey): string => translations[lang][key];
 

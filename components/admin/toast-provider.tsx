@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 interface Toast {
   id: string;
@@ -27,19 +28,20 @@ export function useToast() {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((message: string, type: Toast["type"] = "info") => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
-  }, []);
-
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  const showToast = useCallback(
+    (message: string, type: Toast["type"] = "info") => {
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((prev) => [...prev, { id, message, type }]);
+      // Errors stay long enough to read twice; confirmations get out of the way.
+      const ttl = type === "error" ? 6000 : 3500;
+      setTimeout(() => removeToast(id), ttl);
+    },
+    [removeToast]
+  );
 
   return (
     <ToastContext.Provider value={{ showToast, removeToast }}>
@@ -49,17 +51,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToastContainer({ 
-  toasts, 
-  removeToast 
-}: { 
-  toasts: Toast[]; 
+function ToastContainer({
+  toasts,
+  removeToast,
+}: {
+  toasts: Toast[];
   removeToast: (id: string) => void;
 }) {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed right-4 top-4 z-[100] flex flex-col gap-2">
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-4 bottom-24 z-[110] flex flex-col items-center gap-2 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:items-end"
+    >
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
@@ -67,30 +73,29 @@ function ToastContainer({
   );
 }
 
-function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
-  const iconMap = {
-    success: <CheckCircle className="h-5 w-5 text-[var(--ad-success)]" />,
-    error: <AlertCircle className="h-5 w-5 text-[var(--ad-error)]" />,
-    info: <Info className="h-5 w-5 text-[var(--ad-primary)]" />,
-    warning: <AlertCircle className="h-5 w-5 text-[var(--ad-warning)]" />,
-  };
+const toastMeta = {
+  success: { Icon: CheckCircle2, tone: "text-[var(--ad-success)]" },
+  error: { Icon: AlertCircle, tone: "text-[var(--ad-error)]" },
+  warning: { Icon: AlertTriangle, tone: "text-[var(--ad-warning)]" },
+  info: { Icon: Info, tone: "text-[var(--ad-info)]" },
+} as const;
 
-  const bgMap = {
-    success: "bg-[var(--ad-success)]/10 border-[var(--ad-success)]/20",
-    error: "bg-[var(--ad-error)]/10 border-[var(--ad-error)]/20",
-    info: "bg-[var(--ad-primary)]/10 border-[var(--ad-primary)]/20",
-    warning: "bg-[var(--ad-warning)]/10 border-[var(--ad-warning)]/20",
-  };
+function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
+  const { Icon, tone } = toastMeta[toast.type];
 
   return (
-    <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg animate-in slide-in-from-right ${bgMap[toast.type]}`}>
-      {iconMap[toast.type]}
-      <p className="text-sm font-medium text-[var(--ad-text-primary)]">{toast.message}</p>
+    <div className="adm-pop animate-fade-in-up pointer-events-auto flex w-full items-center gap-3 py-2.5 pl-3.5 pr-2 sm:w-auto sm:max-w-sm">
+      <Icon className={cn("h-[18px] w-[18px] shrink-0", tone)} />
+      <p className="flex-1 text-[13px] font-medium text-[var(--ad-text-primary)]">
+        {toast.message}
+      </p>
       <button
+        type="button"
         onClick={onClose}
-        className="ml-2 rounded p-1 hover:bg-black/5 transition-colors"
+        aria-label="বন্ধ করুন"
+        className="rounded-[var(--ad-radius-sm)] p-1.5 text-[var(--ad-text-muted)] transition-colors hover:bg-[var(--ad-inset)] hover:text-[var(--ad-text-primary)]"
       >
-        <X className="h-4 w-4 text-[var(--ad-text-secondary)]" />
+        <X className="h-3.5 w-3.5" />
       </button>
     </div>
   );

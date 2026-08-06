@@ -85,7 +85,7 @@ export function MobileNav({ menuItems }: MobileNavProps) {
               <Link
                 href="/admin/login"
                 onClick={close}
-                className="flex items-center gap-2 rounded-md bg-[var(--np-primary)] px-3 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                className="flex items-center gap-2 rounded-md bg-[var(--np-primary)] px-3 py-2.5 text-sm font-medium text-[var(--np-on-primary)] hover:opacity-90 transition-opacity"
               >
                 <User className="h-4 w-4" /> লগইন
               </Link>

@@ -2,6 +2,8 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/public/news-card";
+import { PageHeading } from "@/components/public/section-heading";
+import { EmptyState } from "@/components/public/empty-state";
 import { Pagination } from "@/components/public/pagination";
 import { CommonSidebar } from "@/components/public/common-sidebar";
 import { getPublishedByCategory as _getPublishedByCategory } from "@/lib/news";
@@ -37,28 +39,21 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
       {/* Two-column: posts (flex-1) | sidebar (300px) */}
-      <div className="flex gap-8">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
         {/* ── MAIN CONTENT ── */}
-        <section className="flex-1 min-w-0">
-          {/* Category header */}
-          <div className="mb-6 border-b border-[var(--np-border)] pb-4">
-            <div className="flex items-baseline gap-3 flex-wrap">
-              <h1 className="np-headline-lg text-[var(--np-text-primary)]">
-                {data.category.name}
-              </h1>
-              <span className="text-sm text-[var(--np-muted)]">
-                {data.total} টি সংবাদ
-              </span>
-            </div>
-            <div className="mt-2 h-1 w-12 bg-[var(--np-primary)]" />
-          </div>
+        <section className="min-w-0">
+          <PageHeading title={data.category.name} count={data.total} />
 
           {/* Posts grid — 2 columns */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {data.items.map((post) => (
-              <NewsCard key={post.id} post={post} />
-            ))}
-          </div>
+          {data.items.length === 0 ? (
+            <EmptyState message="এই বিভাগে এখনো কোনো সংবাদ নেই।" />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {data.items.map((post) => (
+                <NewsCard key={post.id} post={post} />
+              ))}
+            </div>
+          )}
 
           <Pagination
             currentPage={data.page}

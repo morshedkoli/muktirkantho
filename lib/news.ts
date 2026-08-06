@@ -1,6 +1,10 @@
 import { PostStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { toInt } from "@/lib/utils";
+import { escapeRegExp, toInt } from "@/lib/utils";
+
+// Long queries make both the text index and the regex fallback expensive without
+// improving results, so cap what reaches the database.
+const MAX_QUERY_LENGTH = 120;
 
 export const POST_INCLUDE = {
   category: true,
@@ -22,16 +26,49 @@ export type CategoryWithPosts = {
   id: string;
   name: string;
   slug: string;
-  createdAt: Date;
-  updatedAt: Date;
   posts: PostWithRelations[];
 };
+
+/**
+ * The location picker only ever renders `name` inside an `<option>` and puts
+ * `slug` in the href, so that is all we select. Pulling the full rows shipped
+ * `createdAt`/`updatedAt`/`divisionId` for every district and upazila into the
+ * client bundle — dead weight that grows with the geography table, not with the
+ * page.
+ */
+const LOCATION_TREE_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  districts: {
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      upazilas: {
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, slug: true },
+      },
+    },
+  },
+} satisfies Prisma.DivisionSelect;
+
+export type DivisionTree = Prisma.DivisionGetPayload<{ select: typeof LOCATION_TREE_SELECT }>;
+
+const CATEGORY_SELECT = { id: true, name: true, slug: true } satisfies Prisma.CategorySelect;
+
+/** Categories that get their own strip on the homepage. */
+const HOMEPAGE_CATEGORY_COUNT = 3;
+const HOMEPAGE_CATEGORY_POSTS = 4;
 
 export async function getHomeData() {
   const where = { status: PostStatus.published } as const;
 
-  // Single round-trip: breaking and latest are the same query — derive breaking from latest
-  const [allLatest, featured, categories, divisions] = await Promise.all([
+  // The per-category strips need category ids, so they can't join this batch.
+  // Everything that doesn't depend on them does, keeping this to two round
+  // trips total rather than one per section.
+  const [allLatest, featured, categories, divisions, tagsResult] = await Promise.all([
     prisma.post.findMany({
       where,
       include: POST_INCLUDE,
@@ -44,46 +81,30 @@ export async function getHomeData() {
       take: 6,
       orderBy: { publishedAt: "desc" },
     }),
-    prisma.category.findMany({ take: 6, orderBy: { createdAt: "desc" } }),
-    prisma.division.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        districts: {
-          orderBy: { name: "asc" },
-          include: {
-            upazilas: {
-              orderBy: { name: "asc" },
-              select: { id: true, name: true, slug: true },
-            },
-          },
-        },
-      },
-    }),
-  ]);
-
-  const breaking = allLatest.slice(0, 8);
-  const latest = allLatest;
-
-  // Second batch: trending tags + per-category posts — all in one parallel round-trip
-  const topCategories = categories.slice(0, 3);
-  const [tagsResult, categoryPostArrays] = await Promise.all([
+    prisma.category.findMany({ take: 6, orderBy: { createdAt: "desc" }, select: CATEGORY_SELECT }),
+    prisma.division.findMany({ orderBy: { name: "asc" }, select: LOCATION_TREE_SELECT }),
     prisma.post.findMany({
       where,
       select: { tags: true },
       take: 50,
       orderBy: { publishedAt: "desc" },
     }),
-    Promise.all(
-      topCategories.map((cat) =>
-        prisma.post.findMany({
-          where: { categoryId: cat.id, status: PostStatus.published },
-          include: POST_INCLUDE,
-          take: 3,
-          orderBy: { publishedAt: "desc" },
-        })
-      )
-    ),
   ]);
+
+  const breaking = allLatest.slice(0, 8);
+  const latest = allLatest;
+
+  const topCategories = categories.slice(0, HOMEPAGE_CATEGORY_COUNT);
+  const categoryPostArrays = await Promise.all(
+    topCategories.map((cat) =>
+      prisma.post.findMany({
+        where: { categoryId: cat.id, status: PostStatus.published },
+        include: POST_INCLUDE,
+        take: HOMEPAGE_CATEGORY_POSTS,
+        orderBy: { publishedAt: "desc" },
+      })
+    )
+  );
 
   const trendingTags = [...new Set(tagsResult.flatMap((item) => item.tags))].slice(0, 16);
   const categoryWithPosts: CategoryWithPosts[] = topCategories.map((cat, i) => ({
@@ -94,27 +115,6 @@ export async function getHomeData() {
   return { breaking, featured, latest, categories, divisions, trendingTags, categoryWithPosts };
 }
 
-export async function getSidebarData() {
-  const [categories, divisions] = await Promise.all([
-    prisma.category.findMany({ take: 8, orderBy: { createdAt: "desc" } }),
-    prisma.division.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        districts: {
-          orderBy: { name: "asc" },
-          include: {
-            upazilas: {
-              orderBy: { name: "asc" },
-              select: { id: true, name: true, slug: true },
-            },
-          },
-        },
-      },
-    }),
-  ]);
-
-  return { categories, divisions };
-}
 
 export async function getPublishedByCategory(categorySlug: string, page = 1, pageSize = 10) {
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
@@ -223,7 +223,7 @@ export async function getSearchResults(query: string, pageParam: string | null):
   const page = toInt(pageParam, 1);
   const pageSize = 10;
   const skip = (page - 1) * pageSize;
-  const trimmed = query.trim();
+  const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH);
 
   if (!trimmed) {
     return { page, pages: 1, total: 0, items: [], query: "" };
@@ -275,12 +275,15 @@ export async function getSearchResults(query: string, pageParam: string | null):
     console.error("[search] Text-index query failed, falling back to regex search:", err);
   }
 
+  // `contains` becomes a MongoDB `$regex`, so the term must be escaped before it
+  // reaches the driver.
+  const literal = escapeRegExp(trimmed);
   const where: Prisma.PostWhereInput = {
     status: PostStatus.published,
     OR: [
-      { title: { contains: trimmed, mode: "insensitive" } },
-      { excerpt: { contains: trimmed, mode: "insensitive" } },
-      { content: { contains: trimmed, mode: "insensitive" } },
+      { title: { contains: literal, mode: "insensitive" } },
+      { excerpt: { contains: literal, mode: "insensitive" } },
+      { content: { contains: literal, mode: "insensitive" } },
       { tags: { has: trimmed.toLowerCase() } },
     ],
   };

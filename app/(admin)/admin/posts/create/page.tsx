@@ -6,6 +6,17 @@ import { getSiteSettings } from "@/lib/site-settings";
 const initialState = { status: "idle" as const };
 import { prisma } from "@/lib/prisma";
 
+/**
+ * Never prerendered.
+ *
+ * Without this the editor's category, division, district and upazila lists are
+ * captured at build time and frozen into a static page — so a category added
+ * after deploy would not appear here until the next one. It also forces the
+ * build to pull the whole taxonomy over the wire to render a page that is
+ * behind a login and different on every request.
+ */
+export const dynamic = "force-dynamic";
+
 export default async function AdminCreatePostPage() {
   const [categories, divisions, districts, upazilas, settings] = await Promise.all([
     prisma.category.findMany({ orderBy: { name: "asc" } }),

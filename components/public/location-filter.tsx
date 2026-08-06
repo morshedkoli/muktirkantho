@@ -109,7 +109,7 @@ export function LocationFilter({ divisions }: LocationFilterProps) {
           <Link
             href={divisionPath || "#"}
             aria-disabled={!divisionPath}
-            className="rounded-md bg-[var(--np-primary)] px-2 py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-[var(--np-primary-hover)] aria-disabled:pointer-events-none aria-disabled:opacity-50"
+            className="rounded-md bg-[var(--np-primary)] px-2 py-2 text-center text-xs font-semibold text-[var(--np-on-primary)] transition-colors hover:bg-[var(--np-primary-hover)] aria-disabled:pointer-events-none aria-disabled:opacity-50"
           >
             Division
           </Link>

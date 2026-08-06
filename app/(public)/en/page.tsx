@@ -57,7 +57,7 @@ export default async function EnglishHomePage() {
               <h3 className="font-label text-xs uppercase tracking-wider text-[var(--np-muted)] mb-3">Trending</h3>
               <div className="flex flex-wrap gap-2">
                 {trendingTags.slice(0, 8).map((tag) => (
-                  <Link key={tag} href={`/tag/${tag}`}
+                  <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`}
                     className="rounded-sm border border-[var(--np-border)] bg-[var(--np-newsprint)] px-3 py-1.5 text-xs text-[var(--np-text-soft)] hover:border-[var(--np-primary)] hover:text-[var(--np-primary)] transition-all">
                     #{tag}
                   </Link>

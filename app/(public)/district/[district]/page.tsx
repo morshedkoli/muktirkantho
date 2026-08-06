@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/public/news-card";
+import { PageHeading } from "@/components/public/section-heading";
+import { EmptyState } from "@/components/public/empty-state";
 import { Pagination } from "@/components/public/pagination";
 import { CommonSidebar } from "@/components/public/common-sidebar";
 import { getPublishedByDistrict } from "@/lib/news";
@@ -20,14 +22,18 @@ export default async function DistrictPage({ params, searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
-      <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
-        <section>
-          <h1 className="np-headline-lg text-[var(--np-text-primary)]">{data.district.name}</h1>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {data.items.map((post) => (
-              <NewsCard key={post.id} post={post} />
-            ))}
-          </div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="min-w-0">
+          <PageHeading title={data.district.name} count={data.total} />
+          {data.items.length === 0 ? (
+            <EmptyState message="এই জেলায় এখনো কোনো সংবাদ প্রকাশিত হয়নি।" />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {data.items.map((post) => (
+                <NewsCard key={post.id} post={post} />
+              ))}
+            </div>
+          )}
           <Pagination
             currentPage={data.page}
             totalPages={data.pages}

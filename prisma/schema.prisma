@@ -39,11 +39,58 @@ model Post {
   district District @relation(fields: [districtId], references: [id])
   upazila  Upazila? @relation(fields: [upazilaId], references: [id])
 
+  socialShares SocialShare[]
+
   @@index([categoryId])
   @@index([districtId])
   @@index([tags])
   @@index([publishedAt])
   @@index([status, publishedAt])
+}
+
+enum SocialPlatform {
+  facebook
+}
+
+enum ShareStatus {
+  pending
+  shared
+  failed
+}
+
+/// One row per (post, platform) — the record of whether a post ever reached
+/// that network, and the reason if it did not.
+///
+/// The `@@unique([postId, platform])` constraint is the feature, not an
+/// optimisation: auto-post runs on every save of a published post, and without
+/// a uniqueness guarantee re-saving an article would post it to the page again.
+/// The share pipeline claims this row first and only then calls the Graph API.
+model SocialShare {
+  id       String         @id @default(auto()) @map("_id") @db.ObjectId
+  postId   String         @db.ObjectId
+  post     Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  platform SocialPlatform @default(facebook)
+  status   ShareStatus    @default(pending)
+
+  /// Graph API id of the created post, and the permalink built from it.
+  externalId  String?
+  externalUrl String?
+
+  /// Last failure, kept verbatim so an editor can act on it (an expired token
+  /// reads very differently from a rejected image URL).
+  error       String?
+  /// What asked for this share: "auto", "manual" or "retry".
+  trigger     String?
+  attempts    Int       @default(0)
+  lastAttemptAt DateTime?
+  sharedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([postId, platform])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Category {

@@ -9,6 +9,7 @@ import { isObjectId } from "@/lib/object-id";
 import { getPostPath } from "@/lib/post-url";
 import { AD_PLACEMENTS } from "@/lib/ads";
 import { getYouTubeEmbedUrl } from "@/lib/youtube";
+import { toInlineJsonLd } from "@/lib/seo";
 import { AdSlot } from "@/components/public/ad-slot";
 import { CopyLinkButton } from "@/components/public/copy-link-button";
 import { ImageWatermark } from "@/components/public/image-watermark";
@@ -94,7 +95,17 @@ export default async function NewsDetailPage({ params }: Props) {
   const related = await prisma.post.findMany({
     where: { id: { not: post.id }, status: PostStatus.published, OR: [{ categoryId: post.categoryId }, { tags: { hasSome: post.tags } }] },
     take: 3, orderBy: { publishedAt: "desc" },
-    include: { category: true },
+    // Projected: related cards render a thumbnail, title, category and date.
+    // `include` here pulled three more full article bodies into every article
+    // page — the most-hit route on the site.
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      imageUrl: true,
+      publishedAt: true,
+      category: { select: { name: true } },
+    },
   });
 
   const html = await renderContent(post.content);
@@ -118,7 +129,7 @@ export default async function NewsDetailPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toInlineJsonLd(jsonLd) }} />
 
       {/* Breadcrumb */}
       <nav className="mb-4 flex flex-wrap items-center gap-1 np-category text-[var(--np-text-secondary)]">
@@ -156,7 +167,7 @@ export default async function NewsDetailPage({ params }: Props) {
               {/* Category badge — red pill */}
               <Link
                 href={`/category/${post.category?.slug}`}
-                className="inline-block mb-3 rounded-full bg-red-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-red-700 transition-colors"
+                className="inline-block mb-3 rounded-full bg-[var(--np-primary)] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--np-on-primary)] hover:bg-[var(--np-primary-hover)] transition-colors"
               >
                 {post.category?.name}
               </Link>
@@ -270,7 +281,7 @@ export default async function NewsDetailPage({ params }: Props) {
                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--np-muted)] mb-2">ট্যাগ:</p>
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
-                    <Link key={tag} href={`/tag/${tag}`}
+                    <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`}
                       className="font-label text-xs text-[var(--np-muted)] border border-[var(--np-border)] bg-[var(--np-newsprint)] px-3 py-1.5 hover:border-[var(--np-primary)] hover:text-[var(--np-primary)] transition-all">
                       #{tag}
                     </Link>
@@ -303,7 +314,7 @@ export default async function NewsDetailPage({ params }: Props) {
                       )}
                       <div className="p-3">
                         {item.category && (
-                          <span className="inline-block mb-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                          <span className="inline-block mb-1 rounded-full bg-[var(--np-primary)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--np-on-primary)]">
                             {item.category.name}
                           </span>
                         )}

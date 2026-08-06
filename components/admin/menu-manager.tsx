@@ -235,7 +235,7 @@ function MenuModal({
             <Button
               type="submit"
               disabled={pending}
-              className="flex-1 bg-[var(--ad-primary)] hover:bg-[var(--ad-primary-hover)] text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-[var(--ad-primary)]/20"
+              className="flex-1 bg-[var(--ad-primary)] hover:bg-[var(--ad-primary-hover)] text-[var(--ad-on-primary)] text-xs font-bold uppercase tracking-wider shadow-lg shadow-[var(--ad-primary)]/20"
             >
               {pending ? "Saving…" : item ? "Update" : "Add Item"}
             </Button>
@@ -256,9 +256,12 @@ export function MenuManager({
   categories: Category[];
 }) {
   const [activeTab, setActiveTab] = useState("header");
-  const [modal, setModal] = useState<{ open: boolean; item: MenuItem | null }>({
+  // `nonce` bumps on every open so a fresh "add" form remounts with cleared
+  // fields — an id is enough to key an edit, but new items have no id.
+  const [modal, setModal] = useState<{ open: boolean; item: MenuItem | null; nonce: number }>({
     open: false,
     item: null,
+    nonce: 0,
   });
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -269,8 +272,8 @@ export function MenuManager({
 
   const maxOrder = tabItems.length > 0 ? Math.max(...tabItems.map((i) => i.order)) : 0;
 
-  const openAdd = () => setModal({ open: true, item: null });
-  const openEdit = (item: MenuItem) => setModal({ open: true, item });
+  const openAdd = () => setModal((m) => ({ open: true, item: null, nonce: m.nonce + 1 }));
+  const openEdit = (item: MenuItem) => setModal((m) => ({ open: true, item, nonce: m.nonce + 1 }));
   const closeModal = () => setModal((m) => ({ ...m, open: false }));
 
   const handleDelete = (id: string) => {
@@ -296,7 +299,7 @@ export function MenuManager({
               onClick={() => setActiveTab(loc.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                 isActive
-                  ? "bg-[var(--ad-primary)] text-white shadow-lg shadow-[var(--ad-primary)]/20"
+                  ? "bg-[var(--ad-primary)] text-[var(--ad-on-primary)] shadow-lg shadow-[var(--ad-primary)]/20"
                   : "bg-[var(--ad-card)] border border-[var(--ad-border)] text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)] hover:border-[var(--ad-primary)]/40"
               }`}
             >
@@ -304,7 +307,7 @@ export function MenuManager({
               <span
                 className={`text-[10px] rounded-full px-1.5 py-0.5 font-mono font-bold ${
                   isActive
-                    ? "bg-white/25 text-white"
+                    ? "bg-[var(--ad-on-primary)]/20 text-[var(--ad-on-primary)]"
                     : "bg-[var(--ad-border)]/60 text-[var(--ad-text-muted)]"
                 }`}
               >
@@ -328,7 +331,7 @@ export function MenuManager({
           </div>
           <Button
             onClick={openAdd}
-            className="bg-[var(--ad-primary)] hover:bg-[var(--ad-primary-hover)] text-white text-xs font-bold uppercase tracking-wider px-4 h-8 shadow-lg shadow-[var(--ad-primary)]/20"
+            className="bg-[var(--ad-primary)] hover:bg-[var(--ad-primary-hover)] text-[var(--ad-on-primary)] text-xs font-bold uppercase tracking-wider px-4 h-8 shadow-lg shadow-[var(--ad-primary)]/20"
           >
             <Plus className="h-3.5 w-3.5 mr-1.5" />
             Add Item
@@ -418,7 +421,7 @@ export function MenuManager({
       {/* Add/Edit Modal */}
       {modal.open && (
         <MenuModal
-          key={modal.item?.id ?? `new-${activeTab}-${Date.now()}`}
+          key={modal.item?.id ?? `new-${activeTab}-${modal.nonce}`}
           item={modal.item}
           location={modal.item?.location ?? activeTab}
           maxOrder={maxOrder}

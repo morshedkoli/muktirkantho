@@ -2,10 +2,10 @@ import { Footer } from "@/components/public/footer";
 import { Header } from "@/components/public/header";
 import { Masthead } from "@/components/public/masthead";
 import { MobileAnchorAd } from "@/components/public/mobile-anchor-ad";
-import { AdSlot } from "@/components/public/ad-slot";
-import { ThemeProvider } from "@/components/theme-provider";
 import { BreakingTickerServer } from "@/components/public/breaking-ticker";
-import { AD_PLACEMENTS } from "@/lib/ads";
+
+// `ThemeProvider` already wraps the whole tree in the root layout — mounting a
+// second one here just nested a duplicate context with no behavioural effect.
 
 export default function PublicLayout({
   children,
@@ -14,26 +14,22 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <ThemeProvider>
-        {/* Top identity bar: date | logo | social */}
-        <Masthead />
+      {/* Top identity bar: date | logo | social */}
+      <Masthead />
 
-        {/* Sticky navigation header */}
-        <Header />
+      {/* Sticky navigation header */}
+      <Header />
 
-        {/* Breaking news ticker — shown on all public pages */}
-        <BreakingTickerServer />
+      {/* Breaking news ticker — shown on all public pages */}
+      <BreakingTickerServer />
 
-        {/* Page content */}
-        <div className="flex-1 pb-[60px] lg:pb-0">
-          {children}
-        </div>
+      {/* Page content */}
+      <div className="flex-1">{children}</div>
 
-        <Footer />
-        <MobileAnchorAd>
-          <AdSlot placement={AD_PLACEMENTS.MOBILE_ANCHOR} showPlaceholder={false} />
-        </MobileAnchorAd>
-      </ThemeProvider>
+      <Footer />
+
+      {/* Renders nothing (and reserves no space) unless an anchor ad exists. */}
+      <MobileAnchorAd />
     </div>
   );
 }

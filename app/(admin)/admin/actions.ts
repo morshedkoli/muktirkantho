@@ -1,7 +1,9 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { PostStatus } from "@prisma/client";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { deleteImage } from "@/lib/cloudinary";
@@ -11,11 +13,18 @@ import { createAd, removeAd, setAdStatus } from "@/lib/ads";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings, saveSiteSettings } from "@/lib/site-settings";
-import { hashPassword, verifyPassword } from "@/lib/password";
-import { generatePostSeo, getPlainTextFromContent } from "@/lib/seo";
+import { hashPassword, safeEqual, verifyPassword } from "@/lib/password";
+import { generatePostSeo } from "@/lib/seo";
+import { deriveExcerpt, resolveCurrentAuthor } from "@/lib/post-payload";
 import { makeSlug } from "@/lib/utils";
 import { loginSchema, postSchema, taxonomySchema } from "@/lib/validators";
 import { verifyCsrf } from "@/lib/csrf";
+import {
+  FACEBOOK_OAUTH_DIALOG_URL,
+  FACEBOOK_OAUTH_SCOPE,
+  FACEBOOK_OAUTH_STATE_COOKIE,
+} from "@/lib/facebook";
+import { autoShareOnPublish, sharePostToFacebook, shouldAutoShare } from "@/lib/social-share";
 import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 export type AdminActionState = {
@@ -23,23 +32,14 @@ export type AdminActionState = {
   message?: string;
 };
 
+const LOGIN_ATTEMPT_LIMIT = 5;
+
 async function requireActionAdmin() {
   await verifyCsrf();
   const user = await getAuthUser();
   if (!user) {
     redirect("/admin/login");
   }
-}
-
-async function resolveCurrentAuthor() {
-  const [authUser, settings] = await Promise.all([getAuthUser(), getSiteSettings()]);
-  const candidate =
-    settings?.adminName?.trim() ||
-    settings?.adminEmail?.trim() ||
-    authUser?.email?.trim() ||
-    env.ADMIN_EMAIL;
-
-  return candidate || "Admin";
 }
 
 function normalizePostPayload(formData: FormData) {
@@ -53,14 +53,8 @@ function normalizePostPayload(formData: FormData) {
   const seo = generatePostSeo(title, content);
 
   // Excerpt isn't a form field — always derive it server-side from the cleaned
-  // plain text. Fall back to the title so the validator's min length holds even
-  // when content is short.
-  const plainContent = getPlainTextFromContent(content);
-  let excerpt = plainContent.slice(0, 280).trim();
-  if (excerpt.length < 20) {
-    const fallback = `${title} ${plainContent}`.trim();
-    excerpt = fallback.slice(0, 280).trim();
-  }
+  // plain text (see `deriveExcerpt`), so the client can't set it directly.
+  const excerpt = deriveExcerpt("", title, content);
 
   const imageUrl = formData.get("imageUrl")?.toString().trim() ?? "";
   const imagePublicId = formData.get("imagePublicId")?.toString().trim() ?? "";
@@ -155,6 +149,38 @@ function formatPostValidationError(error: z.ZodError): string {
   return `${prefix} ${parts.join(" · ")}`;
 }
 
+/**
+ * Read the per-post Facebook checkbox out of the submitted form.
+ *
+ * Returns `undefined` when the editor never showed the control (no page
+ * connected), which `shouldAutoShare` treats as "no opinion — defer to the
+ * global switch". An unchecked box submits nothing, so its absence alongside a
+ * present marker field is a deliberate "no".
+ */
+function readShareToggle(formData: FormData): boolean | undefined {
+  if (formData.get("shareFacebookPresent") !== "1") return undefined;
+  return formData.get("shareFacebook") === "on";
+}
+
+/**
+ * Auto-share a just-saved post, without letting the network fail the save.
+ *
+ * The decision is `shouldAutoShare`; the posting, idempotency and recording all
+ * live in lib/social-share.ts. Nothing here awaits a Facebook round trip for
+ * its own sake — the outcome is written to the SocialShare row, which is what
+ * the queue screen reads.
+ */
+async function maybeAutoShare(postId: string, status: PostStatus, formData: FormData) {
+  const settings = await getSiteSettings();
+  const wanted = shouldAutoShare({
+    isPublished: status === PostStatus.published,
+    globalAutoPost: settings?.facebookAutoPost ?? false,
+    perPostToggle: readShareToggle(formData),
+  });
+  if (!wanted) return;
+  await autoShareOnPublish(postId);
+}
+
 async function resolveUniquePostSlug(title: string, excludePostId?: string) {
   const baseSlug = makeSlug(title) || "post";
 
@@ -180,6 +206,14 @@ async function resolveUniquePostSlug(title: string, excludePostId?: string) {
 }
 
 export async function loginAdminAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
+  // A cross-site login CSRF would sign the victim into the attacker's account,
+  // so the same-origin check applies here too — before any credential work.
+  try {
+    await verifyCsrf();
+  } catch {
+    return { status: "error", message: "অনুরোধটি যাচাই করা যায়নি। পৃষ্ঠাটি রিলোড করে আবার চেষ্টা করুন।" };
+  }
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email")?.toString() ?? "",
     password: formData.get("password")?.toString() ?? "",
@@ -190,10 +224,16 @@ export async function loginAdminAction(_: AdminActionState, formData: FormData):
   }
 
   const { email, password } = parsed.data;
+  const emailKey = email.toLowerCase();
 
-  const rl = checkRateLimit(email.toLowerCase());
-  if (!rl.allowed) {
-    return { status: "error", message: `অনেকবার চেষ্টা করা হয়েছে। ${rl.retryAfterSeconds} সেকেন্ড পর আবার চেষ্টা করুন।` };
+  // Two buckets: per-account (stops targeting one admin) and per-IP (stops the
+  // same client working through a list of candidate emails).
+  const clientIp = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  for (const key of [`login:email:${emailKey}`, `login:ip:${clientIp}`]) {
+    const rl = checkRateLimit(key, { limit: LOGIN_ATTEMPT_LIMIT });
+    if (!rl.allowed) {
+      return { status: "error", message: `অনেকবার চেষ্টা করা হয়েছে। ${rl.retryAfterSeconds} সেকেন্ড পর আবার চেষ্টা করুন।` };
+    }
   }
 
   const settings = await getSiteSettings();
@@ -201,22 +241,23 @@ export async function loginAdminAction(_: AdminActionState, formData: FormData):
   const configuredPasswordHash = settings?.adminPasswordHash?.trim();
 
   if (configuredEmail && configuredPasswordHash) {
-    const matches = email.toLowerCase() === configuredEmail && verifyPassword(password, configuredPasswordHash);
+    const matches = emailKey === configuredEmail && verifyPassword(password, configuredPasswordHash);
     if (!matches) {
       return { status: "error", message: "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" };
     }
   } else {
-    if (email !== env.ADMIN_EMAIL || password !== env.ADMIN_PASSWORD) {
+    if (!safeEqual(email, env.ADMIN_EMAIL) || !safeEqual(password, env.ADMIN_PASSWORD)) {
       return { status: "error", message: "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" };
     }
-    // First login with env credentials  hash and store password so it is no longer plaintext
+    // First login with env credentials — hash and store password so it is no longer plaintext
     await saveSiteSettings({
       adminEmail: env.ADMIN_EMAIL,
       adminPasswordHash: hashPassword(password),
     });
   }
 
-  resetRateLimit(email.toLowerCase());
+  resetRateLimit(`login:email:${emailKey}`);
+  resetRateLimit(`login:ip:${clientIp}`);
   const token = await signAdminToken({ email, role: "admin" });
   await setAuthCookie(token);
   redirect("/admin/dashboard?notice=Signed%20in&type=success");
@@ -257,39 +298,12 @@ export async function createPostAction(_: AdminActionState, formData: FormData):
     },
   });
 
-  // Share to Facebook if the per-post toggle is on and the post is published.
-  const shareFacebook = formData.get("shareFacebook") === "on";
-  if (safe.status === PostStatus.published && shareFacebook) {
-    try {
-      const settings = await getSiteSettings();
-      if (settings?.facebookConnected && settings.facebookPageAccessToken) {
-        const { formatFacebookPost, postToFacebookPage } = await import("@/lib/facebook");
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-        const postUrl = `${siteUrl}/news/${slug}`;
+  await maybeAutoShare(post.id, safe.status, formData);
 
-        const message = formatFacebookPost(
-          safe.title,
-          post.excerpt,
-          post.category?.name ?? "News",
-          postUrl,
-          post.district?.name
-        );
-
-        await postToFacebookPage(
-          settings.facebookPageId!,
-          settings.facebookPageAccessToken,
-          message,
-          postUrl,
-          safe.imageUrl || undefined
-        );
-      }
-    } catch (error) {
-      console.error("Failed to share to Facebook:", error);
-    }
-  }
-
+  revalidateTag("posts", {});
   revalidatePath("/");
   revalidatePath("/admin/posts");
+  revalidatePath("/admin/social/queue");
   redirect("/admin/posts?notice=Post%20created&type=success");
 }
 
@@ -329,37 +343,13 @@ export async function updatePostAction(
     include: { category: true, district: true },
   });
 
-  // Share to Facebook if the per-post toggle is on and the post is published.
-  const shareFacebook = formData.get("shareFacebook") === "on";
-  if (safe.status === PostStatus.published && shareFacebook) {
-    try {
-      const settings = await getSiteSettings();
-      if (settings?.facebookConnected && settings.facebookPageAccessToken) {
-        const { formatFacebookPost, postToFacebookPage } = await import("@/lib/facebook");
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-        const postUrl = `${siteUrl}/news/${slug}`;
-        const message = formatFacebookPost(
-          safe.title,
-          updated.excerpt,
-          updated.category?.name ?? "News",
-          postUrl,
-          updated.district?.name
-        );
-        await postToFacebookPage(
-          settings.facebookPageId!,
-          settings.facebookPageAccessToken,
-          message,
-          postUrl,
-          safe.imageUrl || undefined
-        );
-      }
-    } catch (error) {
-      console.error("Failed to share to Facebook:", error);
-    }
-  }
+  await maybeAutoShare(updated.id, safe.status, formData);
 
+  revalidateTag("posts", {});
+  revalidatePath("/");
   revalidatePath(`/news/${slug}`);
   revalidatePath("/admin/posts");
+  revalidatePath("/admin/social/queue");
   redirect("/admin/posts?notice=Post%20updated&type=success");
 }
 
@@ -371,6 +361,7 @@ export async function deletePostAction(postId: string) {
     await deleteImage(post.imagePublicId);
   }
 
+  revalidateTag("posts", {});
   revalidatePath("/");
   revalidatePath("/admin/posts");
   redirect("/admin/posts?notice=Post%20deleted&type=success");
@@ -395,6 +386,7 @@ export async function createCategoryAction(
     },
   });
 
+  revalidateTag("categories", {});
   revalidatePath("/");
   revalidatePath("/admin/categories");
   redirect("/admin/categories?notice=Category%20added&type=success");
@@ -411,6 +403,8 @@ export async function deleteCategoryAction(id: string) {
   }
 
   await prisma.category.delete({ where: { id } });
+  revalidateTag("categories", {});
+  revalidatePath("/");
   revalidatePath("/admin/categories");
   redirect("/admin/categories?notice=Category%20deleted&type=success");
 }
@@ -751,6 +745,53 @@ export async function deleteAdAction(adId: string) {
 }
 
 // Facebook Integration Actions
+
+const FACEBOOK_OAUTH_STATE_TTL_SECONDS = 10 * 60;
+
+/**
+ * Build the Facebook OAuth URL and arm the CSRF `state` parameter.
+ *
+ * The state is a cryptographically random value stored in an httpOnly cookie so
+ * the callback can prove the redirect it receives belongs to a flow this admin
+ * actually started. The redirect URI is derived from the request host rather
+ * than accepted from the client, so it can't be pointed at another origin.
+ */
+export async function beginFacebookConnectAction(): Promise<{ url: string } | AdminActionState> {
+  await requireActionAdmin();
+
+  const settings = await getSiteSettings();
+  const appId = settings?.facebookAppId?.trim();
+  if (!appId) {
+    return { status: "error", message: "Save your Facebook App ID first." };
+  }
+
+  const hdrs = await headers();
+  const host = hdrs.get("x-forwarded-host") || hdrs.get("host");
+  const proto = hdrs.get("x-forwarded-proto") ?? "https";
+  if (!host) {
+    return { status: "error", message: "Could not determine the site URL." };
+  }
+
+  const state = randomUUID();
+  (await cookies()).set(FACEBOOK_OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/admin/facebook",
+    maxAge: FACEBOOK_OAUTH_STATE_TTL_SECONDS,
+  });
+
+  const params = new URLSearchParams({
+    client_id: appId,
+    redirect_uri: `${proto}://${host}/admin/facebook/callback`,
+    scope: FACEBOOK_OAUTH_SCOPE,
+    response_type: "code",
+    state,
+  });
+
+  return { url: `${FACEBOOK_OAUTH_DIALOG_URL}?${params.toString()}` };
+}
+
 export async function saveFacebookCredentialsAction(
   _: AdminActionState,
   formData: FormData
@@ -820,50 +861,80 @@ export async function toggleFacebookAutoPostAction() {
   redirect(`/admin/facebook?notice=Auto-post%20${newValue ? "enabled" : "disabled"}&type=success`);
 }
 
-// Action to manually share a post to Facebook
-export async function shareToFacebookAction(postId: string) {
+/**
+ * Share one post to Facebook on demand.
+ *
+ * Routed through the same pipeline as auto-post, so a manual share is recorded,
+ * de-duplicated and reported exactly like an automatic one — the only
+ * difference is the `trigger` written to the row.
+ */
+export async function shareToFacebookAction(postId: string): Promise<AdminActionState> {
+  await requireActionAdmin();
+
+  const outcome = await sharePostToFacebook(postId, "manual");
+  revalidatePath("/admin/social/queue");
+
+  return outcome.ok
+    ? { status: "success", message: outcome.message }
+    : { status: "error", message: outcome.message };
+}
+
+/** Retry a previously failed share. Same pipeline, recorded as a retry. */
+export async function retryShareAction(shareId: string): Promise<AdminActionState> {
+  await requireActionAdmin();
+
+  const share = await prisma.socialShare.findUnique({
+    where: { id: shareId },
+    select: { postId: true },
+  });
+  if (!share) {
+    return { status: "error", message: "Share record not found." };
+  }
+
+  const outcome = await sharePostToFacebook(share.postId, "retry");
+  revalidatePath("/admin/social/queue");
+
+  return outcome.ok
+    ? { status: "success", message: outcome.message }
+    : { status: "error", message: outcome.message };
+}
+
+/**
+ * Check the stored page token against the Graph API.
+ *
+ * A connection can be dead while still looking connected — the flag in the
+ * database says nothing about whether Facebook still honours the token.
+ */
+export async function verifyFacebookConnectionAction(): Promise<AdminActionState> {
   await requireActionAdmin();
 
   const settings = await getSiteSettings();
-  if (!settings?.facebookConnected || !settings.facebookPageAccessToken) {
-    return { status: "error" as const, message: "Facebook not connected" };
+  if (!settings?.facebookConnected || !settings.facebookPageAccessToken || !settings.facebookPageId) {
+    return { status: "error", message: "No Facebook page is connected." };
   }
 
-  const post = await prisma.post.findUnique({
-    where: { id: postId },
-    include: { category: true, district: true },
-  });
+  const { verifyPageToken } = await import("@/lib/facebook");
+  const result = await verifyPageToken(settings.facebookPageId, settings.facebookPageAccessToken);
 
-  if (!post) {
-    return { status: "error" as const, message: "Post not found" };
+  if (result.ok) {
+    return {
+      status: "success",
+      message: `Connection to ${settings.facebookPageName ?? "the page"} is healthy.`,
+    };
   }
 
-  try {
-    const { formatFacebookPost, postToFacebookPage } = await import("@/lib/facebook");
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const postUrl = `${siteUrl}/news/${post.slug}`;
-
-    const message = formatFacebookPost(
-      post.title,
-      post.excerpt,
-      post.category.name,
-      postUrl,
-      post.district?.name
-    );
-
-    await postToFacebookPage(
-      settings.facebookPageId!,
-      settings.facebookPageAccessToken,
-      message,
-      postUrl,
-      post.imageUrl ?? undefined
-    );
-
-    return { status: "success" as const, message: "Shared to Facebook successfully" };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to share to Facebook";
-    return { status: "error" as const, message };
+  // Mark it disconnected so the UI stops implying auto-post is working.
+  if (result.needsReconnect) {
+    await saveSiteSettings({ facebookConnected: false });
+    revalidatePath("/admin/facebook");
   }
+
+  return {
+    status: "error",
+    message: result.needsReconnect
+      ? `Facebook rejected the stored token (${result.reason}). Reconnect the page.`
+      : `Could not verify the connection: ${result.reason}`,
+  };
 }
 
 // ─── Menu Manager ────────────────────────────────────────────────────────────
@@ -971,7 +1042,7 @@ export async function inviteUserAction(_: AdminActionState, formData: FormData):
         avatar,
       }
     });
-  } catch (error) {
+  } catch {
     return { status: "error", message: "User with this email already exists." };
   }
 

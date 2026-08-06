@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent scratch space and detached worktrees carry their own copies of the
+    // app plus generated bundles; linting them buries real findings in noise.
+    "**/.next/**",
+    ".agent/**",
+    ".claire/**",
+    ".claude/**",
+    "design-system/**",
   ]),
 ]);
 

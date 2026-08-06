@@ -1,31 +1,41 @@
 import type { Metadata } from "next";
-import { Libre_Baskerville, Source_Sans_3, JetBrains_Mono, Noto_Sans_Bengali } from "next/font/google";
+import { Libre_Baskerville, JetBrains_Mono, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "600", "700"],
+/**
+ * Three families, minimum viable weights.
+ *
+ * Bengali webfonts are heavy (~40–110 KB per weight), so every weight has to
+ * earn its place. Noto Sans Bengali ships a Latin subset too, which is why
+ * there is no separate Latin body face — it was ~8 extra files for text that
+ * is almost entirely Bangla.
+ */
+const notoSansBengali = Noto_Sans_Bengali({
+  variable: "--font-noto-bengali",
+  subsets: ["bengali", "latin"],
+  weight: ["400", "600", "700"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
+/** Display face for editorial headlines and Latin numerals. */
 const libreBaskerville = Libre_Baskerville({
   variable: "--font-libre-baskerville",
   subsets: ["latin"],
   weight: ["400", "700"],
+  display: "swap",
+  fallback: ["Georgia", "serif"],
 });
 
+/** Single weight — used only for small uppercase labels, kickers and timestamps. */
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
-});
-
-const notoSansBengali = Noto_Sans_Bengali({
-  variable: "--font-noto-bengali",
-  subsets: ["bengali", "latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["500"],
+  display: "swap",
+  fallback: ["ui-monospace", "monospace"],
 });
 
 
@@ -74,20 +84,20 @@ export default function RootLayout({
   return (
     <html lang="bn" suppressHydrationWarning>
       <head>
-        {/* Preconnect for external font domains */}
-        <link rel="preconnect" href="https://fonts.maateen.me" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.maateen.me" />
-        {/* BenSen Bangla font — fallback for Noto Sans Bengali */}
-        <link rel="stylesheet" href="https://fonts.maateen.me/bensen/font.css" />
         <script
-          // Runs before <body> paints — guarantees data-theme is present
-          // on <html> for the very first render, so dark: classes work from frame 1.
+          // Runs before <body> paints — guarantees data-theme is present on
+          // <html> for the very first render, so dark: classes work from frame 1
+          // and there is no flash of the wrong theme.
+          //
+          // Resolution order: explicit choice, then OS preference. The previous
+          // version ignored the OS entirely, so a reader on a dark desktop was
+          // always served the light theme until they found the toggle.
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var r=document.documentElement;r.setAttribute('data-theme',t);r.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`,
           }}
         />
       </head>
-      <body suppressHydrationWarning className={`${sourceSans.variable} ${libreBaskerville.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${libreBaskerville.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} antialiased`}>
         <ThemeProvider>
           {children}
         </ThemeProvider>

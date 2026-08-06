@@ -25,10 +25,6 @@ export const AD_PLACEMENT_OPTIONS: Array<{ value: AdPlacement; label: string }> 
   { value: AD_PLACEMENTS.MOBILE_ANCHOR, label: "Mobile Anchor (320x50)" },
 ];
 
-export function getAdPlacementLabel(placement: string) {
-  return AD_PLACEMENT_OPTIONS.find((item) => item.value === placement)?.label ?? placement;
-}
-
 export interface AdPlacementMeta {
   key: string;
   label: string;
@@ -117,8 +113,7 @@ type AdRecord = {
 };
 
 type AdDelegate = {
-  findMany: (args: { where?: { placement?: string; isActive?: boolean }; orderBy: { createdAt: "desc" } }) => Promise<AdRecord[]>;
-  findFirst: (args: { where: { placement: string; isActive: boolean }; orderBy: { createdAt: "desc" } }) => Promise<AdRecord | null>;
+  findMany: (args: { where?: { isActive?: boolean }; orderBy: { createdAt: "desc" } }) => Promise<AdRecord[]>;
   create: (args: {
     data: {
       title: string;
@@ -148,28 +143,34 @@ export async function getAllAds() {
   return delegate.findMany({ where: {}, orderBy: { createdAt: "desc" } });
 }
 
-export async function getActiveAd(placement: AdPlacement) {
+/**
+ * All active ads, grouped by placement, in one query per render.
+ *
+ * The homepage mounts six `AdSlot`s. Querying per placement meant six round
+ * trips for a table that holds a handful of rows, so we fetch once and group in
+ * memory; `cache()` collapses the repeat calls within a single render pass.
+ */
+const getActiveAdsByPlacementMap = cache(async function getActiveAdsByPlacementMap() {
   const delegate = getAdDelegate();
-  if (!delegate) return null;
+  if (!delegate) return new Map<string, AdRecord[]>();
 
-  return delegate.findFirst({
-    where: { placement, isActive: true },
+  const ads = await delegate.findMany({
+    where: { isActive: true },
     orderBy: { createdAt: "desc" },
   });
-}
 
-// cache() deduplicates calls with the same placement key within a single render pass.
-export const getActiveAdsByPlacement = cache(async function getActiveAdsByPlacement(
-  placement: AdPlacement
-) {
-  const delegate = getAdDelegate();
-  if (!delegate) return [];
-
-  return delegate.findMany({
-    where: { placement, isActive: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const grouped = new Map<string, AdRecord[]>();
+  for (const ad of ads) {
+    const bucket = grouped.get(ad.placement);
+    if (bucket) bucket.push(ad);
+    else grouped.set(ad.placement, [ad]);
+  }
+  return grouped;
 });
+
+export async function getActiveAdsByPlacement(placement: AdPlacement): Promise<AdRecord[]> {
+  return (await getActiveAdsByPlacementMap()).get(placement) ?? [];
+}
 
 export async function createAd(input: {
   title: string;

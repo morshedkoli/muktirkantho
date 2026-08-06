@@ -1,24 +1,56 @@
 "use client";
 
-import { useState } from "react";
-import { 
+import { useState, useTransition } from "react";
+import {
+  beginFacebookConnectAction,
   disconnectFacebookAction,
   toggleFacebookAutoPostAction,
-  saveFacebookCredentialsAction
+  saveFacebookCredentialsAction,
+  verifyFacebookConnectionAction
 } from "@/app/(admin)/admin/actions";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
-import { 
-  Facebook, 
-  CheckCircle2, 
-  AlertCircle, 
-  ToggleLeft, 
+import { useToast } from "@/components/admin/toast-provider";
+import {
+  Facebook,
+  CheckCircle2,
+  AlertCircle,
+  ToggleLeft,
   ToggleRight,
   Unlink,
   Key,
   Eye,
   EyeOff,
-  Save
+  Save,
+  Loader2,
+  ShieldCheck
 } from "lucide-react";
+
+/** Asks Facebook whether the stored page token still works. */
+function VerifyConnectionButton() {
+  const [pending, startTransition] = useTransition();
+  const { showToast } = useToast();
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() =>
+        startTransition(async () => {
+          const result = await verifyFacebookConnectionAction();
+          showToast(result.message ?? "", result.status === "success" ? "success" : "error");
+        })
+      }
+      className="flex shrink-0 items-center gap-2 rounded-lg border border-[var(--ad-border-strong)] bg-[var(--ad-card)] px-4 py-2 text-sm font-semibold text-[var(--ad-text-primary)] transition-colors hover:bg-[var(--ad-inset)] disabled:opacity-60"
+    >
+      {pending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <ShieldCheck className="h-4 w-4" />
+      )}
+      {pending ? "Checking…" : "Check now"}
+    </button>
+  );
+}
 
 interface FacebookConnectClientProps {
   settings: {
@@ -42,17 +74,14 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
   const [credentialsMessage, setCredentialsMessage] = useState<AdminActionState>({ status: "idle" });
 
   const handleConnect = async () => {
-    // Redirect to Facebook OAuth
-    const redirectUri = `${window.location.origin}/admin/facebook/callback`;
-    const params = new URLSearchParams({
-      client_id: settings.appId || "",
-      redirect_uri: redirectUri,
-      scope: "pages_manage_posts,pages_read_engagement,pages_show_list",
-      response_type: "code",
-      state: Math.random().toString(36).substring(7),
-    });
-    
-    window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
+    // The OAuth URL is built server-side so the CSRF `state` can be random and
+    // stored in an httpOnly cookie the callback can verify.
+    const result = await beginFacebookConnectAction();
+    if ("url" in result) {
+      window.location.href = result.url;
+      return;
+    }
+    setCredentialsMessage(result);
   };
 
   const handleSaveCredentials = async (e: React.FormEvent) => {
@@ -168,7 +197,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
             <div className="flex justify-end">
               <button
                 type="submit"
-                className="flex items-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] transition-colors"
+                className="flex items-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--ad-on-primary)] hover:bg-[var(--ad-primary-hover)] transition-colors"
               >
                 <Save className="h-4 w-4" />
                 Save Credentials
@@ -225,6 +254,8 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
               ) : (
                 <button
                   onClick={handleConnect}
+                  /* Facebook brand blue is fixed in both themes, so its
+                     foreground stays literal white rather than a theme token. */
                   className="flex items-center gap-2 rounded-lg bg-[#1877F2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#166fe5] transition-colors"
                 >
                   <Facebook className="h-4 w-4" />
@@ -289,6 +320,25 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
                 </div>
               </div>
 
+              {/* Connection health.
+                  `facebookConnected` is only a flag in our own database — it
+                  says nothing about whether Facebook still honours the stored
+                  token. This asks Facebook, and clears the flag if the answer
+                  is no, so a dead connection stops advertising itself as live. */}
+              <div className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-[var(--ad-text-primary)]">
+                      Check connection
+                    </h3>
+                    <p className="text-sm text-[var(--ad-text-secondary)] mt-1">
+                      Verify the saved page token still works for posting
+                    </p>
+                  </div>
+                  <VerifyConnectionButton />
+                </div>
+              </div>
+
               {/* Disconnect Button */}
               <div className="rounded-xl border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 p-6">
                 <div className="flex items-center justify-between">
@@ -322,7 +372,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
         </h3>
         <div className="space-y-3">
           <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-white">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-[var(--ad-on-primary)]">
               1
             </div>
             <p className="text-sm text-[var(--ad-text-secondary)]">
@@ -330,7 +380,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-white">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-[var(--ad-on-primary)]">
               2
             </div>
             <p className="text-sm text-[var(--ad-text-secondary)]">
@@ -338,7 +388,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-white">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-[var(--ad-on-primary)]">
               3
             </div>
             <p className="text-sm text-[var(--ad-text-secondary)]">
@@ -346,7 +396,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-white">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ad-primary)] text-xs font-bold text-[var(--ad-on-primary)]">
               4
             </div>
             <p className="text-sm text-[var(--ad-text-secondary)]">

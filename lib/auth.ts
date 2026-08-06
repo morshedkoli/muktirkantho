@@ -51,7 +51,3 @@ export async function getAuthUser() {
   if (!token) return null;
   return verifyAdminToken(token);
 }
-
-export function getTokenName() {
-  return TOKEN_NAME;
-}

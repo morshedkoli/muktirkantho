@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatBanglaDateTime, formatBanglaShortDate } from "@/lib/bangla-date";
+import { formatBanglaDateTime } from "@/lib/bangla-date";
 import { Clock, MapPin, ArrowRight } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
 import { ImageWatermark } from "./image-watermark";
@@ -49,7 +49,10 @@ export function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) {
               : "(max-width: 640px) 100vw, (max-width: 1280px) 35vw, 450px"
           }
           className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+          // The lead story's photo is the LCP element on every page it appears
+          // on, so it gets both the preload hint and a high fetch priority.
           priority={size === "large"}
+          fetchPriority={size === "large" ? "high" : "auto"}
         />
 
         {/* Gradient overlay */}
@@ -63,7 +66,7 @@ export function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) {
         {/* Category badge — top left, red pill */}
         {post.category && (
           <div className="absolute left-4 top-4 z-10">
-            <span className="inline-block rounded-full bg-red-600 px-3 py-1 text-[10px] font-bold uppercase tracking-[1.5px] text-white shadow-md">
+            <span className="inline-block rounded-full bg-[var(--np-primary)] px-3 py-1 text-[10px] font-bold uppercase tracking-[1.5px] text-[var(--np-on-primary)] shadow-md">
               {post.category.name}
             </span>
           </div>
@@ -108,60 +111,13 @@ export function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) {
           )}
 
           {/* CTA */}
-          <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[2px] text-red-400 group-hover:text-white transition-colors">
+          {/* Sits on the photo's dark gradient, so it uses the media accent —
+              the body accent reads at only ~3.6:1 against black. */}
+          <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[2px] text-[var(--np-accent-on-media)] transition-colors group-hover:text-white">
             বিস্তারিত পড়ুন
             <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
           </div>
         </div>
-      </div>
-    </Link>
-  );
-}
-
-/** Compact horizontal card for the secondary stack beside the hero */
-export function SecondaryStoryCard({
-  post,
-  rank,
-}: {
-  post: Post;
-  rank?: number;
-}) {
-  const postPath = getPostPath(post);
-  return (
-    <Link
-      href={postPath}
-      className="group flex gap-3 border-b border-[var(--np-border)] pb-4 last:border-0 last:pb-0"
-    >
-      {rank !== undefined && (
-        <span className="font-display shrink-0 text-3xl font-bold leading-none text-[var(--np-border)] mt-0.5 w-7 text-right">
-          {rank}
-        </span>
-      )}
-
-      {post.imageUrl && (
-        <div className="relative h-16 w-[88px] shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
-          <Image
-            src={post.imageUrl || "/images/placeholder.jpg"}
-            alt=""
-            fill
-            sizes="88px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        </div>
-      )}
-
-      <div className="min-w-0 flex-1">
-        {post.category && (
-          <span className="np-category text-[10px] block">{post.category.name}</span>
-        )}
-        <h3 className="np-headline-sm mt-0.5 line-clamp-2 text-[13px] leading-snug group-hover:text-[var(--np-primary)] transition-colors">
-          {post.title}
-        </h3>
-        {post.publishedAt && (
-          <p className="np-timestamp mt-1 text-[10px]">
-            {formatBanglaShortDate(post.publishedAt)}
-          </p>
-        )}
       </div>
     </Link>
   );

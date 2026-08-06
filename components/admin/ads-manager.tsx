@@ -5,9 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
 import { createAdAction, deleteAdAction, toggleAdStatusAction } from "@/app/(admin)/admin/actions";
-import { AD_PLACEMENT_OPTIONS, AD_PLACEMENTS, getAdPlacementMeta, type AdPlacement } from "@/lib/ads";
+import { AD_PLACEMENT_OPTIONS, getAdPlacementMeta, type AdPlacement } from "@/lib/ads";
 import {
-  Plus,
   Eye,
   EyeOff,
   Trash2,
@@ -197,7 +196,7 @@ function StatCard({
   color: "blue" | "emerald" | "amber" | "rose";
 }) {
   const toneClasses = {
-    blue: "text-sky-600",
+    blue: "text-[var(--ad-info)]",
     emerald: "text-[var(--ad-success)]",
     amber: "text-[var(--ad-warning)]",
     rose: "text-[var(--ad-error)]",
@@ -267,12 +266,12 @@ function PlacementCard({
         <div
           className={cn(
             "w-full flex flex-col items-center justify-center gap-1.5",
-            "border-2 border-dashed border-zinc-200 rounded-lg bg-zinc-50",
+            "border-2 border-dashed border-[var(--ad-border)] rounded-lg bg-[var(--ad-inset)]",
             "h-20",
           )}
         >
-          <Megaphone className="h-5 w-5 text-zinc-300" />
-          <p className="text-xs text-zinc-300">কোনো সক্রিয় বিজ্ঞাপন নেই</p>
+          <Megaphone className="h-5 w-5 text-[var(--ad-text-muted)]" />
+          <p className="text-xs text-[var(--ad-text-muted)]">কোনো সক্রিয় বিজ্ঞাপন নেই</p>
         </div>
       )}
 
@@ -342,7 +341,7 @@ function PlacementPanel({
             </h4>
             {placement.ads.length === 0 ? (
               <div className="rounded-lg border-2 border-dashed border-[var(--ad-border)] p-6 text-center">
-                <Megaphone className="h-8 w-8 mx-auto text-zinc-300 mb-2" />
+                <Megaphone className="h-8 w-8 mx-auto text-[var(--ad-text-muted)] mb-2" />
                 <p className="text-sm text-[var(--ad-text-secondary)]">
                   এই স্লটে কোনো বিজ্ঞাপন নেই।
                 </p>
@@ -497,7 +496,7 @@ function CreateAdForm({ defaultPlacement }: { defaultPlacement: AdPlacement }) {
                 const file = event.target.files?.[0];
                 if (file) onUpload(file);
               }}
-              className="block w-full text-xs text-[var(--ad-text-secondary)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--ad-primary)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white file:cursor-pointer hover:file:bg-[var(--ad-primary-hover)]"
+              className="block w-full text-xs text-[var(--ad-text-secondary)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--ad-primary)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[var(--ad-on-primary)] file:cursor-pointer hover:file:bg-[var(--ad-primary-hover)]"
             />
             <p className="mt-1.5 text-xs text-[var(--ad-text-secondary)]">
               প্রস্তাবিত: {meta.dimensions} · সর্বোচ্চ ২MB · JPG, PNG, WebP
@@ -532,7 +531,7 @@ function CreateAdForm({ defaultPlacement }: { defaultPlacement: AdPlacement }) {
         <button
           type="submit"
           disabled={pending || !imageUrl}
-          className="w-full rounded-lg bg-[var(--ad-primary)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--ad-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--ad-primary)]/20"
+          className="w-full rounded-lg bg-[var(--ad-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--ad-on-primary)] hover:bg-[var(--ad-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--ad-primary)]/20"
         >
           {pending ? "তৈরি হচ্ছে..." : "বিজ্ঞাপন তৈরি করুন"}
         </button>

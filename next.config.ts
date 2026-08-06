@@ -21,8 +21,10 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.maateen.me",
-      "font-src 'self' https://fonts.gstatic.com https://fonts.maateen.me",
+      // next/font self-hosts every face at build time, so no external font or
+      // stylesheet origin needs to be reachable at runtime.
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self'",
       // Allow images from any HTTPS host so admins can paste arbitrary image URLs without breaking the page
       "img-src 'self' data: blob: https:",
       "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
@@ -30,6 +32,11 @@ const securityHeaders = [
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
+      // Modern equivalent of X-Frame-Options; unlike that header it also covers
+      // nested frames and is the directive browsers actually honour now.
+      "frame-ancestors 'self'",
+      // Stop a stray http:// asset from silently downgrading the page.
+      "upgrade-insecure-requests",
     ].join("; "),
   },
 ];
@@ -45,7 +52,20 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.unsplash.com" },
     ],
-    // Don't throw on unsupported image — degrade to passthrough rendering
+    // AVIF first: on news photography it lands 20–40% smaller than WebP, and
+    // Next falls back to WebP then the original for browsers that can't take it.
+    formats: ["image/avif", "image/webp"],
+    // Article imagery is immutable once uploaded to Cloudinary — cache the
+    // optimized variants for a year instead of re-encoding every 60s.
+    minimumCacheTTL: 31536000,
+    // Trimmed to the widths this layout actually renders (cards, hero, sidebar
+    // thumbs). Every extra entry is another variant to generate and store.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [64, 88, 128, 256, 384],
+    // SVG logos/favicons are served through next/image. SVG can carry inline
+    // script, so it is only safe alongside the two settings below: the sandbox
+    // CSP neutralises scripts and `attachment` stops the browser rendering an
+    // uploaded SVG inline on our own origin.
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

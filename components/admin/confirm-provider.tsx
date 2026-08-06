@@ -1,7 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { AlertTriangle, Info, ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 interface ConfirmOptions {
   title: string;
@@ -30,27 +32,17 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     isOpen: boolean;
     options: ConfirmOptions | null;
     resolve: ((value: boolean) => void) | null;
-  }>({
-    isOpen: false,
-    options: null,
-    resolve: null,
-  });
+  }>({ isOpen: false, options: null, resolve: null });
 
   const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
     return new Promise((resolve) => {
-      setDialogState({
-        isOpen: true,
-        options,
-        resolve,
-      });
+      setDialogState({ isOpen: true, options, resolve });
     });
   }, []);
 
   const handleClose = useCallback((result: boolean) => {
     setDialogState((prev) => {
-      if (prev.resolve) {
-        prev.resolve(result);
-      }
+      prev.resolve?.(result);
       return { isOpen: false, options: null, resolve: null };
     });
   }, []);
@@ -69,6 +61,24 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const dialogTone = {
+  danger: {
+    Icon: ShieldAlert,
+    ring: "border-[var(--ad-error)]/25 bg-[var(--ad-error-tint)] text-[var(--ad-error)]",
+    variant: "destructive" as const,
+  },
+  warning: {
+    Icon: AlertTriangle,
+    ring: "border-[var(--ad-warning)]/25 bg-[var(--ad-warning-tint)] text-[var(--ad-warning)]",
+    variant: "default" as const,
+  },
+  info: {
+    Icon: Info,
+    ring: "border-[var(--ad-info)]/25 bg-[var(--ad-info-tint)] text-[var(--ad-info)]",
+    variant: "default" as const,
+  },
+};
+
 interface ConfirmDialogProps {
   options: ConfirmOptions;
   onConfirm: () => void;
@@ -79,64 +89,58 @@ function ConfirmDialog({ options, onConfirm, onCancel }: ConfirmDialogProps) {
   const {
     title,
     message,
-    confirmText = "Confirm",
-    cancelText = "Cancel",
+    confirmText = "নিশ্চিত করুন",
+    cancelText = "বাতিল",
     type = "warning",
   } = options;
 
-  const buttonStyles = {
-    danger: "bg-[var(--ad-error)] hover:bg-[var(--ad-error)]/80 text-white",
-    warning: "bg-[var(--ad-warning)] hover:bg-[var(--ad-warning)]/80 text-white",
-    info: "bg-[var(--ad-primary)] hover:bg-[var(--ad-primary-hover)] text-white",
-  };
+  const { Icon, ring, variant } = dialogTone[type];
 
-  const iconColors = {
-    danger: "text-[var(--ad-error)]",
-    warning: "text-[var(--ad-warning)]",
-    info: "text-[var(--ad-primary)]",
-  };
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onCancel]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-label={title}
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+    >
+      <div
+        className="absolute inset-0 bg-[#0a0a0c]/60 backdrop-blur-[2px]"
         onClick={onCancel}
       />
-      
-      {/* Dialog */}
-      <div className="relative bg-[var(--ad-card)] rounded-xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95">
-        <div className="p-6">
-          <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-full bg-[var(--ad-paper-2)] ${iconColors[type]}`}>
-              <AlertTriangle className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-[var(--ad-text-primary)]">{title}</h3>
-              <p className="mt-2 text-sm text-[var(--ad-text-secondary)]">{message}</p>
-            </div>
-            <button
-              onClick={onCancel}
-              className="p-1 rounded-lg hover:bg-[var(--ad-paper-2)] transition-colors"
-            >
-              <X className="h-5 w-5 text-[var(--ad-muted)]" />
-            </button>
+
+      <div className="animate-fade-in-up relative w-full max-w-md overflow-hidden rounded-[var(--ad-radius-lg)] border border-[var(--ad-border)] bg-[var(--ad-card)] shadow-[var(--ad-shadow-lg)]">
+        <div className="flex gap-4 p-5">
+          <div
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border",
+              ring
+            )}
+          >
+            <Icon className="h-[18px] w-[18px]" />
           </div>
-          
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-[var(--ad-text-secondary)] bg-[var(--ad-card)] border border-[var(--ad-border)] rounded-lg hover:bg-[var(--ad-background)] transition-colors"
-            >
-              {cancelText}
-            </button>
-            <button
-              onClick={onConfirm}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${buttonStyles[type]}`}
-            >
-              {confirmText}
-            </button>
+          <div className="min-w-0 flex-1">
+            <h2 className="adm-display text-[16px] leading-tight">{title}</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-[var(--ad-text-secondary)]">
+              {message}
+            </p>
           </div>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-[var(--ad-border)] bg-[var(--ad-card-alt)] px-5 py-3.5">
+          <Button variant="outline" onClick={onCancel}>
+            {cancelText}
+          </Button>
+          <Button variant={variant} onClick={onConfirm} autoFocus>
+            {confirmText}
+          </Button>
         </div>
       </div>
     </div>

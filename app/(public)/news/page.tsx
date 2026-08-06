@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { NewsCard } from "@/components/public/news-card";
+import { PageHeading } from "@/components/public/section-heading";
 import { Pagination } from "@/components/public/pagination";
 import { CommonSidebar } from "@/components/public/common-sidebar";
 import { getLatestNews } from "@/lib/news";
@@ -23,12 +24,9 @@ export default async function LatestNewsPage({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
-      <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
-        <section>
-          <div className="mb-6 border-b border-[var(--np-border)] pb-3">
-            <h1 className="np-headline-lg text-[var(--np-text-primary)]">সর্বশেষ সংবাদ</h1>
-            <p className="mt-2 text-sm text-[var(--np-text-secondary)]">{data.total}টি সংবাদ প্রকাশিত</p>
-          </div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="min-w-0">
+          <PageHeading title="সর্বশেষ সংবাদ" count={data.total} countLabel="টি সংবাদ প্রকাশিত" />
 
           {data.items.length === 0 ? (
             <div className="rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-8 text-center text-[var(--np-text-secondary)]">

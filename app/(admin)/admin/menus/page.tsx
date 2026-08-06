@@ -9,13 +9,15 @@ export default async function MenusPage() {
     prisma.menuItem
       .findMany({ orderBy: [{ location: "asc" }, { order: "asc" }] })
       .catch(() => []),
-    prisma.category
-      .findMany({ orderBy: { name: "asc" } })
-      .catch(() => []),
+    prisma.category.findMany({ orderBy: { name: "asc" } }).catch(() => []),
   ]);
 
   return (
-    <AdminShell title="Menu Manager">
+    <AdminShell
+      kicker="সিস্টেম"
+      title="মেনু ব্যবস্থাপনা"
+      description="সাইটের হেডার ও ফুটার নেভিগেশনের লিংক সাজান।"
+    >
       <MenuManager initialItems={items} categories={categories} />
     </AdminShell>
   );

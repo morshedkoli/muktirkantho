@@ -1,29 +1,22 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getSiteSettings, saveSiteSettings } from "@/lib/site-settings";
-import { getAuthUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/route-auth";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   try {
-    const user = await getAuthUser();
-    if (!user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
     const settings = await getSiteSettings();
-    const currentEnabled = settings?.adsEnabled ?? true;
-    
-    // Toggle the setting
-    await saveSiteSettings({
-      adsEnabled: !currentEnabled,
-    });
-    
+    const enabled = !(settings?.adsEnabled ?? true);
+
+    await saveSiteSettings({ adsEnabled: enabled });
+
     // Revalidate all pages to reflect the change
     revalidatePath("/", "layout");
-    
-    return NextResponse.json({ 
-      success: true, 
-      enabled: !currentEnabled 
-    });
+
+    return NextResponse.json({ success: true, enabled });
   } catch (error) {
     console.error("Failed to toggle ads:", error);
     return NextResponse.json(

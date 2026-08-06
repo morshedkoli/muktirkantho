@@ -10,8 +10,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
   const payload = await request.json();
   const parsed = taxonomySchema.safeParse(payload);

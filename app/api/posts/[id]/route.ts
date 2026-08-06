@@ -1,28 +1,14 @@
 import { NextResponse } from "next/server";
 import { PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { postSchema } from "@/lib/validators";
 import { makeSlug } from "@/lib/utils";
 import { requireAdmin } from "@/lib/route-auth";
 import { deleteImage } from "@/lib/cloudinary";
 import { isObjectId } from "@/lib/object-id";
-import { generatePostSeo, getPlainTextFromContent } from "@/lib/seo";
+import { parsePostBody } from "@/lib/post-payload";
 import { getAuthUser } from "@/lib/auth";
-import { getSiteSettings } from "@/lib/site-settings";
-import { env } from "@/lib/env";
 
 type Context = { params: Promise<{ id: string }> };
-
-async function resolveCurrentAuthor() {
-  const [authUser, settings] = await Promise.all([getAuthUser(), getSiteSettings()]);
-  return (
-    settings?.adminName?.trim() ||
-    settings?.adminEmail?.trim() ||
-    authUser?.email?.trim() ||
-    env.ADMIN_EMAIL ||
-    "Admin"
-  );
-}
 
 export async function GET(_: Request, { params }: Context) {
   const { id } = await params;
@@ -32,69 +18,63 @@ export async function GET(_: Request, { params }: Context) {
 
   const post = await prisma.post.findUnique({ where: { id } });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Drafts are only visible to a signed-in admin; everyone else gets a 404 so
+  // the endpoint doesn't confirm that an unpublished post exists.
+  if (post.status !== PostStatus.published && !(await getAuthUser())) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   return NextResponse.json(post);
 }
 
 export async function PATCH(request: Request, { params }: Context) {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
   const { id } = await params;
   if (!isObjectId(id)) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const body = await request.json();
-  const author = await resolveCurrentAuthor();
-  const title = (body?.title ?? "").toString();
-  const content = (body?.content ?? "").toString();
-  const seo = generatePostSeo(title, content);
-
-  const rawExcerpt = (body?.excerpt ?? "").toString().trim();
-  let derivedExcerpt = rawExcerpt;
-  if (!derivedExcerpt && content) {
-    const plain = getPlainTextFromContent(content);
-    derivedExcerpt = plain.slice(0, 280).trim();
-    if (derivedExcerpt.length < 20) {
-      derivedExcerpt = `${title} ${plain}`.trim().slice(0, 280);
-    }
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = postSchema.safeParse({
-    ...body,
-    excerpt: derivedExcerpt || undefined,
-    imageUrl: (body?.imageUrl ?? "").toString().trim() || undefined,
-    imagePublicId: (body?.imagePublicId ?? "").toString().trim() || undefined,
-    author: (body?.author ?? "").toString().trim() || author,
-    youtubeUrl: (body?.youtubeUrl ?? "").toString().trim() || undefined,
-    metaTitle: seo.metaTitle,
-    metaDescription: seo.metaDescription,
-  });
+  const parsed = await parsePostBody(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const payload = parsed.data;
-  const updated = await prisma.post.update({
-    where: { id },
-    data: {
-      ...payload,
-      slug: makeSlug(payload.title),
-      excerpt: payload.excerpt ?? payload.metaDescription,
-      imageUrl: payload.imageUrl || null,
-      imagePublicId: payload.imagePublicId || null,
-      upazilaId: payload.upazilaId || null,
-      youtubeUrl: payload.youtubeUrl || null,
-      publishedAt: payload.status === PostStatus.published ? new Date() : null,
-    },
-  });
 
-  return NextResponse.json(updated);
+  try {
+    const updated = await prisma.post.update({
+      where: { id },
+      data: {
+        ...payload,
+        slug: makeSlug(payload.title),
+        excerpt: payload.excerpt ?? payload.metaDescription,
+        imageUrl: payload.imageUrl || null,
+        imagePublicId: payload.imagePublicId || null,
+        upazilaId: payload.upazilaId || null,
+        youtubeUrl: payload.youtubeUrl || null,
+        publishedAt: payload.status === PostStatus.published ? new Date() : null,
+      },
+    });
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error("[PATCH /api/posts/:id] DB update failed:", err);
+    return NextResponse.json({ error: "Failed to update post" }, { status: 500 });
+  }
 }
 
-export async function DELETE(_: Request, { params }: Context) {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
+export async function DELETE(request: Request, { params }: Context) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
   const { id } = await params;
   if (!isObjectId(id)) {
@@ -124,12 +104,13 @@ export async function DELETE(_: Request, { params }: Context) {
 
 export async function POST(request: Request, { params }: Context) {
   const formData = await request.formData();
-  const method = formData.get("_method");
-  if (method === "DELETE") {
-    const result = await DELETE(request, { params });
-    // If deletion failed, surface the error rather than blindly redirecting
-    if (result.status !== 200) return result;
-    return NextResponse.redirect(new URL("/admin/posts", request.url));
+  if (formData.get("_method") !== "DELETE") {
+    return NextResponse.json({ error: "Unsupported action" }, { status: 405 });
   }
-  return NextResponse.json({ error: "Unsupported action" }, { status: 405 });
+
+  // `request` is forwarded only for its method/headers — DELETE reads no body.
+  const result = await DELETE(request, { params });
+  // If deletion failed, surface the error rather than blindly redirecting
+  if (result.status !== 200) return result;
+  return NextResponse.redirect(new URL("/admin/posts", request.url));
 }

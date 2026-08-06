@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { PostStatus } from "@prisma/client";
 import { AdSlot } from "@/components/public/ad-slot";
@@ -7,39 +8,63 @@ import { AD_PLACEMENTS } from "@/lib/ads";
 import { getPostPath } from "@/lib/post-url";
 import { formatBanglaDate } from "@/lib/bangla-date";
 
-async function getPopularPosts() {
-  try {
-    return await prisma.post.findMany({
-      where: { status: PostStatus.published },
-      orderBy: { publishedAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        imageUrl: true,
-        publishedAt: true,
-        category: { select: { slug: true } },
-        district: { select: { slug: true } },
-      },
-    });
-  } catch {
-    return [];
-  }
-}
+/**
+ * This sidebar renders on every listing page, all of which are dynamic because
+ * of `?page=`. Caching keeps it to one query per 60s window instead of two per
+ * request; the `posts` tag lets publishing invalidate it straight away.
+ */
+const getPopularPosts = unstable_cache(
+  async () => {
+    try {
+      const posts = await prisma.post.findMany({
+        where: { status: PostStatus.published },
+        orderBy: { publishedAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          imageUrl: true,
+          publishedAt: true,
+          category: { select: { slug: true } },
+          district: { select: { slug: true } },
+        },
+      });
 
-async function getCategoriesWithCount() {
-  try {
-    return await prisma.category.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: { select: { posts: { where: { status: PostStatus.published } } } },
-      },
-    });
-  } catch {
-    return [];
-  }
-}
+      // The cache stores values as JSON, so `Date` comes back as an ISO string.
+      // Normalize to a string here and let the formatter parse it, rather than
+      // handing consumers a value whose type lies about what it holds.
+      return posts.map((post) => ({
+        ...post,
+        publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
+      }));
+    } catch {
+      return [];
+    }
+  },
+  ["sidebar-popular-posts"],
+  { revalidate: 60, tags: ["posts"] },
+);
+
+const getCategoriesWithCount = unstable_cache(
+  async () => {
+    try {
+      return await prisma.category.findMany({
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          _count: { select: { posts: { where: { status: PostStatus.published } } } },
+        },
+      });
+    } catch {
+      return [];
+    }
+  },
+  ["sidebar-categories"],
+  { revalidate: 300, tags: ["posts", "categories"] },
+);
 
 export async function CommonSidebar() {
   const [popularPosts, categories] = await Promise.all([
@@ -48,7 +73,9 @@ export async function CommonSidebar() {
   ]);
 
   return (
-    <aside className="hidden lg:block w-[300px] shrink-0 space-y-6">
+    // Sits in a 300px grid column on every listing page, so it no longer needs
+    // to fix its own width.
+    <aside className="hidden min-w-0 space-y-6 lg:block">
       {/* আলোচিত সংবাদ — Popular Posts */}
       <section className="border border-[var(--np-border)] bg-[var(--np-card)]">
         <div className="border-l-4 border-[var(--np-primary)] px-4 py-3 bg-[var(--np-newsprint)]">
@@ -62,7 +89,7 @@ export async function CommonSidebar() {
             return (
               <Link key={post.id} href={postPath} className="flex gap-3 group items-start">
                 {/* Number */}
-                <span className="shrink-0 w-6 h-6 rounded-full bg-[var(--np-primary)] text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-[var(--np-primary)] text-[var(--np-on-primary)] text-xs font-bold flex items-center justify-center mt-0.5">
                   {index + 1}
                 </span>
                 {/* Thumbnail */}

@@ -4,9 +4,9 @@ import { getAuthUser } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
 import { env } from "@/lib/env";
 
-export async function GET() {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
+export async function GET(request: Request) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
   const authUser = await getAuthUser();
   const settings = await getSiteSettings();

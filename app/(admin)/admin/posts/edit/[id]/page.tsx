@@ -8,6 +8,9 @@ import { getSiteSettings } from "@/lib/site-settings";
 const initialState = { status: "idle" as const };
 import { prisma } from "@/lib/prisma";
 
+/** Per-request by definition — it edits one live post. */
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ id: string }> };
 
 export default async function AdminEditPostPage({ params }: Props) {
@@ -49,6 +52,7 @@ export default async function AdminEditPostPage({ params }: Props) {
         socialPlatforms={socialPlatforms}
         initial={{
           id: post.id,
+          slug: post.slug,
           title: post.title,
           excerpt: post.excerpt,
           content: post.content,

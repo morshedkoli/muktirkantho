@@ -1,10 +1,10 @@
+import { prisma } from "@/lib/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CategoryManager } from "@/components/admin/category-manager";
 import {
   createCategoryAction,
   deleteCategoryAction,
 } from "@/app/(admin)/admin/actions";
-import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,11 @@ export default async function AdminCategoriesPage() {
   });
 
   return (
-    <AdminShell title="Categories">
+    <AdminShell
+      kicker="নিউজরুম"
+      title="ক্যাটাগরি"
+      description="সংবাদের বিভাগ তৈরি ও পরিচালনা করুন। প্রতিটি পোস্ট একটি ক্যাটাগরিতে থাকে।"
+    >
       <CategoryManager
         categories={categories}
         createAction={createCategoryAction}

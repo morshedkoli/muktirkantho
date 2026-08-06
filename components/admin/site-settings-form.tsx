@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Loader2, Save } from "lucide-react";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
 import { saveSiteSettingsAction } from "@/app/(admin)/admin/actions";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Panel, Field, Alert } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,86 +17,89 @@ type SiteSettingsFormProps = {
   };
 };
 
-type SettingsFormState = {
-  contactAddress: string;
-  contactPhone: string;
-  contactEmail: string;
-};
-
 const initialState: AdminActionState = { status: "idle" };
 
 export function SiteSettingsForm({ initial }: SiteSettingsFormProps) {
   const [state, formAction, pending] = useActionState(saveSiteSettingsAction, initialState);
-  const [form, setForm] = useState<SettingsFormState>({
+  const [form, setForm] = useState({
     contactAddress: initial.contactAddress ?? "",
     contactPhone: initial.contactPhone ?? "",
     contactEmail: initial.contactEmail ?? "",
   });
 
   return (
-    <form action={formAction} className="space-y-6">
-      {state.status === "error" && state.message ? (
-        <p className="rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-4 py-3 text-sm text-[var(--ad-error)]">{state.message}</p>
-      ) : null}
+    <form action={formAction} className="max-w-3xl space-y-4">
+      {state.status === "error" && state.message && (
+        <Alert tone="error">{state.message}</Alert>
+      )}
+      {state.status === "success" && (
+        <Alert tone="success">সেটিংস সংরক্ষিত হয়েছে।</Alert>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Footer Contact Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[var(--ad-text-secondary)] mb-2 font-mono">
-              Address
-            </label>
+      <Panel
+        kicker="ফুটার"
+        title="যোগাযোগের তথ্য"
+        description="সাইটের ফুটারে এই তথ্যগুলো পাঠকদের দেখানো হয়।"
+      >
+        <div className="space-y-4">
+          <Field label="ঠিকানা" htmlFor="contactAddress">
             <Textarea
+              id="contactAddress"
               name="contactAddress"
-              value={form.contactAddress}
-              onChange={(event) => setForm((prev) => ({ ...prev, contactAddress: event.target.value }))}
               rows={3}
-              placeholder="123 News Street, Dhaka-1200, Bangladesh"
+              value={form.contactAddress}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, contactAddress: e.target.value }))
+              }
+              placeholder="১২৩ প্রেস রোড, ঢাকা-১২০০, বাংলাদেশ"
             />
-          </div>
+          </Field>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--ad-text-secondary)] mb-2 font-mono">
-                Phone
-              </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="ফোন" htmlFor="contactPhone">
               <Input
+                id="contactPhone"
                 name="contactPhone"
-                type="text"
+                type="tel"
                 value={form.contactPhone}
-                onChange={(event) => setForm((prev) => ({ ...prev, contactPhone: event.target.value }))}
-                placeholder="+880 1234-567890"
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, contactPhone: e.target.value }))
+                }
+                placeholder="+৮৮০ ১২৩৪-৫৬৭৮৯০"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--ad-text-secondary)] mb-2 font-mono">
-                Email
-              </label>
+            <Field label="ইমেইল" htmlFor="contactEmail">
               <Input
+                id="contactEmail"
                 name="contactEmail"
                 type="email"
                 value={form.contactEmail}
-                onChange={(event) => setForm((prev) => ({ ...prev, contactEmail: event.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, contactEmail: e.target.value }))
+                }
                 placeholder="editor@muktirkantho.com"
               />
-            </div>
+            </Field>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Panel>
 
       <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={pending}
-          className="bg-[var(--ad-primary)] shadow-lg shadow-[var(--ad-primary)]/20 hover:bg-[var(--ad-primary-hover)] text-white text-xs uppercase tracking-wider font-bold px-6"
-        >
-          {pending ? "Saving..." : "Save Settings"}
+        <Button type="submit" disabled={pending}>
+          {pending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              সংরক্ষণ হচ্ছে…
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              সংরক্ষণ করুন
+            </>
+          )}
         </Button>
       </div>
     </form>
   );
 }
-

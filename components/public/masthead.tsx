@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Facebook, Twitter, Youtube, Instagram, Linkedin } from "lucide-react";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getSocialMenuItems } from "@/lib/menus";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SiteLogo } from "./site-logo";
 
 function isValidLogoUrl(url: string | null | undefined): url is string {
@@ -26,6 +28,43 @@ const SOCIAL_ICONS: Record<string, SocialIconComponent> = {
   LinkedIn: Linkedin,
   YouTube: Youtube,
 };
+
+/**
+ * Masthead logo rendered through next/image so it is served as AVIF/WebP at the
+ * size actually displayed. The raw `<img>` tags this replaces pulled full-size
+ * Cloudinary PNGs, and the browser preloaded both the light and dark variants
+ * even though one is always `display:none`.
+ */
+function LogoImage({
+  src,
+  height,
+  className = "",
+}: {
+  src: string;
+  height: number;
+  className?: string;
+}) {
+  return (
+    <Image
+      src={src}
+      alt="মুক্তির কণ্ঠ"
+      height={height}
+      // Logos are wordmarks: width follows the aspect ratio, so we give next/image
+      // a generous intrinsic width and let `h-full w-auto` do the real sizing.
+      width={height * 5}
+      // `lazy` rather than `priority`/`eager` on purpose. next/image emits a
+      // `<link rel=preload>` for any non-lazy image, which put this small
+      // wordmark ahead of the article hero — the real LCP element — in the
+      // fetch queue. The logo is in the initial viewport, so browsers still
+      // request it immediately; we only lose the preload hint, and its height
+      // is pinned below so nothing shifts.
+      loading="lazy"
+      sizes={`${height * 5}px`}
+      className={`${className} w-auto max-w-[56vw] sm:max-w-none`}
+      style={{ height: `${height}px` }}
+    />
+  );
+}
 
 export async function Masthead() {
   let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
@@ -89,35 +128,17 @@ export async function Masthead() {
           >
             {hasBoth ? (
               <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={lightLogo!}
-                  alt="মুক্তির কণ্ঠ"
-                  className="block dark:hidden w-auto max-w-[56vw] sm:max-w-none"
-                  style={{ height: `${logoH}px` }}
-                />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={darkLogo!}
-                  alt="মুক্তির কণ্ঠ"
-                  className="hidden dark:block w-auto max-w-[56vw] sm:max-w-none"
-                  style={{ height: `${logoH}px` }}
-                />
+                <LogoImage src={lightLogo!} height={logoH} className="block dark:hidden" />
+                <LogoImage src={darkLogo!} height={logoH} className="hidden dark:block" />
               </>
             ) : hasAny ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fallbackLogo!}
-                alt="মুক্তির কণ্ঠ"
-                className="w-auto max-w-[56vw] sm:max-w-none"
-                style={{ height: `${logoH}px` }}
-              />
+              <LogoImage src={fallbackLogo!} height={logoH} />
             ) : (
               <SiteLogo width={Math.round(logoH * 4)} height={logoH} />
             )}
           </Link>
 
-          {/* Right: Social icons */}
+          {/* Right: Social icons + theme switch */}
           <div className="flex items-center justify-end gap-1.5 sm:gap-2">
             {socialItems.length > 0
               ? socialItems.map((social) => {
@@ -130,13 +151,17 @@ export async function Masthead() {
                       aria-label={social.label}
                       target={social.openInNewTab ? "_blank" : undefined}
                       rel={social.openInNewTab ? "noopener noreferrer" : undefined}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--np-border)] text-[var(--np-text-secondary)] hover:bg-[var(--np-primary)] hover:text-white hover:border-[var(--np-primary)] transition-all duration-200"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--np-border)] text-[var(--np-text-secondary)] hover:bg-[var(--np-primary)] hover:text-[var(--np-on-primary)] hover:border-[var(--np-primary)] transition-all duration-200"
                     >
                       <Icon className="h-3.5 w-3.5" />
                     </a>
                   );
                 })
               : null}
+
+            {/* Social icons are hidden on the narrowest screens, so the theme
+                switch sits outside that group and stays reachable everywhere. */}
+            <ThemeToggle size="sm" />
           </div>
         </div>
       </div>

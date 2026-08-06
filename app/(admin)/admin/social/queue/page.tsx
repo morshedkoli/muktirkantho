@@ -1,10 +1,21 @@
-import { prisma } from "@/lib/prisma";
-import { AdminShell } from "@/components/admin/admin-shell";
-import { Facebook, Zap, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { PostStatus, ShareStatus, SocialPlatform } from "@prisma/client";
+import { format } from "date-fns";
+import {
+  Facebook,
+  CheckCircle2,
+  Clock,
+  Link2Off,
+  Settings,
+  AlertTriangle,
+  ExternalLink,
+} from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { bnNumber } from "@/lib/bn-number";
+import { AdminShell } from "@/components/admin/admin-shell";
+import { Panel, StatTile, EmptyState, Alert } from "@/components/admin/ui";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { PostStatus } from "@prisma/client";
 import {
   Table,
   TableBody,
@@ -13,156 +24,261 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { format } from "date-fns";
+import { ShareButton } from "./share-button";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * What actually happened, not what could happen.
+ *
+ * The previous version derived every row's state from `post.status`, so a post
+ * that failed to reach Facebook and a post that sailed through looked
+ * identical — both "শেয়ারযোগ্য". Rows now come from the SocialShare record, and
+ * a published post with no record is shown as genuinely unshared with a button
+ * to do something about it.
+ */
 export default async function SocialQueuePage() {
-  const [posts, settings] = await Promise.all([
+  const [posts, settings, counts] = await Promise.all([
     prisma.post.findMany({
-      select: { id: true, title: true, status: true, publishedAt: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
+      where: { status: PostStatus.published },
+      orderBy: { publishedAt: "desc" },
+      take: 25,
+      select: {
+        id: true,
+        title: true,
+        publishedAt: true,
+        createdAt: true,
+        socialShares: {
+          where: { platform: SocialPlatform.facebook },
+          select: {
+            id: true,
+            status: true,
+            error: true,
+            externalUrl: true,
+            attempts: true,
+            trigger: true,
+            sharedAt: true,
+            lastAttemptAt: true,
+          },
+        },
+      },
     }),
     prisma.siteSetting.findFirst(),
+    prisma.socialShare.groupBy({
+      by: ["status"],
+      where: { platform: SocialPlatform.facebook },
+      _count: true,
+    }),
   ]);
 
-  const pending = posts.filter((p) => p.status === PostStatus.draft).length;
-  const sent = posts.filter((p) => p.status === PostStatus.published).length;
-  const facebookConnected = settings?.facebookConnected ?? false;
+  const countOf = (status: ShareStatus) =>
+    counts.find((c) => c.status === status)?._count ?? 0;
+
+  const sharedCount = countOf(ShareStatus.shared);
+  const failedCount = countOf(ShareStatus.failed);
+  const unshared = posts.filter((p) => p.socialShares.length === 0).length;
+
+  const connected = settings?.facebookConnected ?? false;
+  const autoPost = settings?.facebookAutoPost ?? false;
 
   return (
-    <TooltipProvider>
-      <div className="space-y-6 animate-fade-in-up">
-        <AdminShell
-          title="Social Queue"
-          description="Manage automated sharing schedules, connected accounts, and queued broadcasts."
-          actions={
-            <Button asChild size="sm" variant="default">
-              <Link href="/admin/facebook">
-                <Facebook className="h-4 w-4" />
-                Facebook Settings
-              </Link>
-            </Button>
-          }
-        >
-          {/* Status Overview */}
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: "Pending (Drafts)", value: pending, icon: Clock, bg: "bg-[var(--ad-amber-light)]", fg: "text-[var(--ad-amber)]" },
-              { label: "Sent / Published", value: sent, icon: CheckCircle, bg: "bg-[var(--ad-green-light)]", fg: "text-[var(--ad-green)]" },
-              { label: "Platform Status", value: facebookConnected ? "Active" : "Disconnected", icon: facebookConnected ? CheckCircle : AlertTriangle, bg: facebookConnected ? "bg-[var(--ad-green-light)]" : "bg-[var(--ad-brand-light)]", fg: facebookConnected ? "text-[var(--ad-green)]" : "text-[var(--ad-brand)]" },
-            ].map((s) => {
-              const Icon = s.icon;
-              return (
-                <Card key={s.label} className="shadow-premium border-[var(--ad-border)] bg-[var(--ad-card)]">
-                  <CardContent className="p-5 flex items-center gap-3.5">
-                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${s.bg} ${s.fg} border border-transparent`}>
-                      <Icon className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ad-text-muted)] font-mono">{s.label}</p>
-                      <p className="text-xl font-black text-[var(--ad-text-primary)] leading-none mt-1 tracking-tight">{s.value}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+    <AdminShell
+      kicker="প্রচার"
+      title="সোশ্যাল কিউ"
+      description="ফেসবুকে স্বয়ংক্রিয় শেয়ারের ফলাফল ও সংযোগের অবস্থা।"
+      actions={
+        <Button asChild variant="outline">
+          <Link href="/admin/facebook">
+            <Settings className="h-4 w-4" />
+            ফেসবুক সেটিংস
+          </Link>
+        </Button>
+      }
+    >
+      {!connected ? (
+        <Alert tone="warning" title="ফেসবুক সংযুক্ত নয়">
+          কোনো ফেসবুক পেজ যুক্ত করা নেই, তাই স্বয়ংক্রিয় শেয়ার বন্ধ আছে।{" "}
+          <Link href="/admin/facebook" className="font-semibold underline underline-offset-2">
+            এখনই সংযুক্ত করুন
+          </Link>
+          ।
+        </Alert>
+      ) : !autoPost ? (
+        <Alert tone="info" title="অটো-পোস্ট বন্ধ">
+          পেজ যুক্ত আছে, কিন্তু স্বয়ংক্রিয় শেয়ার বন্ধ। এখন শুধু ম্যানুয়ালি শেয়ার করা যাবে।{" "}
+          <Link href="/admin/facebook" className="font-semibold underline underline-offset-2">
+            চালু করুন
+          </Link>
+          ।
+        </Alert>
+      ) : null}
 
-          {/* Queue Table */}
-          <Card className="overflow-hidden shadow-premium border-[var(--ad-border)] bg-[var(--ad-card)] rounded-xl">
-            <div className="border-b border-[var(--ad-border)] px-5 py-3.5 bg-[var(--ad-background)]/30">
-              <h2 className="text-[13px] font-bold uppercase tracking-wider text-[var(--ad-text-primary)]">Facebook Auto-post Integration Queue</h2>
-            </div>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-6 w-[45%]">Article Title</TableHead>
-                    <TableHead className="w-[20%]">Publish Target</TableHead>
-                    <TableHead className="w-[20%]">Status Date</TableHead>
-                    <TableHead className="pr-6 w-[15%]">Transmission Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {posts.slice(0, 15).map((item) => {
-                    const isPublished = item.status === PostStatus.published;
-                    return (
-                      <TableRow key={item.id} className="group hover:bg-[var(--ad-paper)]/30">
-                        <TableCell className="pl-6 font-bangla font-bold text-[13px] text-[var(--ad-text-primary)]">
-                          {item.title}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="bg-[#1877f2] flex h-6 w-6 items-center justify-center rounded text-white shadow-sm shrink-0">
-                              <Facebook className="h-3.5 w-3.5" />
-                            </div>
-                            <span className="font-mono text-[9.5px] font-bold uppercase tracking-wider text-[var(--ad-text-secondary)]">Facebook Page</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-[11px] font-bold text-[var(--ad-text-secondary)]">
-                          {format(new Date(item.publishedAt || item.createdAt), "MMM d, yyyy HH:mm")}
-                        </TableCell>
-                        <TableCell className="pr-6">
-                          <span className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                            isPublished
-                              ? "bg-[var(--ad-green-light)] text-[var(--ad-green)] border-[var(--ad-green)]/15"
-                              : "bg-[var(--ad-amber-light)] text-[var(--ad-amber)] border-[var(--ad-amber)]/15"
-                          }`}>
-                            {isPublished ? "Sent / Posted" : "Pending Draft"}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {posts.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-12 text-[var(--ad-text-muted)] text-sm">
-                        No articles configured in publishing queue
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+      {failedCount > 0 && (
+        <Alert tone="error" title={`${bnNumber(failedCount)}টি শেয়ার ব্যর্থ হয়েছে`}>
+          নিচের তালিকা থেকে কারণ দেখে আবার চেষ্টা করুন।
+        </Alert>
+      )}
 
-          {/* Connected Page Summary */}
-          <Card className="shadow-premium border-[var(--ad-border)] bg-[var(--ad-card)] rounded-xl">
-            <CardContent className="p-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#1877f2] flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-md">
-                    <Facebook className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[var(--ad-text-primary)] font-mono uppercase tracking-wider">
-                      {settings?.facebookPageName || "Facebook Page Integration"}
-                    </h3>
-                    <p className="text-[11.5px] text-[var(--ad-text-muted)] mt-0.5 leading-normal">
-                      {facebookConnected
-                        ? `Connected to page ID: ${settings?.facebookPageId}. Auto-sharing is active.`
-                        : "No Facebook business page linked. Auto-posting is currently inactive."}
-                    </p>
-                  </div>
-                </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${facebookConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--ad-text-secondary)]">
-                    {facebookConnected ? "Connected" : "Disconnected"}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </AdminShell>
+      <div className="grid grid-cols-3 gap-3 lg:gap-4">
+        <StatTile
+          label="শেয়ার হয়েছে"
+          value={bnNumber(sharedCount)}
+          hint="ফেসবুকে সফলভাবে গেছে"
+          tone="success"
+          icon={CheckCircle2}
+        />
+        <StatTile
+          label="ব্যর্থ"
+          value={bnNumber(failedCount)}
+          hint={failedCount > 0 ? "আবার চেষ্টা করা যাবে" : "কোনো ব্যর্থতা নেই"}
+          tone={failedCount > 0 ? "warning" : "neutral"}
+          icon={AlertTriangle}
+        />
+        <StatTile
+          label="অটো-পোস্ট"
+          value={connected && autoPost ? "চালু" : "বন্ধ"}
+          hint={connected ? (settings?.facebookPageName ?? "পেজ যুক্ত") : "পেজ যুক্ত নয়"}
+          tone={connected && autoPost ? "success" : "accent"}
+          icon={connected ? Facebook : Link2Off}
+        />
       </div>
-    </TooltipProvider>
+
+      <Panel
+        flush
+        kicker="সারি"
+        title="প্রকাশিত পোস্টের শেয়ার অবস্থা"
+        actions={
+          <span className="adm-label">
+            {unshared > 0 ? `${bnNumber(unshared)}টি এখনো শেয়ার হয়নি` : "সব শেয়ার হয়েছে"}
+          </span>
+        }
+      >
+        {posts.length === 0 ? (
+          <EmptyState
+            icon={Facebook}
+            title="সারিতে কিছু নেই"
+            description="পোস্ট প্রকাশ করলে সেগুলো এখানে শেয়ারের জন্য দেখা যাবে।"
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[42%] pl-5">শিরোনাম</TableHead>
+                <TableHead className="w-[18%]">সময়</TableHead>
+                <TableHead className="w-[18%]">অবস্থা</TableHead>
+                <TableHead className="w-[22%] pr-5 text-right">পদক্ষেপ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {posts.map((post) => {
+                const share = post.socialShares[0];
+                const status = share?.status;
+
+                return (
+                  <TableRow key={post.id}>
+                    <TableCell className="pl-5">
+                      <Link
+                        href={`/admin/posts/edit/${post.id}`}
+                        className="block truncate text-[13px] font-semibold text-[var(--ad-text-primary)] transition-colors hover:text-[var(--ad-primary)]"
+                      >
+                        {post.title}
+                      </Link>
+                      {status === ShareStatus.failed && share?.error && (
+                        <p className="mt-1 line-clamp-2 text-[11.5px] leading-relaxed text-[var(--ad-error)]">
+                          {share.error}
+                        </p>
+                      )}
+                      {status === ShareStatus.shared && share?.externalUrl && (
+                        <a
+                          href={share.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="adm-mono mt-1 inline-flex items-center gap-1 text-[10.5px] text-[var(--ad-text-muted)] transition-colors hover:text-[var(--ad-primary)]"
+                        >
+                          ফেসবুকে দেখুন
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="adm-mono text-[11.5px] text-[var(--ad-text-muted)]">
+                      {format(
+                        new Date(share?.sharedAt ?? post.publishedAt ?? post.createdAt),
+                        "d MMM yyyy, HH:mm",
+                      )}
+                      {share && share.attempts > 1 && (
+                        <span className="mt-0.5 block text-[10px]">
+                          {bnNumber(share.attempts)} বার চেষ্টা
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {status === ShareStatus.shared ? (
+                        <Badge dot variant="success">
+                          শেয়ার হয়েছে
+                        </Badge>
+                      ) : status === ShareStatus.failed ? (
+                        <Badge dot variant="destructive">
+                          ব্যর্থ
+                        </Badge>
+                      ) : status === ShareStatus.pending ? (
+                        <Badge dot variant="info">
+                          চলছে
+                        </Badge>
+                      ) : (
+                        <Badge dot variant="warning">
+                          শেয়ার হয়নি
+                        </Badge>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="pr-5 text-right">
+                      {status === ShareStatus.shared ? (
+                        <span className="adm-mono text-[10.5px] text-[var(--ad-text-muted)]">
+                          {share?.trigger === "auto" ? "স্বয়ংক্রিয়" : "ম্যানুয়াল"}
+                        </span>
+                      ) : status === ShareStatus.failed && share ? (
+                        <ShareButton mode="retry" shareId={share.id} disabled={!connected} />
+                      ) : status === ShareStatus.pending ? (
+                        <span className="adm-mono text-[10.5px] text-[var(--ad-text-muted)]">
+                          <Clock className="mr-1 inline h-3 w-3" />
+                          চলছে
+                        </span>
+                      ) : (
+                        <ShareButton mode="share" postId={post.id} disabled={!connected} />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Panel>
+
+      <Panel>
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3.5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--ad-radius-sm)] bg-[#1877f2] text-white">
+              <Facebook className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[13.5px] font-semibold text-[var(--ad-text-primary)]">
+                {settings?.facebookPageName || "কোনো পেজ যুক্ত নেই"}
+              </p>
+              <p className="adm-mono mt-0.5 truncate text-[11px] text-[var(--ad-text-muted)]">
+                {connected
+                  ? `পেজ আইডি: ${settings?.facebookPageId ?? "—"}`
+                  : "স্বয়ংক্রিয় শেয়ার নিষ্ক্রিয়"}
+              </p>
+            </div>
+          </div>
+          <Badge dot variant={connected ? "success" : "destructive"}>
+            {connected ? "সংযুক্ত" : "বিচ্ছিন্ন"}
+          </Badge>
+        </div>
+      </Panel>
+    </AdminShell>
   );
 }

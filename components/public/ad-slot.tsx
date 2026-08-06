@@ -36,14 +36,14 @@ export async function AdSlot({
         <div
           className={cn(
             "w-full flex flex-col items-center justify-center gap-2",
-            "border-2 border-dashed border-zinc-200 rounded-lg bg-zinc-50",
+            "border-2 border-dashed border-[var(--np-border)] rounded-lg bg-[var(--np-newsprint-2)]",
             meta.aspectClass,
           )}
         >
-          <Megaphone className="h-6 w-6 text-zinc-300" />
+          <Megaphone className="h-6 w-6 text-[var(--np-text-secondary)]" />
           <div className="text-center">
-            <p className="text-xs font-medium text-zinc-400">{meta.label}</p>
-            <p className="text-xs text-zinc-300">{meta.dimensions}</p>
+            <p className="text-xs font-medium text-[var(--np-text-secondary)]">{meta.label}</p>
+            <p className="text-xs text-[var(--np-text-secondary)]">{meta.dimensions}</p>
           </div>
         </div>
       </div>

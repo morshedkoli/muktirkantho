@@ -1,9 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { PageHeader } from "@/components/admin/ui";
 import { cn } from "@/lib/cn";
+import { useStoredValue } from "@/lib/use-stored-value";
+
+const SIDEBAR_KEY = "admin_sidebar_expanded";
+
+const parseExpanded = (raw: string): boolean => raw === "true";
+
+/**
+ * Labelled by default. An icon-only rail asks you to memorise sixteen
+ * glyphs before you can navigate; the collapse toggle is still there for
+ * people who have, and the choice persists.
+ */
+const SIDEBAR_DEFAULT_EXPANDED = true;
 
 interface AdminShellLayoutProps {
   children: React.ReactNode;
@@ -12,92 +25,76 @@ interface AdminShellLayoutProps {
 }
 
 /**
- * AdminShellLayout — full page layout shell.
- * Renders sidebar (fixed left) + header (top of main) + content area.
- * Manages sidebar collapse state and mobile menu state.
+ * Console chrome: the ink rail on the left, a sticky header, and a measured
+ * content column. The content column is capped — an editor scanning a table of
+ * headlines on a 27" monitor should not have to track a line across 2000px.
  */
-export function AdminShellLayout({
-  children,
-  logoUrl,
-  logoDarkUrl,
-}: AdminShellLayoutProps) {
+export function AdminShellLayout({ children, logoUrl }: AdminShellLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useStoredValue(
+    SIDEBAR_KEY,
+    SIDEBAR_DEFAULT_EXPANDED,
+    parseExpanded
+  );
 
-  // Restore sidebar expanded state from localStorage after mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("admin_sidebar_expanded");
-      if (saved !== null) setSidebarExpanded(saved === "true");
-    } catch {}
-  }, []);
-
-  const handleToggleExpand = () => {
-    setSidebarExpanded((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("admin_sidebar_expanded", String(next));
-      } catch {}
-      return next;
-    });
-  };
+  const handleToggleExpand = () => setSidebarExpanded(!sidebarExpanded);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-[var(--ad-background)] text-[var(--ad-text-primary)]">
       <AdminSidebar
         mobileMenuOpen={mobileMenuOpen}
         onMobileMenuClose={() => setMobileMenuOpen(false)}
         expanded={sidebarExpanded}
         onToggleExpand={handleToggleExpand}
         logoUrl={logoUrl}
-        logoDarkUrl={logoDarkUrl}
       />
 
-      {/* Main content area — offset by sidebar width */}
       <div
         className={cn(
-          "flex flex-col min-h-screen transition-all duration-300",
-          sidebarExpanded ? "lg:ml-60" : "lg:ml-14"
+          "flex min-h-screen flex-col transition-[margin] duration-200 ease-out",
+          sidebarExpanded ? "lg:ml-[228px]" : "lg:ml-14"
         )}
       >
-        <AdminHeader
-          onMobileMenuToggle={() => setMobileMenuOpen((o) => !o)}
-        />
-        <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7 pb-20 lg:pb-7 w-full max-w-full overflow-x-hidden">
-          {children}
+        <AdminHeader onMobileMenuToggle={() => setMobileMenuOpen((o) => !o)} />
+        <main className="w-full flex-1 overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-10">
+          <div className="mx-auto w-full max-w-[1400px]">{children}</div>
         </main>
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// AdminShell — page-level content wrapper (title bar + actions + children)
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+ * AdminShell — page content wrapper.
+ *
+ * Kept as the single entry point every page already imports; the header itself
+ * now comes from the shared PageHeader so titles, kickers and action rows are
+ * identical everywhere.
+ * ------------------------------------------------------------------------- */
 
 interface AdminShellProps {
   title: string;
+  kicker?: string;
   description?: string;
   children: React.ReactNode;
   actions?: React.ReactNode;
 }
 
-export function AdminShell({ title, children, actions }: AdminShellProps) {
+export function AdminShell({
+  title,
+  kicker,
+  description,
+  children,
+  actions,
+}: AdminShellProps) {
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 leading-tight tracking-tight">
-            {title}
-          </h1>
-        </div>
-        {actions && (
-          <div className="flex items-center gap-3 shrink-0">{actions}</div>
-        )}
-      </div>
-
-      {/* Content */}
+    <div className="animate-fade-in-up space-y-6">
+      <PageHeader
+        kicker={kicker}
+        title={title}
+        description={description}
+        actions={actions}
+      />
       <div className="space-y-6">{children}</div>
     </div>
   );

@@ -4,19 +4,24 @@ import { isFacebookConfigured, getFacebookAppId } from "@/lib/facebook";
 import { FacebookConnectClient } from "./facebook-connect-client";
 
 export const metadata = {
-  title: "Facebook Integration",
-  description: "Connect your Facebook page and auto-share news posts",
+  title: "ফেসবুক সংযোগ",
+  description: "ফেসবুক পেজ যুক্ত করে সংবাদ স্বয়ংক্রিয়ভাবে শেয়ার করুন",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function FacebookPage() {
-  const settings = await getSiteSettings();
-  const configured = await isFacebookConfigured();
-  const appId = await getFacebookAppId();
+  const [settings, configured, appId] = await Promise.all([
+    getSiteSettings(),
+    isFacebookConfigured(),
+    getFacebookAppId(),
+  ]);
 
   return (
     <AdminShell
-      title="Facebook Integration"
-      description="Connect your Facebook page to automatically share news posts"
+      kicker="প্রচার"
+      title="ফেসবুক সংযোগ"
+      description="পেজ যুক্ত করলে প্রকাশিত সংবাদ স্বয়ংক্রিয়ভাবে ফেসবুকে শেয়ার হবে।"
     >
       <FacebookConnectClient
         settings={{
@@ -25,7 +30,7 @@ export default async function FacebookPage() {
           pageName: settings?.facebookPageName ?? null,
           autoPost: settings?.facebookAutoPost ?? false,
           connectedAt: settings?.facebookConnectedAt ?? null,
-          appId: appId,
+          appId,
         }}
         isConfigured={configured}
       />

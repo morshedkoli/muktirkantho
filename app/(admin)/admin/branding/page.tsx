@@ -6,6 +6,9 @@ export const metadata = {
   description: "Manage your site branding and logo",
 };
 
+/** Reads live site settings — prerendering would freeze the saved logo. */
+export const dynamic = "force-dynamic";
+
 export default async function BrandingPage() {
   const settings = await getSiteSettings();
 

@@ -8,6 +8,9 @@ import { LoginForm } from "./login-form";
  * uploaded logo renders on first paint without a client-side fetch.
  * The interactive form is in LoginForm ("use client").
  */
+/** Reads the uploaded logo from settings, which changes without a redeploy. */
+export const dynamic = "force-dynamic";
+
 export default async function AdminLoginPage() {
   let logoUrl: string | null = null;
   let logoHeight: number | null = null;

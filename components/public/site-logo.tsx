@@ -77,7 +77,9 @@ export function SiteLogo({ className = "", width = 280, height = 80 }: { classNa
           fontFamily="Hind Siliguri, sans-serif"
           fontSize="14"
           fontWeight="500"
-          fill="#DC2626"
+          // Typeset text, so it follows the UI accent. The flag motif above
+          // keeps its own fixed colours — that's brand artwork, not chrome.
+          fill="var(--np-primary)"
           letterSpacing="1"
         >
           সত্যের পথে অবিচল

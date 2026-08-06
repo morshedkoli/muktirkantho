@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent scratch space and detached worktrees
+.agent/
+.claire/
+.claude/worktrees/
+design-system/

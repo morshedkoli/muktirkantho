@@ -1,113 +1,68 @@
 "use client";
 
-import { Sun, Moon } from "lucide-react";
-import React from "react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 
-interface ThemeToggleProps {
-  variant?: "default" | "minimal";
-  size?: "sm" | "md" | "lg";
+const SIZES = {
+  sm: { box: "h-8 w-8", icon: "h-4 w-4" },
+  md: { box: "h-9 w-9", icon: "h-[18px] w-[18px]" },
+  lg: { box: "h-11 w-11", icon: "h-5 w-5" },
+} as const;
+
+type ThemeToggleProps = {
+  size?: keyof typeof SIZES;
+  className?: string;
+};
+
+/**
+ * Sun/moon pair swapped by CSS via the `dark:` variant, which is bound to
+ * `[data-theme]`. Because the blocking script sets that attribute before first
+ * paint, the correct glyph is right from frame one — no mount flag, no flash of
+ * the wrong icon, and nothing to reconcile during hydration.
+ */
+function ThemeIcons({ className }: { className: string }) {
+  return (
+    <>
+      <Moon className={`${className} block dark:hidden`} aria-hidden />
+      <Sun className={`${className} hidden dark:block`} aria-hidden />
+    </>
+  );
 }
 
-export function ThemeToggle({ variant = "minimal", size = "md" }: ThemeToggleProps) {
+/** Theme switch for the public site. */
+export function ThemeToggle({ size = "md", className = "" }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const sizeClasses = {
-    sm: "h-8 w-8",
-    md: "h-10 w-10",
-    lg: "h-12 w-12",
-  };
-
-  const iconSizes = {
-    sm: "h-4 w-4",
-    md: "h-5 w-5",
-    lg: "h-6 w-6",
-  };
-
-  // Prevent hydration mismatch by not rendering anything until mounted
-  if (!mounted) {
-    // Render a placeholder that matches the dimensions to avoid layout shift
-    return <div className={variant === "minimal" ? sizeClasses[size] : "h-10 w-28"} />;
-  }
-
-  if (variant === "minimal") {
-    return (
-      <button
-        onClick={toggleTheme}
-        className={`${sizeClasses[size]} inline-flex items-center justify-center rounded-lg border border-[var(--np-border)] bg-[var(--np-card)] text-[var(--np-text-secondary)] shadow-sm transition-all hover:bg-[var(--np-background)] hover:text-[var(--np-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--np-primary)] focus-visible:ring-offset-2`}
-        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {theme === "dark" ? (
-          <Sun className={iconSizes[size]} />
-        ) : (
-          <Moon className={iconSizes[size]} />
-        )}
-      </button>
-    );
-  }
+  const s = SIZES[size];
+  const label = theme === "dark" ? "লাইট মোডে যান" : "ডার্ক মোডে যান";
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--np-card)] border border-[var(--np-border)] text-[var(--np-text-primary)] hover:bg-[var(--np-background)] transition-colors"
+      aria-label={label}
+      title={label}
+      className={`${s.box} ${className} inline-flex shrink-0 items-center justify-center rounded-full border border-[var(--np-border)] text-[var(--np-text-secondary)] transition-colors hover:border-[var(--np-primary)] hover:bg-[var(--np-primary)] hover:text-[var(--np-on-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--np-primary)]`}
     >
-      {theme === "dark" ? (
-        <>
-          <Sun className="h-4 w-4" />
-          <span className="text-sm font-medium">Light Mode</span>
-        </>
-      ) : (
-        <>
-          <Moon className="h-4 w-4" />
-          <span className="text-sm font-medium">Dark Mode</span>
-        </>
-      )}
+      <ThemeIcons className={s.icon} />
     </button>
   );
 }
 
-// Admin theme toggle with admin colors
-export function AdminThemeToggle({ size = "md" }: ThemeToggleProps) {
+/** Same control, styled with the admin dashboard's token set. */
+export function AdminThemeToggle({ size = "md", className = "" }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const sizeClasses = {
-    sm: "h-8 w-8",
-    md: "h-10 w-10",
-    lg: "h-12 w-12",
-  };
-
-  const iconSizes = {
-    sm: "h-4 w-4",
-    md: "h-5 w-5",
-    lg: "h-6 w-6",
-  };
-
-  if (!mounted) {
-    return <div className={`${sizeClasses[size]} opacity-0`} aria-hidden="true" />;
-  }
+  const s = SIZES[size];
+  const label = theme === "dark" ? "লাইট মোডে যান" : "ডার্ক মোডে যান";
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      className={`${sizeClasses[size]} inline-flex items-center justify-center rounded-lg border border-[var(--ad-border)] bg-[var(--ad-card)] text-[var(--ad-text-secondary)] shadow-sm transition-all hover:bg-[var(--ad-background)] hover:text-[var(--ad-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ad-primary)] focus-visible:ring-offset-2`}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={label}
+      title={label}
+      className={`${s.box} ${className} inline-flex shrink-0 items-center justify-center rounded-[var(--ad-radius-sm)] text-[var(--ad-text-muted)] transition-colors hover:bg-[var(--ad-inset)] hover:text-[var(--ad-text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ad-primary)]`}
     >
-      {theme === "dark" ? (
-        <Sun className={iconSizes[size]} />
-      ) : (
-        <Moon className={iconSizes[size]} />
-      )}
+      <ThemeIcons className={s.icon} />
     </button>
   );
 }

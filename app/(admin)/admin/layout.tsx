@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
 import { ToastProvider } from "@/components/admin/toast-provider";
 import { ConfirmProvider } from "@/components/admin/confirm-provider";
+import { NoticeListener } from "@/components/admin/notice-listener";
 import { AdminShellLayout } from "@/components/admin/admin-shell";
 import { LangProvider } from "@/lib/admin-i18n";
 
@@ -13,7 +14,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoDarkUrl, setLogoDarkUrl] = useState<string | null>(null);
 
-  // Fetch branding settings once on mount
   useEffect(() => {
     if (isLoginPage) return;
     fetch("/api/admin/branding", { cache: "no-store" })
@@ -39,6 +39,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <ToastProvider>
       <ConfirmProvider>
         <LangProvider>
+          {/* useSearchParams needs a Suspense boundary during prerender. */}
+          <Suspense fallback={null}>
+            <NoticeListener />
+          </Suspense>
           <AdminShellLayout logoUrl={logoUrl} logoDarkUrl={logoDarkUrl}>
             {children}
           </AdminShellLayout>

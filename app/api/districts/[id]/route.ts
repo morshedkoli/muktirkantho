@@ -5,9 +5,9 @@ import { isObjectId } from "@/lib/object-id";
 
 type Context = { params: Promise<{ id: string }> };
 
-export async function DELETE(_: Request, { params }: Context) {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
+export async function DELETE(request: Request, { params }: Context) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
   const { id } = await params;
   if (!isObjectId(id)) {

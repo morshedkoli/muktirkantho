@@ -18,13 +18,12 @@ export function ImageWatermark({ size = "md", showText = true }: WatermarkProps)
     <div className={`bg-white/90 backdrop-blur-sm rounded-md shadow-md border border-white/30 ${s.padding} flex items-center ${s.gap}`}>
       <SiteFavicon size={s.icon} />
       {showText && (
+        // Fixed colours, not theme tokens: this pill is always a light chip on
+        // top of a photo, so it reads the same in both themes. The navy it used
+        // to carry appeared nowhere else in the brand.
         <div className="flex flex-col leading-none">
-          <span className={`font-bold text-[#1E3A8A] ${s.text}`}>
-            মুক্তির কণ্ঠ
-          </span>
-          <span className={`text-[#DC2626] font-medium ${s.url}`}>
-            muktirkantho.com
-          </span>
+          <span className={`font-bold text-[#17171a] ${s.text}`}>মুক্তির কণ্ঠ</span>
+          <span className={`font-medium text-[#bf4046] ${s.url}`}>muktirkantho.com</span>
         </div>
       )}
     </div>

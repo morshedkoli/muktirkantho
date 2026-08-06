@@ -25,35 +25,37 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
 
   if (variant === "compact") {
     return (
-      <article className="group flex gap-4">
-        <Link href={postPath} className="relative h-20 w-20 shrink-0 overflow-hidden bg-[var(--np-background)]" aria-hidden="true" tabIndex={-1}>
+      <article className="group flex gap-3.5">
+        <Link
+          href={postPath}
+          className="relative h-[68px] w-[92px] shrink-0 overflow-hidden bg-[var(--np-newsprint-2)]"
+          aria-hidden="true"
+          tabIndex={-1}
+        >
           <Image
             src={post.imageUrl || "/images/placeholder.jpg"}
-            alt={post.title}
+            alt=""
             fill
-            sizes="80px"
+            sizes="92px"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute right-1 bottom-1 z-10">
             <ImageWatermarkSimple size={16} />
           </div>
         </Link>
-        <div className="flex flex-col justify-center">
+        <div className="flex min-w-0 flex-col justify-center">
           {post.category && (
-            <Link
-              href={`/category/${post.category.slug}`}
-              className="np-category hover:underline"
-            >
+            <Link href={`/category/${post.category.slug}`} className="np-category self-start hover:underline">
               {post.category.name}
             </Link>
           )}
-          <h3 className="mt-1 np-headline-sm leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)] line-clamp-2">
-            <Link href={postPath}>{post.title}</Link>
+          <h3 className="np-headline-sm mt-1 line-clamp-2 leading-snug text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)]">
+            <Link href={postPath} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--np-primary)]">
+              {post.title}
+            </Link>
           </h3>
           {post.publishedAt && (
-            <p className="mt-1 np-timestamp">
-              {formatBanglaDate(post.publishedAt)}
-            </p>
+            <p className="np-timestamp mt-1 text-[11px]">{formatBanglaDate(post.publishedAt)}</p>
           )}
         </div>
       </article>
@@ -73,7 +75,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           />
           {post.category && (
             <div className="absolute left-3 top-3">
-              <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+              <span className="rounded-full bg-[var(--np-primary)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--np-on-primary)] shadow-sm">
                 {post.category.name}
               </span>
             </div>
@@ -108,17 +110,24 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
     );
   }
 
-  // Default vertical card — clean newspaper style
+  // Default vertical card — clean newspaper style.
+  // The accent rule that slides in on hover gives the card a designed state
+  // rather than the stock "shadow gets slightly bigger" default.
   return (
-    <article className="group flex flex-col overflow-hidden bg-[var(--np-card)] border border-[var(--np-border)] shadow-sm hover:shadow-md transition-shadow">
+    <article className="group relative flex flex-col overflow-hidden border border-[var(--np-border)] bg-[var(--np-card)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--np-text-secondary)]/40 hover:shadow-[var(--np-shadow-lg)] focus-within:border-[var(--np-primary)]">
       {/* Image — 16/9 ratio */}
-      <Link href={postPath} className="relative aspect-video overflow-hidden bg-[var(--np-newsprint)]">
+      <Link
+        href={postPath}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="relative aspect-video overflow-hidden bg-[var(--np-newsprint-2)]"
+      >
         <Image
           src={post.imageUrl || "/images/placeholder.jpg"}
-          alt={post.title}
+          alt=""
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
         />
         {/* Logo watermark */}
         <div className="absolute right-2 bottom-2 z-10">
@@ -127,26 +136,31 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
       </Link>
 
       <div className="flex flex-1 flex-col p-3.5">
-        {/* Category badge — red pill below image */}
+        {/* Category kicker — set in the label face, not another red pill. The
+            hero already carries a pill, so repeating it flattened the hierarchy. */}
         {post.category && (
           <Link
             href={`/category/${post.category.slug}`}
-            className="mb-2 self-start rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-red-700 transition-colors"
+            className="np-category relative z-10 mb-1.5 self-start transition-colors hover:text-[var(--np-primary-hover)]"
           >
             {post.category.name}
           </Link>
         )}
 
-        {/* Title — 2-line clamp, underline on hover */}
-        <h3 className="np-headline-sm line-clamp-2 leading-snug text-[var(--np-text-primary)] group-hover:underline decoration-[var(--np-primary)] decoration-1 underline-offset-2 transition-colors">
-          <Link href={postPath}>{post.title}</Link>
+        <h3 className="np-headline-sm line-clamp-3 leading-snug text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)]">
+          {/* Stretched link: the whole card is the hit target, but only the
+              headline sits in the tab order. */}
+          <Link
+            href={postPath}
+            className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--np-primary)]"
+          >
+            {post.title}
+          </Link>
         </h3>
 
         {/* Author + time — small gray */}
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--np-text-secondary)]">
-          {post.author && (
-            <span className="font-medium">{post.author}</span>
-          )}
+        <div className="mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-1 pt-2.5 text-[11px] text-[var(--np-text-secondary)]">
+          {post.author && <span className="font-medium">{post.author}</span>}
           {post.publishedAt && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -156,7 +170,7 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           {post.district && (
             <Link
               href={`/district/${post.district.slug}`}
-              className="flex items-center gap-1 hover:text-[var(--np-primary)] transition-colors"
+              className="relative z-10 flex items-center gap-1 transition-colors hover:text-[var(--np-primary)]"
             >
               <MapPin className="h-3 w-3" />
               {post.district.name}

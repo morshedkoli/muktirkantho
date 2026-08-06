@@ -6,90 +6,119 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* ============================================
-   THEME VARIABLES - NEWSPAPER
-   ============================================ */
+   NEWSROOM CONSOLE — Admin design system
 
-/* ============================================
-   EDITORIAL DESIGN SYSTEM — Admin Dashboard
+   Calm, warm and quiet, with exactly one voice raised: a soft red.
+   That red is the primary action, the active nav item and the brand mark —
+   one colour doing one job, so the console is legible at a glance instead of
+   asking you to learn a colour code.
+
+   Three rules hold the whole system together:
+
+   1. ONE RED. `--ad-primary` and `--ad-accent` are the same soft red. If it is
+      red, it is either the thing you came to click or the thing you are
+      currently on. Nothing decorative is ever red.
+   2. DESTRUCTIVE IS NOT THE BRAND RED. With a red primary, "Save" and "Delete"
+      would otherwise look identical. `--ad-error` is a much deeper red
+      (OKLab ΔE 0.128 from primary in light) and destructive controls stay
+      OUTLINED while primary controls are FILLED — the shape carries the
+      warning as much as the hue.
+   3. HAIRLINES, NOT SHADOWS. Depth comes from rules and surface steps.
+      Shadow is reserved for things that genuinely float (menus, dialogs).
+
+   The nav rail follows the theme rather than staying a dark slab, so light
+   mode is light all the way across.
+
+   Contrast is verified, not asserted: every text token clears WCAG AA 4.5:1 on
+   every surface it is used on (card, card-alt, background and inset), and
+   --ad-border-strong clears 3:1 on all four for interactive boundaries.
    ============================================ */
 
 :root {
-  /* Editorial Admin Dark (Default for admin) */
-  --ed-ink: #0d0d0d;
-  --ed-deep: #1a1a1a;
-  --ed-paper: #f5f0e8;
-  --ed-paper-2: #ede7d9;
-  --ed-breaking: #c0392b;
-  --ed-alert: #e67e22;
-  --ed-gold: #b8982a;
-  --ed-muted: #7a7060;
-  --ed-border: #c8bfaa;
-  --ed-success: #27ae60;
-  --ed-facebook: #1877f2;
-  --ed-twitter: #000;
-  --ed-instagram: #e4405f;
-  --ed-linkedin: #0a66c2;
-  --ed-blue: #2980b9;
-  --ed-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
-
-  /* ── Admin Design System (mockup palette) ── */
-  /* Surfaces */
-  --ad-background: #f8fafc;
-  --ad-sidebar: #ffffff;
-  --ad-sidebar-border: rgba(241, 245, 249, 0.8);
-  --ad-sidebar-divider: rgba(241, 245, 249, 0.6);
+  /* ── Surfaces ── */
+  --ad-background: #f7f6f4;        /* warm paper canvas */
+  --ad-bg: var(--ad-background);
   --ad-card: #ffffff;
+  --ad-card-alt: #faf9f7;          /* toolbars, table heads, zebra rows */
+  --ad-inset: #f1efec;             /* wells, input fills, skeletons */
 
-  /* Borders */
-  --ad-border: #f1f5f9;
-  --ad-border-strong: #e2e8f0;
+  /* Navigation rail — follows the theme */
+  --ad-rail: #ffffff;
+  --ad-rail-raised: #f4f2ef;
+  --ad-rail-text: #1a1a1d;
+  --ad-rail-muted: #6b6971;         /* 5.41:1 on rail */
+  --ad-rail-border: #e6e3de;
+  --ad-sidebar: var(--ad-rail);
+  --ad-sidebar-border: var(--ad-rail-border);
+  --ad-sidebar-divider: var(--ad-rail-border);
 
-  /* Text */
-  --ad-text-primary: #0f172a;
-  --ad-text-secondary: #475569;
-  --ad-text-muted: #94a3b8;
+  /* ── Lines ── */
+  --ad-border: #e6e3de;             /* hairline dividers */
+  --ad-border-strong: #8a867f;      /* 3.71:1 card / 3.04:1 inset — real edges */
+  --ad-rule: #efedE9;
 
-  /* Brand & primary action — emerald */
-  --ad-green: #10b981;
-  --ad-green-hover: #059669;
-  --ad-green-light: rgba(16, 185, 129, 0.08);
-  --ad-green-mid: #34d399;
-  --ad-primary: #10b981;
-  --ad-primary-hover: #059669;
-
-  /* Brand rose (logo mark, badges, danger) */
-  --ad-brand: #f43f5e;
-  --ad-brand-light: rgba(244, 63, 94, 0.08);
-  --ad-breaking: #f43f5e;
-  --ad-error: #f43f5e;
-
-  /* Accents */
-  --ad-amber: #f59e0b;
-  --ad-amber-light: rgba(245, 158, 11, 0.08);
-  --ad-blue: #3b82f6;
-  --ad-blue-light: rgba(59, 130, 246, 0.08);
-  --ad-purple: #8b5cf6;
-  --ad-purple-light: rgba(139, 92, 246, 0.08);
-
-  /* Status — keep older aliases */
-  --ad-secondary: var(--ad-amber);
-  --ad-success: var(--ad-green);
-  --ad-warning: var(--ad-amber);
-  --ad-accent: var(--ad-blue);
-  --ad-paper: #f8fafc;
-  --ad-paper-2: #f1f5f9;
-  --ad-muted: var(--ad-text-muted);
+  /* ── Text ── */
+  --ad-text-primary: #1a1a1d;       /* 17.36:1 on card */
+  --ad-text-secondary: #56555b;     /* 7.38:1 on card */
+  --ad-text-muted: #6c6a72;         /* 5.33:1 card / 4.64:1 inset */
   --ad-ink: var(--ad-text-primary);
+  --ad-muted: var(--ad-text-secondary);
 
-  /* Shadows */
-  --ad-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), 0 1px 2px rgba(15, 23, 42, 0.02);
-  --ad-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.03), 0 4px 6px -4px rgba(15, 23, 42, 0.02);
+  /* ── The one red — primary action, active nav, brand ── */
+  --ad-primary: #b8474e;            /* 5.19:1 on card, white on it 5.19:1 */
+  --ad-primary-hover: #9d3840;
+  --ad-primary-tint: rgb(184 71 78 / 0.10);
+  --ad-primary-tint-strong: rgb(184 71 78 / 0.16);
+  --ad-on-primary: #ffffff;
 
-  /* Glassmorphism helpers */
-  --ad-glass-bg: rgba(255, 255, 255, 0.75);
-  --ad-glass-blur: 12px;
-  --ad-radius-premium: 12px;
+  /* Accent is an alias of primary on purpose — see rule 1 above. */
+  --ad-accent: var(--ad-primary);
+  --ad-accent-hover: var(--ad-primary-hover);
+  --ad-accent-tint: var(--ad-primary-tint);
+  --ad-brand: var(--ad-primary);
+  --ad-brand-light: var(--ad-primary-tint);
+  --ad-breaking: var(--ad-primary);
+
+  /* ── Destructive — deliberately NOT the brand red ── */
+  --ad-error: #8c1f2b;              /* 8.95:1 on card */
+  --ad-error-tint: rgb(140 31 43 / 0.10);
+  --ad-on-error: #ffffff;           /* paired foreground for an error FILL */
+  --ad-danger: var(--ad-error);
+  --ad-danger-tint: var(--ad-error-tint);
+
+  /* ── Status ── */
+  --ad-success: #1a7a3c;            /* 5.39:1 — published / live */
+  --ad-success-tint: rgb(26 122 60 / 0.10);
+  --ad-warning: #8a6210;            /* 5.48:1 — draft / pending */
+  --ad-warning-tint: rgb(138 98 16 / 0.11);
+  --ad-info: #0a4fa0;               /* 7.96:1 — scheduled / neutral data */
+  --ad-info-tint: rgb(10 79 160 / 0.09);
+
+  /* Legacy hue aliases — kept so older markup keeps resolving into the
+     new palette instead of drifting back to stock Tailwind colours. */
+  --ad-green: var(--ad-success);
+  --ad-green-hover: #14612f;
+  --ad-green-light: var(--ad-success-tint);
+  --ad-green-mid: var(--ad-success);
+  --ad-amber: var(--ad-warning);
+  --ad-amber-light: var(--ad-warning-tint);
+  --ad-blue: var(--ad-info);
+  --ad-blue-light: var(--ad-info-tint);
+  --ad-purple: #6b4ea8;
+  --ad-purple-light: rgb(107 78 168 / 0.10);
+  --ad-secondary: var(--ad-warning);
+  --ad-paper: var(--ad-background);
+  --ad-paper-2: var(--ad-inset);
+
+  /* ── Elevation — hairlines first, shadow only for things that float ── */
+  --ad-shadow: 0 1px 2px rgb(22 22 26 / 0.04);
+  --ad-shadow-lg: 0 16px 40px -12px rgb(22 22 26 / 0.18);
+  --ad-shadow-pop: 0 8px 28px -8px rgb(22 22 26 / 0.16);
+
+  /* ── Geometry ── */
+  --ad-radius: 10px;
+  --ad-radius-sm: 7px;
+  --ad-radius-lg: 14px;
 
   /* Shadcn UI compatibility mappings */
   --background: var(--ad-background);
@@ -98,163 +127,232 @@
   --card-foreground: var(--ad-text-primary);
   --popover: var(--ad-card);
   --popover-foreground: var(--ad-text-primary);
-  --primary: var(--ad-green);
-  --primary-foreground: #ffffff;
-  --secondary: var(--ad-border);
+  --primary: var(--ad-primary);
+  --primary-foreground: var(--ad-on-primary);
+  --secondary: var(--ad-inset);
   --secondary-foreground: var(--ad-text-primary);
-  --muted: var(--ad-border);
+  --muted: var(--ad-inset);
   --muted-foreground: var(--ad-text-muted);
-  --accent: var(--ad-border);
-  --accent-foreground: var(--ad-text-primary);
+  --accent: var(--ad-accent);
+  --accent-foreground: var(--ad-on-primary);
   --destructive: var(--ad-error);
   --destructive-foreground: #ffffff;
   --border: var(--ad-border);
-  --input: var(--ad-border);
-  --ring: var(--ad-green);
-  --radius: 0.75rem;
+  --input: var(--ad-border-strong);
+  --ring: var(--ad-primary);
+  --radius: var(--ad-radius);
 }
 
-/* Editorial Admin Dark Mode — soft slate */
+/* Newsroom Console — dark.
+   Warm near-black rather than pure black, so the soft red sits on it without
+   vibrating. The red lightens (a dark-mode red at light-mode saturation goes
+   muddy) and its paired foreground flips to near-black, which is why nothing
+   should ever hardcode `text-white` on a primary fill — use --ad-on-primary. */
 [data-theme="dark"] {
-  --ed-ink: #c8c4bc;
-  --ed-deep: #a0988c;
-  --ed-paper: #1c1c22;
-  --ed-paper-2: #22222a;
-  --ed-breaking: #c05050;
-  --ed-alert: #c8882a;
-  --ed-gold: #c8a830;
-  --ed-muted: #807868;
-  --ed-border: #32323a;
-  --ed-success: #3a9060;
-  --ed-facebook: #1877f2;
-  --ed-twitter: #444;
-  --ed-instagram: #c04060;
-  --ed-linkedin: #0a66c2;
-  --ed-blue: #4880b8;
-  --ed-shadow: 0 1px 3px rgba(0,0,0,0.22);
-  --ed-shadow-lg: 0 10px 30px rgba(0,0,0,0.32);
+  --ad-background: #111114;
+  --ad-bg: var(--ad-background);
+  --ad-card: #1a1a1e;
+  --ad-card-alt: #202025;
+  --ad-inset: #26262c;
 
-  /* Admin Dark Mode */
-  --ad-background: #080b11;
-  --ad-sidebar: #0c101b;
-  --ad-sidebar-border: rgba(30, 41, 59, 0.4);
-  --ad-sidebar-divider: rgba(30, 41, 59, 0.3);
-  --ad-card: #0c101b;
+  --ad-rail: #0d0d10;
+  --ad-rail-raised: #1e1e23;
+  --ad-rail-text: #ecebe8;
+  --ad-rail-muted: #9b99a2;         /* 6.90:1 on rail */
+  --ad-rail-border: #282830;
+  --ad-sidebar: var(--ad-rail);
+  --ad-sidebar-border: var(--ad-rail-border);
+  --ad-sidebar-divider: var(--ad-rail-border);
 
-  --ad-border: rgba(30, 41, 59, 0.4);
-  --ad-border-strong: #1e293b;
+  --ad-border: #2b2b32;
+  --ad-border-strong: #73727d;      /* 3.63:1 card / 3.15:1 inset */
+  --ad-rule: #232329;
 
-  --ad-text-primary: #f1f5f9;
-  --ad-text-secondary: #94a3b8;
-  --ad-text-muted: #64748b;
-
-  --ad-green: #34d399;
-  --ad-green-hover: #10b981;
-  --ad-green-light: rgba(52, 211, 153, 0.1);
-  --ad-green-mid: #059669;
-  --ad-primary: #34d399;
-  --ad-primary-hover: #10b981;
-
-  --ad-brand: #fb7185;
-  --ad-brand-light: rgba(251, 113, 133, 0.1);
-  --ad-breaking: #fb7185;
-  --ad-error: #fb7185;
-
-  --ad-amber: #fbbf24;
-  --ad-amber-light: rgba(251, 191, 36, 0.1);
-  --ad-blue: #60a5fa;
-  --ad-blue-light: rgba(96, 165, 250, 0.1);
-  --ad-purple: #a78bfa;
-  --ad-purple-light: rgba(167, 139, 250, 0.1);
-
-  --ad-secondary: var(--ad-amber);
-  --ad-success: var(--ad-green);
-  --ad-warning: var(--ad-amber);
-  --ad-accent: var(--ad-blue);
-  --ad-paper: #0c101b;
-  --ad-paper-2: #1e293b;
-  --ad-muted: var(--ad-text-muted);
+  --ad-text-primary: #ebeae7;       /* 14.42:1 on card */
+  --ad-text-secondary: #a7a5ad;     /* 7.13:1 on card */
+  --ad-text-muted: #918f99;         /* 5.45:1 card / 4.72:1 inset */
   --ad-ink: var(--ad-text-primary);
+  --ad-muted: var(--ad-text-secondary);
 
-  --ad-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
-  --ad-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  /* ── The one red ── */
+  --ad-primary: #e8797f;            /* 6.17:1 on card, near-black on it 6.36:1 */
+  --ad-primary-hover: #f18b91;
+  --ad-primary-tint: rgb(232 121 127 / 0.14);
+  --ad-primary-tint-strong: rgb(232 121 127 / 0.22);
+  --ad-on-primary: #17171b;
 
-  /* Glassmorphism dark helpers */
-  --ad-glass-bg: rgba(12, 16, 27, 0.7);
-  --ad-glass-blur: 16px;
-  --ad-radius-premium: 12px;
+  --ad-accent: var(--ad-primary);
+  --ad-accent-hover: var(--ad-primary-hover);
+  --ad-accent-tint: var(--ad-primary-tint);
+  --ad-brand: var(--ad-primary);
+  --ad-brand-light: var(--ad-primary-tint);
+  --ad-breaking: var(--ad-primary);
+
+  /* Destructive. On a dark canvas two reds can only separate so far in hue, so
+     here the OUTLINED-vs-FILLED treatment carries most of the distinction —
+     this token leans orange to take what separation is available. */
+  --ad-error: #ff8a76;              /* 7.91:1 on card */
+  --ad-error-tint: rgb(255 138 118 / 0.14);
+  --ad-on-error: #17171b;           /* flips to ink — the dark error is light */
+  --ad-danger: var(--ad-error);
+  --ad-danger-tint: var(--ad-error-tint);
+
+  --ad-success: #4caf72;            /* 6.35:1 on card */
+  --ad-success-tint: rgb(76 175 114 / 0.14);
+  --ad-warning: #d8a83a;            /* 7.92:1 on card */
+  --ad-warning-tint: rgb(216 168 58 / 0.14);
+  --ad-info: #6ba3dd;               /* 6.53:1 on card */
+  --ad-info-tint: rgb(107 163 221 / 0.14);
+
+  --ad-green: var(--ad-success);
+  --ad-green-hover: #6ac48b;
+  --ad-green-light: var(--ad-success-tint);
+  --ad-green-mid: var(--ad-success);
+  --ad-amber: var(--ad-warning);
+  --ad-amber-light: var(--ad-warning-tint);
+  --ad-blue: var(--ad-info);
+  --ad-blue-light: var(--ad-info-tint);
+  --ad-purple: #a78bfa;
+  --ad-purple-light: rgb(167 139 250 / 0.14);
+  --ad-secondary: var(--ad-warning);
+  --ad-paper: var(--ad-background);
+  --ad-paper-2: var(--ad-inset);
+
+  --ad-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+  --ad-shadow-lg: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --ad-shadow-pop: 0 8px 28px -8px rgb(0 0 0 / 0.6);
 }
 
-/* Glassmorphic visual utilities */
-.glass-panel {
-  background: var(--ad-glass-bg);
-  backdrop-filter: blur(var(--ad-glass-blur));
-  -webkit-backdrop-filter: blur(var(--ad-glass-blur));
-  border: 1px solid var(--ad-sidebar-border);
-}
+/* ============================================
+   NEWSPAPER PALETTE (public site)
 
-.shadow-premium {
-  box-shadow: var(--ad-shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+   Both themes are contrast-checked against WCAG 2.1 AA: every text token
+   clears 4.5:1 on every surface it is used on, and `--np-border-strong`
+   clears the 3:1 required for interactive component boundaries (1.4.11).
 
-.shadow-premium:hover {
-  box-shadow: var(--ad-shadow-lg);
-  transform: translateY(-1px);
-}
-
+   The accent is a soft brick red rather than a saturated fire-engine red.
+   `--np-on-primary` is the paired foreground — white in light mode, near-black
+   in dark, because the dark accent is light enough that white text on it fails.
+   Never hardcode `text-white` on a primary fill; use the token.
+   ============================================ */
 :root {
-  /* Newspaper Light Mode — Prothomalo-Inspired Palette */
-  --np-primary: #d0021b;
-  --np-primary-hover: #9b0014;
-  --np-secondary: #c9951a;
-  --np-secondary-hover: #a67a14;
-  --np-background: #f8f7f5;
+  /* ── Brand ── */
+  --np-primary: #bf4046;          /* 5.20:1 on white, 4.81:1 on newsprint */
+  --np-primary-hover: #9d3138;
+  --np-on-primary: #ffffff;       /* 5.20:1 over --np-primary */
+  --np-primary-tint: rgb(191 64 70 / 0.09);
+  /* Accent used *on top of photography* (hero gradients, image overlays).
+     Fixed in both themes: those surfaces are always dark, so the body accent
+     would sit at ~3.6:1 against them regardless of which theme is active. */
+  --np-accent-on-media: #ee9096;
+
+  --np-secondary: #a8791a;
+  --np-secondary-hover: #8a6314;
+
+  /* ── Surfaces ── */
+  --np-background: #f7f6f3;
   --np-card: #ffffff;
-  --np-border: #dddddd;
-  --np-text-primary: #111111;
-  --np-text-secondary: #666666;
-  --np-text-soft: #333333;
-  --np-breaking: #d0021b;
-  --np-accent: #c9951a;
+  --np-newsprint: #f7f6f3;
+  --np-newsprint-2: #edebe6;
+
+  /* ── Lines ── */
+  --np-border: #dcd9d3;           /* decorative dividers */
+  --np-border-strong: #8d8981;    /* 3.48:1 — inputs, focus, real edges */
+  --np-rule: #e6e3dd;             /* hairline between stacked items */
+
+  /* ── Text ── */
+  --np-text-primary: #17171a;     /* 17.89:1 on card */
+  --np-text-secondary: #5b5b62;   /* 6.74:1 on card, 5.65:1 on newsprint-2 */
+  --np-text-soft: #3b3b42;
+
+  /* ── Status ── */
   --np-success: #1a7a3c;
-  --np-warning: #c9951a;
-  --np-error: #d0021b;
+  --np-warning: #a8791a;
+  --np-error: #bf4046;
   --np-blue: #0a4fa0;
-  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
-  --np-shadow-lg: 0 10px 30px -6px rgb(0 0 0 / 0.12);
-  --np-ink: #111111;
-  --np-ink-soft: #333333;
-  --np-muted: #666666;
-  --np-newsprint: #f8f7f5;
-  --np-newsprint-2: #eeece8;
+  --np-accent: #a8791a;
+
+  /* Breaking bar — deeper and denser than the brand accent so "breaking" reads
+     as its own signal instead of more of the same red. */
+  --np-breaking: #bf4046;
+  --np-breaking-bar: #a8353c;     /* white on it: 6.48:1 */
+  --np-breaking-badge: #83262c;
+  --np-breaking-edge: #922c33;
+
+  /* Footer is a dark slab in both themes — a deliberate anchor at the end of
+     the page rather than a mirror of the body surface. It gets its own scale so
+     it doesn't inherit body tokens that assume a light background. */
+  --np-footer-bg: #1c1c20;
+  --np-footer-deep: #121215;
+  --np-footer-text: #e7e6e3;      /* 13.61:1 */
+  --np-footer-muted: #a8a6ad;     /* 7.06:1 — replaces zinc-500 at 3.67:1 */
+  --np-footer-heading: #9b99a2;   /* 6.04:1 */
+  --np-footer-border: #6b6b76;    /* 3.23:1 for icon-button edges */
+  --np-footer-accent: #d9666c;    /* 4.91:1 — lifted, since the light-mode
+                                     brand red is too dark on this slab */
+
+  --np-shadow: 0 1px 3px 0 rgb(23 23 26 / 0.08);
+  --np-shadow-lg: 0 10px 30px -6px rgb(23 23 26 / 0.14);
+
+  /* Legacy aliases kept so older markup keeps resolving. */
+  --np-ink: var(--np-text-primary);
+  --np-ink-soft: var(--np-text-soft);
+  --np-muted: var(--np-text-secondary);
 }
 
-/* Newspaper Dark Mode — soft slate palette */
+/* Newspaper Dark Mode — neutral slate.
+   The old dark palette paired warm-beige text (#cbc7be) with cool slate
+   surfaces and failed AA on three counts: secondary text (3.87:1), borders
+   (1.31:1) and the brand red itself (2.92:1). */
 [data-theme="dark"] {
-  --np-primary: #c0403a;
-  --np-primary-hover: #d45550;
-  --np-secondary: #b8902a;
-  --np-secondary-hover: #c8a040;
-  --np-background: #1c1c22;
-  --np-card: #25252d;
-  --np-border: #38383f;
-  --np-text-primary: #cbc7be;
-  --np-text-secondary: #848078;
-  --np-text-soft: #a09890;
-  --np-breaking: #c0403a;
-  --np-accent: #b8902a;
-  --np-success: #3a9060;
-  --np-warning: #b8902a;
-  --np-error: #c0403a;
-  --np-blue: #4a80b8;
-  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.25);
-  --np-shadow-lg: 0 10px 30px -6px rgb(0 0 0 / 0.35);
-  --np-ink: #cbc7be;
-  --np-ink-soft: #a09890;
-  --np-muted: #848078;
-  --np-newsprint: #1c1c22;
-  --np-newsprint-2: #222228;
+  --np-primary: #e2686f;          /* 5.09:1 on card, 5.64:1 on page bg */
+  --np-primary-hover: #ef8189;
+  --np-on-primary: #17171a;       /* 5.49:1 over --np-primary */
+  --np-primary-tint: rgb(226 104 111 / 0.16);
+
+  --np-secondary: #d8a83a;
+  --np-secondary-hover: #e6bb55;
+
+  --np-background: #141418;
+  --np-card: #1e1e24;
+  --np-newsprint: #141418;
+  --np-newsprint-2: #26262e;
+
+  --np-border: #33333d;
+  --np-border-strong: #6d6d7b;    /* 3.26:1 */
+  --np-rule: #2b2b34;
+
+  --np-text-primary: #e8e7e4;     /* 13.41:1 on card */
+  --np-text-secondary: #a3a1a8;   /* 6.49:1 on card, 5.88:1 on newsprint-2 */
+  --np-text-soft: #c6c4c8;
+
+  --np-success: #4caf72;
+  --np-warning: #d8a83a;
+  --np-error: #e2686f;
+  --np-blue: #6ba3dd;
+  --np-accent: #d8a83a;
+
+  --np-breaking: #e2686f;
+  --np-breaking-bar: #8e343a;     /* white on it: 7.77:1 */
+  --np-breaking-badge: #6d262b;
+  --np-breaking-edge: #7d2d33;
+
+  /* Pushed below the page background so the footer still reads as a separate
+     zone in dark mode instead of blending into the body. */
+  --np-footer-bg: #101014;
+  --np-footer-deep: #0a0a0d;
+  --np-footer-text: #e8e7e4;      /* 15.35:1 */
+  --np-footer-muted: #a3a1a8;     /* 7.43:1 */
+  --np-footer-heading: #93919b;   /* 6.11:1 */
+  --np-footer-border: #61616c;    /* 3.10:1 */
+  --np-footer-accent: #e2686f;    /* 5.82:1 */
+
+  --np-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+  --np-shadow-lg: 0 10px 30px -6px rgb(0 0 0 / 0.55);
+
+  --np-ink: var(--np-text-primary);
+  --np-ink-soft: var(--np-text-soft);
+  --np-muted: var(--np-text-secondary);
 }
 
 /* Theme Transition - Disable for instant theme switch */
@@ -290,6 +388,9 @@
   --color-np-background: var(--np-background);
   --color-np-card: var(--np-card);
   --color-np-border: var(--np-border);
+  --color-np-border-strong: var(--np-border-strong);
+  --color-np-rule: var(--np-rule);
+  --color-np-on-primary: var(--np-on-primary);
   --color-np-text-primary: var(--np-text-primary);
   --color-np-text-secondary: var(--np-text-secondary);
   --color-np-text-soft: var(--np-text-soft);
@@ -329,7 +430,7 @@
   --shadow-ad-lg: var(--ad-shadow-lg);
 
   /* Typography */
-  --font-sans: var(--font-source-sans);
+  --font-sans: var(--font-noto-bengali);
   --font-serif: var(--font-libre-baskerville);
   --font-bangla: var(--font-noto-bengali);
   --font-mono: var(--font-jetbrains-mono);
@@ -337,823 +438,792 @@
   --font-label: var(--font-jetbrains-mono);
 }
 
-/* Base Styles */
-* {
-  box-sizing: border-box;
-}
+/* ── Base element styles ─────────────────────────────────────────────
+   Wrapped in @layer base so Tailwind utilities can override them.
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  min-height: 100vh;
-  background: var(--np-newsprint);
-  color: var(--np-text-primary);
-  font-family: var(--font-noto-bengali), var(--font-source-sans), "BenSen", system-ui, -apple-system, sans-serif;
-  font-size: 1rem;
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ============================================
-   TYPOGRAPHY — Prothomalo-Inspired
-   Headlines: Libre Baskerville (serif, for Latin/Bangla)
-   Body/UI: Source Sans 3 (sans, for Bangla/Latin)
-   Labels/Timestamps: JetBrains Mono (mono)
-   ============================================ */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  color: var(--np-text-primary);
-}
-
-h1 { font-size: clamp(1.75rem, 1.5rem + 1vw, 2.25rem); font-weight: 700; }
-h2 { font-size: clamp(1.25rem, 1.125rem + 0.5vw, 1.625rem); font-weight: 700; }
-h3 { font-size: clamp(1rem, 0.9375rem + 0.25vw, 1.25rem); font-weight: 700; }
-h4 { font-size: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem); font-weight: 600; }
-h5 { font-size: 0.9375rem; font-weight: 600; }
-h6 { font-size: 0.875rem; font-weight: 600; }
-
-p {
-  font-size: 1rem;
-  line-height: 1.75;
-  margin-bottom: 1rem;
-  color: var(--np-text-soft);
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-a:hover {
-  color: var(--np-primary);
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Selection */
-::selection {
-  background: var(--np-primary);
-  color: white;
-}
-
-/* Focus States - WCAG AA Accessible */
-:focus-visible {
-  outline: 2px solid var(--np-primary);
-  outline-offset: 2px;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--np-background);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--np-border);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--np-text-secondary);
-}
-
-/* Print Styles */
-@media print {
-  body {
-    background: white;
-    color: black;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
+   Unlayered CSS beats every layered rule in the cascade, regardless of
+   specificity. With these rules unlayered, the bare `a { color: inherit }`
+   below silently defeated every text-colour utility applied to a link —
+   97 links on the homepage alone were rendering the inherited colour
+   instead of the one their class asked for.
+   ──────────────────────────────────────────────────────────────────── */
+@layer base {
   * {
-    box-shadow: none !important;
-  }
-}
-
-/* Utility Classes */
-.font-display {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-}
-
-.font-body {
-  font-family: var(--font-source-sans), system-ui, sans-serif;
-}
-
-.font-bangla {
-  font-family: var(--font-noto-bengali), "BenSen", var(--font-source-sans), sans-serif;
-}
-
-.font-label {
-  font-family: var(--font-jetbrains-mono), monospace;
-}
-
-.text-balance {
-  text-wrap: balance;
-}
-
-/* Breaking News Badge */
-.breaking-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.75rem;
-  background: var(--np-breaking);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 0.25rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
+    box-sizing: border-box;
   }
 
-  50% {
-    opacity: 0.7;
-  }
-}
-
-@keyframes breakingTickerScroll {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.breaking-ticker-track {
-  animation: breakingTickerScroll 28s linear infinite;
-  will-change: transform;
-}
-
-@media (max-width: 640px) {
-  .breaking-ticker-track {
-    animation-duration: 40s;
-  }
-}
-
-.breaking-ticker-track:hover {
-  animation-play-state: paused;
-}
-
-/* Card Base Styles */
-.card {
-  background: var(--np-card);
-  border: 1px solid var(--np-border);
-  border-radius: 0.75rem;
-  box-shadow: var(--np-shadow);
-  overflow: hidden;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: var(--np-shadow-lg);
-}
-
-/* Button Base Styles */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
-}
-
-.btn:focus-visible {
-  outline: 2px solid var(--np-primary);
-  outline-offset: 2px;
-}
-
-.btn-primary {
-  background: var(--np-primary);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--np-primary-hover);
-}
-
-.btn-secondary {
-  background: var(--np-secondary);
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: var(--np-secondary-hover);
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--np-border);
-  color: var(--np-text-primary);
-}
-
-.btn-outline:hover {
-  background: var(--np-background);
-  border-color: var(--np-primary);
-}
-
-/* Input Base Styles */
-.input {
-  width: 100%;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
-  color: var(--np-text-primary);
-  background: var(--np-card);
-  border: 1px solid var(--np-border);
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--np-primary);
-  box-shadow: 0 0 0 3px rgb(30 58 138 / 0.1);
-}
-
-.input::placeholder {
-  color: var(--np-text-secondary);
-}
-
-[data-theme="dark"] .input:focus {
-  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.2);
-}
-
-/* Prose for Article Content */
-.prose-news {
-  max-width: none;
-  font-family: var(--font-noto-bengali), var(--font-source-sans), "BenSen", sans-serif;
-}
-
-.prose-news h2 {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-size: clamp(1.25rem, 1rem + 1.5vw, 1.75rem);
-  font-weight: 700;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  color: var(--np-text-primary);
-  line-height: 1.3;
-}
-
-.prose-news h3 {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-size: clamp(1.125rem, 0.9rem + 1vw, 1.375rem);
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  color: var(--np-text-primary);
-}
-
-.prose-news p {
-  margin-bottom: 1.25rem;
-  line-height: 1.75;
-  color: var(--np-text-secondary);
-  font-size: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem);
-}
-
-.prose-news a {
-  color: var(--np-primary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.2s ease;
-}
-
-.prose-news a:hover {
-  color: var(--np-primary-hover);
-}
-
-.prose-news blockquote {
-  border-left: 4px solid var(--np-accent);
-  padding-left: 1.5rem;
-  margin: 1.5rem 0;
-  font-style: italic;
-  color: var(--np-text-secondary);
-}
-
-/* ============================================
-   NEWSPAPER TYPOGRAPHY SYSTEM — Prothomalo-Inspired
-   Headlines: Libre Baskerville (serif)
-   Body/UI:   Source Sans 3 (sans)
-   Labels:    JetBrains Mono (mono)
-   Headline classes defer font-size to element
-   ============================================ */
-
-/* Headline — large hero/front-page */
-.np-headline-lg {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--np-text-primary);
-}
-
-/* Headline — default (section) */
-.np-headline {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  color: var(--np-text-primary);
-}
-
-/* Headline — small / cards */
-.np-headline-sm {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--np-text-primary);
-}
-
-/* Breaking news headline */
-.np-headline-breaking {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--np-breaking);
-}
-
-/* Section header — single h2, no duplicate label.
-   3px red accent bar at top, optional "see all" link on right. */
-.np-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-top: 3px solid var(--np-primary);
-  padding-top: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-.np-section-header h2,
-.np-section-header .np-headline {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-weight: 700;
-  font-size: 1.125rem;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  color: var(--np-text-primary);
-  margin: 0;
-}
-.np-section-header .np-section-more {
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--np-text-secondary);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.15s;
-}
-.np-section-header .np-section-more:hover {
-  color: var(--np-primary);
-}
-
-/* Subheading — sans-serif */
-.np-subhead {
-  font-family: var(--font-source-sans), system-ui, sans-serif;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--np-text-primary);
-}
-
-/* Article body copy */
-.np-body {
-  font-family: var(--font-noto-bengali), var(--font-source-sans), "BenSen", sans-serif;
-  font-size: 1rem;
-  line-height: 1.75;
-  color: var(--np-text-soft);
-}
-
-/* Byline / author */
-.np-byline {
-  font-family: var(--font-source-sans), system-ui, sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--np-text-secondary);
-}
-
-/* Category label — JetBrains Mono, uppercase, tracking */
-.np-category {
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--np-primary);
-}
-
-/* Timestamp / metadata — JetBrains Mono */
-.np-timestamp {
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.75rem;
-  color: var(--np-text-secondary);
-  letter-spacing: 0.02em;
-}
-
-/* Image caption */
-.np-caption {
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.6875rem;
-  color: var(--np-text-secondary);
-  line-height: 1.4;
-}
-
-/* Pull quote */
-.np-pullquote {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-size: clamp(1rem, 0.9375rem + 0.25vw, 1.125rem);
-  font-style: italic;
-  line-height: 1.5;
-  color: var(--np-text-primary);
-  border-left: 4px solid var(--np-accent);
-  padding-left: 1.5rem;
-  margin: 2rem 0;
-}
-
-/* Drop cap for lead paragraph */
-.np-dropcap::first-letter {
-  font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
-  font-size: 3.5em;
-  font-weight: 700;
-  float: left;
-  line-height: 0.8;
-  margin-right: 0.5rem;
-  margin-top: 0.15rem;
-  color: var(--np-primary);
-}
-
-/* Numbers / data — tabular figures */
-.np-num {
-  font-family: var(--font-source-sans), system-ui, sans-serif;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Latest rail item (Prothomalo left sidebar style) */
-.np-latest-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.5rem 0.625rem;
-  border-bottom: 1px solid var(--np-border);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  color: var(--np-text-primary);
-  transition: background 0.15s;
-}
-.np-latest-item:hover {
-  background: var(--np-newsprint-2);
-}
-.np-latest-time {
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.625rem;
-  color: var(--np-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-/* Columist / Opinion card */
-.np-columnist {
-  text-align: center;
-  padding: 1rem 0.5rem;
-}
-.np-columnist-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--np-newsprint-2);
-  margin: 0 auto 0.5rem;
-  overflow: hidden;
-}
-.np-columnist-name {
-  font-family: var(--font-source-sans), sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--np-text-primary);
-}
-.np-columnist-title {
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.625rem;
-  color: var(--np-muted);
-  margin-top: 2px;
-}
-
-/* Safe Area Insets for Mobile Devices */
-@supports (padding: max(0px)) {
-  .safe-area-pb {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-  }
-
-  .safe-area-pt {
-    padding-top: max(0.5rem, env(safe-area-inset-top));
-  }
-
-  .safe-area-pl {
-    padding-left: max(0.5rem, env(safe-area-inset-left));
-  }
-
-  .safe-area-pr {
-    padding-right: max(0.5rem, env(safe-area-inset-right));
-  }
-
-  .safe-area-px {
-    padding-left: max(0.5rem, env(safe-area-inset-left));
-    padding-right: max(0.5rem, env(safe-area-inset-right));
-  }
-}
-
-/* Mobile-specific responsive utilities */
-@media (max-width: 640px) {
   html {
-    font-size: 15px;
+    scroll-behavior: smooth;
   }
 
-  /* Reduce animation on mobile for performance */
+  body {
+    min-height: 100vh;
+    background: var(--np-newsprint);
+    color: var(--np-text-primary);
+    font-family: var(--font-noto-bengali), system-ui, -apple-system, sans-serif;
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ============================================
+     TYPOGRAPHY — Prothomalo-Inspired
+     Headlines: Libre Baskerville (serif, for Latin/Bangla)
+     Body/UI: Source Sans 3 (sans, for Bangla/Latin)
+     Labels/Timestamps: JetBrains Mono (mono)
+     ============================================ */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--np-text-primary);
+  }
+
+  h1 { font-size: clamp(1.75rem, 1.5rem + 1vw, 2.25rem); font-weight: 700; }
+  h2 { font-size: clamp(1.25rem, 1.125rem + 0.5vw, 1.625rem); font-weight: 700; }
+  h3 { font-size: clamp(1rem, 0.9375rem + 0.25vw, 1.25rem); font-weight: 700; }
+  h4 { font-size: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem); font-weight: 600; }
+  h5 { font-size: 0.9375rem; font-weight: 600; }
+  h6 { font-size: 0.875rem; font-weight: 600; }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    color: var(--np-text-soft);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: var(--np-primary);
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--np-primary);
+    color: white;
+  }
+
+  /* Focus States - WCAG AA Accessible */
+  :focus-visible {
+    outline: 2px solid var(--np-primary);
+    outline-offset: 2px;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--np-background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--np-border);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--np-text-secondary);
+  }
+
+  /* Print Styles */
+  @media print {
+    body {
+      background: white;
+      color: black;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    * {
+      box-shadow: none !important;
+    }
+  }
+}
+
+/* ── Project component classes ───────────────────────────────────────
+   In @layer components so a utility in markup wins over the class, e.g.
+   `class="np-category text-[var(--np-text-primary)]"` renders in the text
+   colour rather than the kicker colour baked into .np-category.
+   ──────────────────────────────────────────────────────────────────── */
+@layer components {
+  .font-display {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+  }
+
+  .font-body {
+    font-family: var(--font-noto-bengali), system-ui, sans-serif;
+  }
+
+  .font-bangla {
+    font-family: var(--font-noto-bengali), system-ui, sans-serif;
+  }
+
+  .font-label {
+    font-family: var(--font-jetbrains-mono), monospace;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Breaking News Badge */
+  .breaking-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--np-breaking);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 0.25rem;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes breakingTickerScroll {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
   .breaking-ticker-track {
-    animation-duration: 50s;
+    animation: breakingTickerScroll 28s linear infinite;
+    will-change: transform;
+  }
+
+  @media (max-width: 640px) {
+    .breaking-ticker-track {
+      animation-duration: 40s;
+    }
+  }
+
+  .breaking-ticker-track:hover {
+    animation-play-state: paused;
+  }
+
+  /* Card Base Styles */
+  .card {
+    background: var(--np-card);
+    border: 1px solid var(--np-border);
+    border-radius: 0.75rem;
+    box-shadow: var(--np-shadow);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .card:hover {
+    box-shadow: var(--np-shadow-lg);
+  }
+
+  /* Button Base Styles */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--np-primary);
+    outline-offset: 2px;
+  }
+
+  .btn-primary {
+    background: var(--np-primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--np-primary-hover);
+  }
+
+  .btn-secondary {
+    background: var(--np-secondary);
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: var(--np-secondary-hover);
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--np-border);
+    color: var(--np-text-primary);
+  }
+
+  .btn-outline:hover {
+    background: var(--np-background);
+    border-color: var(--np-primary);
+  }
+
+  /* Input Base Styles */
+  .input {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    color: var(--np-text-primary);
+    background: var(--np-card);
+    border: 1px solid var(--np-border);
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--np-primary);
+    box-shadow: 0 0 0 3px rgb(30 58 138 / 0.1);
+  }
+
+  .input::placeholder {
+    color: var(--np-text-secondary);
+  }
+
+  [data-theme="dark"] .input:focus {
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.2);
+  }
+
+  /* Prose for Article Content */
+  .prose-news {
+    max-width: none;
+    font-family: var(--font-noto-bengali), system-ui, sans-serif;
+  }
+
+  .prose-news h2 {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-size: clamp(1.25rem, 1rem + 1.5vw, 1.75rem);
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--np-text-primary);
+    line-height: 1.3;
+  }
+
+  .prose-news h3 {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-size: clamp(1.125rem, 0.9rem + 1vw, 1.375rem);
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--np-text-primary);
+  }
+
+  .prose-news p {
+    margin-bottom: 1.25rem;
+    line-height: 1.75;
+    color: var(--np-text-secondary);
+    font-size: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem);
+  }
+
+  .prose-news a {
+    color: var(--np-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s ease;
+  }
+
+  .prose-news a:hover {
+    color: var(--np-primary-hover);
   }
 
   .prose-news blockquote {
-    padding-left: 1rem;
-    margin: 1rem 0;
+    border-left: 4px solid var(--np-accent);
+    padding-left: 1.5rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: var(--np-text-secondary);
   }
-}
 
-/* Admin content bottom padding for mobile nav */
-.admin-content-area {
-  padding-bottom: 5rem;
-}
+  /* ============================================
+     NEWSPAPER TYPOGRAPHY SYSTEM — Prothomalo-Inspired
+     Headlines: Libre Baskerville (serif)
+     Body/UI:   Source Sans 3 (sans)
+     Labels:    JetBrains Mono (mono)
+     Headline classes defer font-size to element
+     ============================================ */
 
-@media (min-width: 1024px) {
+  /* Headline — large hero/front-page */
+  .np-headline-lg {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--np-text-primary);
+  }
+
+  /* Headline — default (section) */
+  .np-headline {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--np-text-primary);
+  }
+
+  /* Headline — small / cards */
+  .np-headline-sm {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--np-text-primary);
+  }
+
+  /* Breaking news headline */
+  .np-headline-breaking {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--np-breaking);
+  }
+
+  /* Section header — single h2, no duplicate label.
+     3px red accent bar at top, optional "see all" link on right. */
+  .np-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 3px solid var(--np-primary);
+    padding-top: 0.875rem;
+    margin-bottom: 1.25rem;
+  }
+  .np-section-header h2,
+  .np-section-header .np-headline {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-weight: 700;
+    font-size: 1.125rem;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--np-text-primary);
+    margin: 0;
+  }
+  .np-section-header .np-section-more {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--np-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+  }
+  .np-section-header .np-section-more:hover {
+    color: var(--np-primary);
+  }
+
+  /* Subheading — sans-serif */
+  .np-subhead {
+    font-family: var(--font-noto-bengali), system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--np-text-primary);
+  }
+
+  /* Article body copy */
+  .np-body {
+    font-family: var(--font-noto-bengali), system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--np-text-soft);
+  }
+
+  /* Byline / author */
+  .np-byline {
+    font-family: var(--font-noto-bengali), system-ui, sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--np-text-secondary);
+  }
+
+  /* Category label — JetBrains Mono, uppercase, tracking */
+  .np-category {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--np-primary);
+  }
+
+  /* Timestamp / metadata — JetBrains Mono */
+  .np-timestamp {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 0.75rem;
+    color: var(--np-text-secondary);
+    letter-spacing: 0.02em;
+  }
+
+  /* Image caption */
+  .np-caption {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 0.6875rem;
+    color: var(--np-text-secondary);
+    line-height: 1.4;
+  }
+
+  /* Pull quote */
+  .np-pullquote {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-size: clamp(1rem, 0.9375rem + 0.25vw, 1.125rem);
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--np-text-primary);
+    border-left: 4px solid var(--np-accent);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  /* Drop cap for lead paragraph */
+  .np-dropcap::first-letter {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-size: 3.5em;
+    font-weight: 700;
+    float: left;
+    line-height: 0.8;
+    margin-right: 0.5rem;
+    margin-top: 0.15rem;
+    color: var(--np-primary);
+  }
+
+  /* Numbers / data — tabular figures */
+  .np-num {
+    font-family: var(--font-noto-bengali), system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Latest rail item (Prothomalo left sidebar style) */
+  .np-latest-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    border-bottom: 1px solid var(--np-border);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--np-text-primary);
+    transition: background 0.15s;
+  }
+  .np-latest-item:hover {
+    background: var(--np-newsprint-2);
+  }
+  .np-latest-time {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 0.625rem;
+    color: var(--np-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Columist / Opinion card */
+  .np-columnist {
+    text-align: center;
+    padding: 1rem 0.5rem;
+  }
+  .np-columnist-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--np-newsprint-2);
+    margin: 0 auto 0.5rem;
+    overflow: hidden;
+  }
+  .np-columnist-name {
+    font-family: var(--font-noto-bengali), sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--np-text-primary);
+  }
+  .np-columnist-title {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 0.625rem;
+    color: var(--np-muted);
+    margin-top: 2px;
+  }
+
+  /* Safe Area Insets for Mobile Devices */
+  @supports (padding: max(0px)) {
+    .safe-area-pb {
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+
+    .safe-area-pt {
+      padding-top: max(0.5rem, env(safe-area-inset-top));
+    }
+
+    .safe-area-pl {
+      padding-left: max(0.5rem, env(safe-area-inset-left));
+    }
+
+    .safe-area-pr {
+      padding-right: max(0.5rem, env(safe-area-inset-right));
+    }
+
+    .safe-area-px {
+      padding-left: max(0.5rem, env(safe-area-inset-left));
+      padding-right: max(0.5rem, env(safe-area-inset-right));
+    }
+  }
+
+  /* Mobile-specific responsive utilities */
+  @media (max-width: 640px) {
+    html {
+      font-size: 15px;
+    }
+
+    /* Reduce animation on mobile for performance */
+    .breaking-ticker-track {
+      animation-duration: 50s;
+    }
+
+    .prose-news blockquote {
+      padding-left: 1rem;
+      margin: 1rem 0;
+    }
+  }
+
+  /* Touch-friendly tap targets */
+  @media (pointer: coarse) {
+
+    button,
+    a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* ============================================
+     NEWSROOM CONSOLE — admin utility classes
+
+     Deliberately small. Anything used once lives in the component; only the
+     grammar that has to stay identical across every admin screen lives here.
+     ============================================ */
+
+  /* Micro label — mono, uppercase, tracked. Every card kicker, table head and
+     field label in the console uses this so they line up as one voice. */
+  .adm-label {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ad-text-muted);
+    line-height: 1.4;
+  }
+
+  /* Display face for page titles and KPI figures — the paper's own voice. */
+  .adm-display {
+    font-family: var(--font-libre-baskerville), var(--font-noto-bengali), Georgia, serif;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--ad-text-primary);
+  }
+
+  /* Big figure. Tabular so a column of counts stays on the same rhythm. */
+  .adm-figure {
+    font-family: var(--font-libre-baskerville), Georgia, serif;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--ad-text-primary);
+  }
+
+  /* Mono data: timestamps, ids, slugs, counts inside tables. */
+  .adm-mono {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Surface. Hairline, not shadow — the console gets its depth from the dark
+     rail against the newsprint canvas, not from every card floating. */
+  .adm-surface {
+    background: var(--ad-card);
+    border: 1px solid var(--ad-border);
+    border-radius: var(--ad-radius);
+  }
+
+  /* Things that genuinely float: dropdowns, dialogs, popovers. */
+  .adm-pop {
+    background: var(--ad-card);
+    border: 1px solid var(--ad-border);
+    border-radius: var(--ad-radius);
+    box-shadow: var(--ad-shadow-pop);
+  }
+
+  /* Kept for markup that still asks for it; now a hairline lift rather than
+     the old floating-card look. */
+  .shadow-premium {
+    box-shadow: var(--ad-shadow);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .shadow-premium:hover {
+    box-shadow: var(--ad-shadow);
+  }
+
+  /* Focus ring used by every interactive admin control. */
+  .adm-focus:focus-visible {
+    outline: 2px solid var(--ad-primary);
+    outline-offset: 2px;
+  }
+
+  /* Post editor formatting toolbar.
+     Sized off a 28px square so single glyphs (B, •, 1.) and the 14px icons sit
+     on the same baseline grid regardless of label width. */
+  .ed-tb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 0.4rem;
+    border: 1px solid transparent;
+    border-radius: calc(var(--ad-radius) * 0.5);
+    background: transparent;
+    color: var(--ad-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ed-tb-btn:hover {
+    background: var(--ad-border);
+    color: var(--ad-text-primary);
+  }
+
+  .ed-tb-btn:focus-visible {
+    outline: 2px solid var(--ad-primary);
+    outline-offset: 1px;
+  }
+
+  /* Reflects the block format under the caret, driven by aria-pressed. */
+  .ed-tb-btn.active {
+    background: color-mix(in oklab, var(--ad-primary) 12%, transparent);
+    border-color: color-mix(in oklab, var(--ad-primary) 30%, transparent);
+    color: var(--ad-primary);
+  }
+
+  /* Scrollbars inside admin panes */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ad-border-strong) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--ad-border-strong);
+    border-radius: 3px;
+  }
+
+  /* Admin content bottom padding for the mobile tab bar */
   .admin-content-area {
-    padding-bottom: 0;
+    padding-bottom: 5rem;
   }
-}
 
-/* Touch-friendly tap targets */
-@media (pointer: coarse) {
-
-  button,
-  a {
-    min-height: 44px;
-    min-width: 44px;
+  @media (min-width: 1024px) {
+    .admin-content-area {
+      padding-bottom: 0;
+    }
   }
-}
 
-/* ============================================
-   EDITORIAL DESIGN SYSTEM UTILITY CLASSES
-   ============================================ */
-
-/* Monospace for data (timestamps, counts, codes) */
-.font-editorial-mono {
-  font-family: 'DM Mono', 'Courier New', monospace;
-}
-
-/* Serif for display / headlines */
-.font-editorial-display {
-  font-family: 'Playfair Display', Georgia, serif;
-}
-
-/* Sans for body / UI */
-.font-editorial-sans {
-  font-family: 'DM Sans', system-ui, sans-serif;
-}
-
-/* Editorial card with 1.5px border (no shadows) */
-.ed-card {
-  border: 1.5px solid var(--ad-border);
-  background: var(--ad-card);
-}
-
-.ed-card-accent {
-  border: 1.5px solid var(--ad-border);
-  background: var(--ad-card);
-  border-top: 3px solid var(--ad-breaking);
-}
-
-/* Status badges */
-.ed-badge {
-  font-family: 'DM Mono', 'Courier New', monospace;
-  font-size: 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 2px;
-  font-weight: 500;
-}
-.ed-badge-draft {
-  background: var(--ed-paper-2);
-  color: var(--ed-muted);
-}
-.ed-badge-published {
-  background: var(--ed-success);
-  color: white;
-}
-.ed-badge-breaking {
-  background: var(--ed-breaking);
-  color: white;
-}
-.ed-badge-review {
-  background: var(--ed-alert);
-  color: white;
-}
-
-/* Section labels (mono, uppercase, muted) */
-.ed-label {
-  font-family: 'DM Mono', 'Courier New', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--ad-text-secondary);
-}
-
-/* KPI number style */
-.ed-kpi {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 900;
-  color: var(--ad-text-primary);
-}
-
-/* Divider */
-.ed-divider {
-  height: 1px;
-  background: var(--ad-border);
-}
-
-/* Small colored dot */
-.ed-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-.ed-dot-success { background: var(--ad-success); }
-.ed-dot-breaking { background: var(--ad-breaking); }
-.ed-dot-alert { background: var(--ad-warning); }
-.ed-dot-muted { background: var(--ad-text-secondary); }
-
-/* Progress bar */
-.ed-progress {
-  height: 2px;
-  background: var(--ad-border);
-  border-radius: 1px;
-  overflow: hidden;
-}
-.ed-progress-fill {
-  height: 100%;
-  background: var(--ad-breaking);
-  border-radius: 1px;
-  transition: width 0.6s ease;
-}
-
-/* Toggle switch (editorial style) */
-.ed-toggle {
-  position: relative;
-  width: 36px;
-  height: 18px;
-  border-radius: 9px;
-  background: var(--ad-border);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.ed-toggle.active {
-  background: var(--ad-ink);
-}
-.ed-toggle-thumb {
-  position: absolute;
-  top: 3px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: white;
-  transition: left 0.2s, right 0.2s;
-}
-.ed-toggle.active .ed-toggle-thumb {
-  right: 3px;
-  left: auto;
-}
-.ed-toggle:not(.active) .ed-toggle-thumb {
-  left: 3px;
-  right: auto;
-}
-
-/* Feature list with arrows */
-.ed-feature-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.ed-feature-list li {
-  font-size: 13px;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 4px 0;
-  color: var(--ad-text-secondary);
-}
-.ed-feature-list li::before {
-  content: '→';
-  color: var(--ad-breaking);
-  font-family: 'DM Mono', 'Courier New', monospace;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-/* Wireframe / skeleton placeholder */
-.ed-skeleton {
-  background: var(--ad-border);
-  border-radius: 2px;
-  opacity: 0.4;
-}
-.ed-skeleton-text {
-  height: 10px;
-  background: var(--ad-border);
-  border-radius: 2px;
-  margin-bottom: 8px;
-}
-
-/* Editor toolbar button */
-.ed-tb-btn {
-  font-family: 'DM Mono', 'Courier New', monospace;
-  font-size: 11px;
-  padding: 4px 10px;
-  background: var(--ad-paper-2);
-  border-radius: 4px;
-  color: var(--ad-text-secondary);
-  cursor: pointer;
-  border: none;
-  transition: all 0.15s;
-}
-.ed-tb-btn:hover {
-  background: var(--ad-border);
-  color: var(--ad-text-primary);
-}
-.ed-tb-btn.active {
-  background: var(--ad-ink);
-  color: var(--ad-paper);
-}
-
-/* Monospace label for timestamps, counts */
-.ed-mono-label {
-  font-family: 'DM Mono', 'Courier New', monospace;
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--ad-text-secondary);
-}
-
-/* Muktir Kantho Admin Custom Redesign Utilities */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+  /* ── Motion ──────────────────────────────────────────────────────────
+     One entrance, used on page content. Anything longer than ~250ms in a
+     tool people use all day stops reading as polish and starts reading as lag.
+     ──────────────────────────────────────────────────────────────────── */
+  @keyframes admRise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .animate-fade-in-up {
+    animation: admRise 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-}
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+  @keyframes admPop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
 
-.shadow-premium {
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.02), 0 2px 8px -1px rgba(15, 23, 42, 0.02);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
+  .animate-pop-in {
+    animation: admPop 0.14s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 
-.shadow-premium:hover {
-  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
-  transform: translateY(-2px);
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-up,
+    .animate-pop-in,
+    .breaking-ticker-track {
+      animation: none !important;
+    }
+  }
 }

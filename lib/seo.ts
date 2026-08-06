@@ -1,3 +1,18 @@
+/**
+ * Serialize a value for embedding inside a `<script>` tag.
+ *
+ * `JSON.stringify` leaves `<` untouched, so a title containing `</script>` would
+ * close the block early and let the rest of the string run as markup. Escaping
+ * the three characters the HTML parser reacts to keeps the payload inert while
+ * staying valid JSON.
+ */
+export function toInlineJsonLd(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
 function truncateAtWord(value: string, maxLength: number) {
   if (value.length <= maxLength) {
     return value;

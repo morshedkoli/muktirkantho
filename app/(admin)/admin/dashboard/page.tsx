@@ -1,63 +1,110 @@
+import Link from "next/link";
 import { PostStatus } from "@prisma/client";
-import { format, subDays } from "date-fns";
-import { prisma } from "@/lib/prisma";
+import { subDays, format } from "date-fns";
 import {
   PenSquare,
   Image as ImageIcon,
   FolderOpen,
   ExternalLink,
-  TrendingUp,
-  TrendingDown,
-  Pencil,
+  FileText,
+  CheckCircle2,
+  Clock,
+  Eye,
+  MessageSquare,
+  ArrowUpRight,
+  MapPin,
 } from "lucide-react";
-import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/cn";
+import { bnNumber as bn, bnCount } from "@/lib/bn-number";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { Panel, PanelLink, StatTile, EmptyState, Alert } from "@/components/admin/ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboardPage() {
-  const today = new Date();
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const sevenDaysAgo = subDays(startOfToday, 6);
-  const thirtyDaysAgo = subDays(startOfToday, 29);
+const DAY_LABELS = ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি"];
 
-  let publishedPosts: number;
-  let draftPosts: number;
-  let todayPosts: number;
-  let weekPosts: number;
-  let recentPosts: Awaited<ReturnType<typeof prisma.post.findMany<{ include: { category: true; district: true } }>>>;
-  let postsByCategory: Array<{ categoryId: string; _count: number }>;
-  let last7DaysPosts: { createdAt: Date }[];
-  let newPublishedCount: number;
-  let newDraftsCount: number;
-  let topCategories: { name: string; count: number }[];
-  let maxCatCount: number;
-  let dayBins: { date: Date; count: number; label: string }[];
-  let maxDay: number;
-  let todayDelta: number;
-  let weekDelta: number;
+/**
+ * The six most recently edited posts, projected down to what the list renders.
+ *
+ * Deliberately `select` rather than `include`: a bare `include` returns whole
+ * Post documents, and each one carries the article's full markdown `content`.
+ * For a list showing a title, thumbnail and two names that's megabytes of body
+ * text pulled across the wire to be discarded — measured at ~8s against a
+ * remote Atlas instance versus ~270ms for this projection.
+ */
+function findRecentPosts() {
+  return prisma.post.findMany({
+    take: 6,
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      imageUrl: true,
+      updatedAt: true,
+      status: true,
+      category: { select: { name: true } },
+      district: { select: { name: true } },
+    },
+  });
+}
+
+const quickActions = [
+  { href: "/admin/posts/create", label: "নতুন পোস্ট", icon: PenSquare },
+  { href: "/admin/media", label: "মিডিয়া", icon: ImageIcon },
+  { href: "/admin/categories", label: "ক্যাটাগরি", icon: FolderOpen },
+  { href: "/", label: "সাইট দেখুন", icon: ExternalLink, external: true },
+];
+
+export default async function AdminDashboardPage() {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = subDays(startOfToday, 6);
+  const previousWeekStart = subDays(startOfToday, 13);
+
+  let data: {
+    published: number;
+    drafts: number;
+    todayCount: number;
+    weekCount: number;
+    previousWeekCount: number;
+    pendingComments: number;
+    totalViews: number;
+    recentPosts: Awaited<ReturnType<typeof findRecentPosts>>;
+    topCategories: { name: string; count: number }[];
+    topDistricts: { name: string; count: number }[];
+    dayBins: { label: string; count: number; isToday: boolean }[];
+  };
 
   try {
-    [
-      publishedPosts,
-      draftPosts,
-      todayPosts,
-      weekPosts,
+    const [
+      published,
+      drafts,
+      todayCount,
+      weekCount,
+      previousWeekCount,
+      pendingComments,
+      viewAggregate,
       recentPosts,
-      postsByCategory,
-      last7DaysPosts,
-      newPublishedCount,
-      newDraftsCount,
+      weekPosts,
+      categoryGroups,
+      districtGroups,
     ] = await Promise.all([
       prisma.post.count({ where: { status: PostStatus.published } }),
       prisma.post.count({ where: { status: PostStatus.draft } }),
       prisma.post.count({ where: { createdAt: { gte: startOfToday } } }),
-      prisma.post.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      prisma.post.count({ where: { createdAt: { gte: weekStart } } }),
+      prisma.post.count({
+        where: { createdAt: { gte: previousWeekStart, lt: weekStart } },
+      }),
+      prisma.comment.count({ where: { status: "pending" } }).catch(() => 0),
+      prisma.post.aggregate({ _sum: { viewCount: true } }),
+      findRecentPosts(),
       prisma.post.findMany({
-        take: 5,
-        orderBy: { updatedAt: "desc" },
-        include: { category: true, district: true },
+        where: { createdAt: { gte: weekStart } },
+        select: { createdAt: true },
       }),
       prisma.post.groupBy({
         by: ["categoryId"],
@@ -65,388 +112,365 @@ export default async function AdminDashboardPage() {
         orderBy: { _count: { categoryId: "desc" } },
         take: 5,
       }),
-      prisma.post.findMany({
-        where: { createdAt: { gte: sevenDaysAgo } },
-        select: { createdAt: true },
+      prisma.post.groupBy({
+        by: ["districtId"],
+        _count: true,
+        orderBy: { _count: { districtId: "desc" } },
+        take: 5,
       }),
-      prisma.post.count({ where: { status: PostStatus.published, createdAt: { gte: sevenDaysAgo } } }),
-      prisma.post.count({ where: { status: PostStatus.draft, createdAt: { gte: sevenDaysAgo } } }),
     ]);
 
-    // 7-day bar chart data
-    dayBins = Array.from({ length: 7 }, (_, i) => {
-      const d = subDays(startOfToday, 6 - i);
-      const dayNames = ["রবি", "সোম", "মঙ্গ", "বুধ", "বৃহ", "শুক্র", "শনি"];
-      return { date: d, count: 0, label: dayNames[d.getDay()] };
+    const [categoryRecords, districtRecords] = await Promise.all([
+      prisma.category.findMany({
+        where: { id: { in: categoryGroups.map((g) => g.categoryId) } },
+      }),
+      prisma.district.findMany({
+        where: { id: { in: districtGroups.map((g) => g.districtId) } },
+      }),
+    ]);
+
+    const dayBins = Array.from({ length: 7 }, (_, i) => {
+      const date = subDays(startOfToday, 6 - i);
+      return {
+        label: DAY_LABELS[date.getDay()],
+        count: 0,
+        isToday: i === 6,
+        key: date.toDateString(),
+      };
     });
-    for (const p of last7DaysPosts) {
-      const dayIdx = dayBins.findIndex(
-        (b) => b.date.toDateString() === new Date(p.createdAt).toDateString()
+    for (const post of weekPosts) {
+      const bin = dayBins.find(
+        (b) => b.key === new Date(post.createdAt).toDateString()
       );
-      if (dayIdx >= 0) dayBins[dayIdx].count += 1;
+      if (bin) bin.count += 1;
     }
-    maxDay = Math.max(...dayBins.map((b) => b.count), 1);
 
-    // Top categories
-    const catIds = postsByCategory.map((c) => c.categoryId);
-    const catRecords = await prisma.category.findMany({ where: { id: { in: catIds } } });
-    const catName = (id: string) => catRecords.find((c) => c.id === id)?.name ?? "—";
-    topCategories = postsByCategory.map((c) => ({
-      name: catName(c.categoryId),
-      count: c._count,
-    }));
-    maxCatCount = Math.max(...topCategories.map((c) => c.count), 1);
-
-    // KPI card deltas (last 7 days)
-    todayDelta = todayPosts;
-    weekDelta = weekPosts;
-  } catch (error: unknown) {
+    data = {
+      published,
+      drafts,
+      todayCount,
+      weekCount,
+      previousWeekCount,
+      pendingComments,
+      totalViews: viewAggregate._sum.viewCount ?? 0,
+      recentPosts,
+      dayBins,
+      topCategories: categoryGroups.map((g) => ({
+        name: categoryRecords.find((c) => c.id === g.categoryId)?.name ?? "—",
+        count: g._count,
+      })),
+      topDistricts: districtGroups.map((g) => ({
+        name: districtRecords.find((d) => d.id === g.districtId)?.name ?? "—",
+        count: g._count,
+      })),
+    };
+  } catch {
     return (
-      <AdminShell title="ড্যাশবোর্ড">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-700">
-          ড্যাশবোর্ড ডেটা লোড করতে সমস্যা হয়েছে।
-        </div>
+      <AdminShell kicker="সংক্ষিপ্ত" title="ড্যাশবোর্ড">
+        <Alert tone="error" title="ডেটা লোড করা যায়নি">
+          ডেটাবেস থেকে ড্যাশবোর্ডের তথ্য আনা যায়নি। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।
+        </Alert>
       </AdminShell>
     );
   }
 
+  const maxDay = Math.max(...data.dayBins.map((b) => b.count), 1);
+  const maxCategory = Math.max(...data.topCategories.map((c) => c.count), 1);
+  const maxDistrict = Math.max(...data.topDistricts.map((d) => d.count), 1);
+  const weekDelta = data.weekCount - data.previousWeekCount;
+
   return (
-    <div className="space-y-6">
-      {/* PAGE TITLE */}
-      <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-        ড্যাশবোর্ড
-      </h1>
-
-      {/* ROW 1 — KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* আজকের পোস্ট */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-            আজকের পোস্ট
-          </p>
-          <div className="flex items-end justify-between gap-2">
-            <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 leading-none">
-              {todayPosts}
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full",
-                todayDelta >= 0
-                  ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
-                  : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
-              )}
-            >
-              {todayDelta >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {todayDelta >= 0 ? "+" : ""}{todayDelta}
-            </span>
-          </div>
-        </div>
-
-        {/* এই সপ্তাহে */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-            এই সপ্তাহে
-          </p>
-          <div className="flex items-end justify-between gap-2">
-            <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 leading-none">
-              {weekPosts}
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full",
-                weekDelta >= 0
-                  ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
-                  : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
-              )}
-            >
-              {weekDelta >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {weekDelta >= 0 ? "+" : ""}{weekDelta}
-            </span>
-          </div>
-        </div>
-
-        {/* প্রকাশিত */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-            প্রকাশিত
-          </p>
-          <div className="flex items-end justify-between gap-2">
-            <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 leading-none">
-              {publishedPosts}
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full",
-                newPublishedCount >= 0
-                  ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
-                  : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
-              )}
-            >
-              {newPublishedCount >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {newPublishedCount >= 0 ? "+" : ""}{newPublishedCount}
-            </span>
-          </div>
-        </div>
-
-        {/* খসড়া */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-            খসড়া
-          </p>
-          <div className="flex items-end justify-between gap-2">
-            <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 leading-none">
-              {draftPosts}
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full",
-                newDraftsCount >= 0
-                  ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
-                  : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
-              )}
-            >
-              {newDraftsCount >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {newDraftsCount >= 0 ? "+" : ""}{newDraftsCount}
-            </span>
-          </div>
-        </div>
+    <AdminShell
+      kicker={format(now, "EEEE, d MMMM yyyy")}
+      title="নিউজরুম ড্যাশবোর্ড"
+      description="আজকের প্রকাশনা, অপেক্ষমাণ কাজ এবং কভারেজের সারসংক্ষেপ।"
+      actions={
+        <>
+          <Button asChild variant="outline" size="default">
+            <Link href="/admin/posts">সব পোস্ট</Link>
+          </Button>
+          <Button asChild size="default">
+            <Link href="/admin/posts/create">
+              <PenSquare className="h-4 w-4" />
+              নতুন পোস্ট
+            </Link>
+          </Button>
+        </>
+      }
+    >
+      {/* ── KPI row ─────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <StatTile
+          label="আজ প্রকাশিত"
+          value={bn(data.todayCount)}
+          hint={`গত ৭ দিনে ${bn(data.weekCount)}টি`}
+          tone="accent"
+          icon={FileText}
+        />
+        <StatTile
+          label="মোট প্রকাশিত"
+          value={bn(data.published)}
+          hint={
+            weekDelta === 0
+              ? "গত সপ্তাহের সমান গতি"
+              : `গত সপ্তাহের চেয়ে ${bn(Math.abs(weekDelta))}টি ${weekDelta > 0 ? "বেশি" : "কম"}`
+          }
+          tone="success"
+          icon={CheckCircle2}
+          href="/admin/posts"
+        />
+        <StatTile
+          label="খসড়া"
+          value={bn(data.drafts)}
+          hint={data.drafts > 0 ? "প্রকাশের অপেক্ষায়" : "কোনো খসড়া বাকি নেই"}
+          tone="warning"
+          icon={Clock}
+          href="/admin/posts"
+        />
+        <StatTile
+          label="মোট পাঠ"
+          value={bnCount(data.totalViews)}
+          hint={
+            data.pendingComments > 0
+              ? `${bn(data.pendingComments)}টি মন্তব্য অপেক্ষমাণ`
+              : "সব মন্তব্য মডারেট করা"
+          }
+          tone="info"
+          icon={Eye}
+          href="/admin/analytics"
+        />
       </div>
 
-      {/* ROW 2 — Bar Chart + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 7-day bar chart (2/3) */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
-          <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              প্রকাশনা কার্যক্রম
-            </p>
-            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
-              গত ৭ দিনের পোস্ট
-            </p>
-          </div>
-          <div className="flex items-end gap-3 h-[140px]">
-            {dayBins.map((b, i) => {
-              const isToday = i === dayBins.length - 1;
-              const heightPct = Math.max(8, Math.round((b.count / maxDay) * 100));
+      {/* ── Activity + quick actions ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Panel
+          className="lg:col-span-2"
+          kicker="প্রকাশনা কার্যক্রম"
+          title="গত ৭ দিন"
+          actions={
+            <span className="adm-mono text-[11px] text-[var(--ad-text-muted)]">
+              সর্বোচ্চ {bn(maxDay)}/দিন
+            </span>
+          }
+        >
+          {/* Bars share one soft-red family: today is solid, the rest are a wash
+              of the same hue. A second colour here would imply a second meaning
+              the data does not have. */}
+          <div className="flex h-[168px] items-end gap-2 sm:gap-3">
+            {data.dayBins.map((bin) => {
+              const heightPct = Math.max(3, Math.round((bin.count / maxDay) * 100));
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                  <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-                    {b.count > 0 ? b.count : ""}
+                <div
+                  key={bin.label + bin.isToday}
+                  className="group flex h-full flex-1 flex-col items-center justify-end gap-2"
+                >
+                  <span
+                    className={cn(
+                      "adm-mono text-[11px] font-semibold",
+                      bin.isToday
+                        ? "text-[var(--ad-primary)]"
+                        : bin.count > 0
+                          ? "text-[var(--ad-text-secondary)]"
+                          : "text-[var(--ad-text-muted)]"
+                    )}
+                  >
+                    {bn(bin.count)}
                   </span>
                   <div
-                    className={cn(
-                      "w-full rounded-t-md transition-all duration-300",
-                      isToday
-                        ? "bg-red-500"
-                        : "bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                    )}
+                    title={`${bin.label}: ${bin.count}`}
                     style={{ height: `${heightPct}%` }}
-                    title={`${b.count} পোস্ট`}
+                    className={cn(
+                      "w-full rounded-[3px] transition-colors",
+                      bin.isToday
+                        ? "bg-[var(--ad-primary)]"
+                        : "bg-[var(--ad-primary-tint-strong)] group-hover:bg-[var(--ad-primary)]/45"
+                    )}
                   />
                   <span
                     className={cn(
-                      "text-[11px] font-semibold",
-                      isToday ? "text-red-500 font-bold" : "text-zinc-400 dark:text-zinc-500"
+                      "adm-label",
+                      bin.isToday && "font-semibold text-[var(--ad-primary)]"
                     )}
                   >
-                    {b.label}
+                    {bin.label}
                   </span>
                 </div>
               );
             })}
           </div>
-        </div>
+        </Panel>
 
-        {/* Quick Actions (1/3) */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
-          <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              দ্রুত পদক্ষেপ
-            </p>
-            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
-              শর্টকাট
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/admin/posts/create"
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
-            >
-              <PenSquare className="h-5 w-5 text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors" />
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors text-center">
-                নতুন পোস্ট
-              </span>
-            </Link>
-
-            <Link
-              href="/admin/media"
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
-            >
-              <ImageIcon className="h-5 w-5 text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors" />
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors text-center">
-                মিডিয়া
-              </span>
-            </Link>
-
-            <Link
-              href="/admin/categories"
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
-            >
-              <FolderOpen className="h-5 w-5 text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors" />
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors text-center">
-                বিভাগ
-              </span>
-            </Link>
-
-            <Link
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
-            >
-              <ExternalLink className="h-5 w-5 text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors" />
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors text-center">
-                সাইট দেখুন
-              </span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ROW 3 — Recent Posts + Top Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Posts Table */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                সাম্প্রতিক
-              </p>
-              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
-                সাম্প্রতিক পোস্ট
-              </p>
-            </div>
-            <Link
-              href="/admin/posts"
-              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-            >
-              সব দেখুন →
-            </Link>
+        <Panel kicker="শর্টকাট" title="দ্রুত পদক্ষেপ">
+          <div className="grid grid-cols-2 gap-2.5">
+            {quickActions.map(({ href, label, icon: Icon, external }) => (
+              <Link
+                key={href}
+                href={href}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noopener noreferrer" : undefined}
+                className="group flex flex-col gap-2.5 rounded-[var(--ad-radius-sm)] border border-[var(--ad-border)] p-3.5 transition-colors hover:border-[var(--ad-primary)]/40 hover:bg-[var(--ad-primary-tint)]"
+              >
+                <Icon className="h-[18px] w-[18px] text-[var(--ad-text-muted)] transition-colors group-hover:text-[var(--ad-primary)]" />
+                <span className="text-[12.5px] font-semibold text-[var(--ad-text-primary)]">
+                  {label}
+                </span>
+              </Link>
+            ))}
           </div>
 
-          {recentPosts.length === 0 ? (
-            <div className="px-6 py-10 text-center">
-              <p className="text-sm text-zinc-400 dark:text-zinc-500">কোনো পোস্ট নেই।</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {/* Table header */}
-              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-6 py-2 bg-zinc-50 dark:bg-zinc-800/50">
-                <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">শিরোনাম</span>
-                <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">বিভাগ</span>
-                <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">অবস্থা</span>
-                <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500"></span>
-              </div>
-              {recentPosts.map((post) => {
-                const isPublished = post.status === PostStatus.published;
-                return (
-                  <div
-                    key={post.id}
-                    className="grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center px-6 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
-                  >
-                    <p className="font-bangla text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                      {post.title}
-                    </p>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400 shrink-0 max-w-[80px] truncate">
-                      {post.category?.name ?? "—"}
-                    </span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0",
-                        isPublished
-                          ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
-                          : "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400"
-                      )}
-                    >
-                      {isPublished ? "প্রকাশিত" : "খসড়া"}
-                    </span>
-                    <Link
-                      href={`/admin/posts/edit/${post.id}`}
-                      className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
+          {data.pendingComments > 0 && (
+            <Link
+              href="/admin/comments"
+              className="mt-3 flex items-center gap-2.5 rounded-[var(--ad-radius-sm)] border border-[var(--ad-warning)]/25 bg-[var(--ad-warning-tint)] px-3.5 py-3 transition-opacity hover:opacity-85"
+            >
+              <MessageSquare className="h-4 w-4 shrink-0 text-[var(--ad-warning)]" />
+              <span className="flex-1 text-[12.5px] font-medium text-[var(--ad-text-primary)]">
+                {bn(data.pendingComments)}টি মন্তব্য অনুমোদনের অপেক্ষায়
+              </span>
+              <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[var(--ad-warning)]" />
+            </Link>
           )}
-        </div>
-
-        {/* Top Categories */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                বিশ্লেষণ
-              </p>
-              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
-                শীর্ষ বিভাগ
-              </p>
-            </div>
-            <Link
-              href="/admin/categories"
-              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-            >
-              সব দেখুন →
-            </Link>
-          </div>
-
-          <div className="px-6 py-5 space-y-4">
-            {topCategories.length === 0 ? (
-              <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">
-                কোনো বিভাগ নেই।
-              </p>
-            ) : (
-              topCategories.map((c) => {
-                const barWidth = Math.max(4, Math.round((c.count / maxCatCount) * 100));
-                return (
-                  <div key={c.name} className="flex items-center gap-3">
-                    <span className="font-bangla text-sm font-medium text-zinc-700 dark:text-zinc-300 w-28 shrink-0 truncate">
-                      {c.name}
-                    </span>
-                    <div className="flex-1 h-[8px] bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-zinc-900 dark:bg-zinc-200 rounded-full transition-all duration-500"
-                        style={{ width: `${barWidth}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 w-6 text-right shrink-0">
-                      {c.count}
-                    </span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
+        </Panel>
       </div>
-    </div>
+
+      {/* ── Recent posts ────────────────────────────────────────────────── */}
+      <Panel
+        flush
+        kicker="সাম্প্রতিক"
+        title="সর্বশেষ সম্পাদিত পোস্ট"
+        actions={<PanelLink href="/admin/posts">সব দেখুন</PanelLink>}
+      >
+        {data.recentPosts.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="এখনো কোনো পোস্ট নেই"
+            description="প্রথম সংবাদ প্রকাশ করে নিউজরুম শুরু করুন।"
+            action={
+              <Button asChild>
+                <Link href="/admin/posts/create">
+                  <PenSquare className="h-4 w-4" />
+                  নতুন পোস্ট
+                </Link>
+              </Button>
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-[var(--ad-border)]">
+            {data.recentPosts.map((post) => {
+              const live = post.status === PostStatus.published;
+              return (
+                <li key={post.id}>
+                  <Link
+                    href={`/admin/posts/edit/${post.id}`}
+                    className="group/row flex items-center gap-3.5 px-5 py-3 transition-colors hover:bg-[var(--ad-card-alt)]"
+                  >
+                    <span className="h-11 w-16 shrink-0 overflow-hidden rounded-[4px] border border-[var(--ad-border)] bg-[var(--ad-inset)]">
+                      {post.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={post.imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center">
+                          <FileText className="h-4 w-4 text-[var(--ad-text-muted)]" />
+                        </span>
+                      )}
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13.5px] font-semibold text-[var(--ad-text-primary)] transition-colors group-hover/row:text-[var(--ad-primary)]">
+                        {post.title}
+                      </span>
+                      <span className="adm-mono mt-1 block truncate text-[10.5px] text-[var(--ad-text-muted)]">
+                        {post.category?.name ?? "—"} · {post.district?.name ?? "—"} ·{" "}
+                        {format(post.updatedAt, "d MMM, HH:mm")}
+                      </span>
+                    </span>
+
+                    <Badge dot variant={live ? "success" : "warning"}>
+                      {live ? "প্রকাশিত" : "খসড়া"}
+                    </Badge>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Panel>
+
+      {/* ── Coverage ────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Panel
+          kicker="বিশ্লেষণ"
+          title="শীর্ষ ক্যাটাগরি"
+          actions={<PanelLink href="/admin/categories">সব দেখুন</PanelLink>}
+        >
+          <CoverageList
+            items={data.topCategories}
+            max={maxCategory}
+            emptyLabel="কোনো ক্যাটাগরি নেই"
+          />
+        </Panel>
+
+        <Panel
+          kicker="কভারেজ"
+          title="শীর্ষ জেলা"
+          actions={<PanelLink href="/admin/districts">সব দেখুন</PanelLink>}
+        >
+          <CoverageList
+            items={data.topDistricts}
+            max={maxDistrict}
+            emptyLabel="কোনো জেলা নেই"
+            icon={MapPin}
+          />
+        </Panel>
+      </div>
+    </AdminShell>
+  );
+}
+
+/* ── Coverage bar list ───────────────────────────────────────────────────── */
+
+function CoverageList({
+  items,
+  max,
+  emptyLabel,
+  icon: Icon,
+}: {
+  items: { name: string; count: number }[];
+  max: number;
+  emptyLabel: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}) {
+  if (items.length === 0) {
+    return (
+      <p className="py-6 text-center text-[12.5px] text-[var(--ad-text-muted)]">
+        {emptyLabel}
+      </p>
+    );
+  }
+
+  return (
+    <ul className="space-y-3.5">
+      {items.map((item) => (
+        <li key={item.name} className="flex items-center gap-3">
+          <span className="flex w-28 shrink-0 items-center gap-1.5 truncate text-[12.5px] font-medium text-[var(--ad-text-primary)]">
+            {Icon && <Icon className="h-3 w-3 shrink-0 text-[var(--ad-text-muted)]" />}
+            {item.name}
+          </span>
+          <span className="h-[6px] flex-1 overflow-hidden rounded-full bg-[var(--ad-inset)]">
+            <span
+              className="block h-full rounded-full bg-[var(--ad-primary)]"
+              style={{ width: `${Math.max(4, Math.round((item.count / max) * 100))}%` }}
+            />
+          </span>
+          <span className="adm-mono w-8 shrink-0 text-right text-[12px] font-semibold text-[var(--ad-text-secondary)]">
+            {bn(item.count)}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

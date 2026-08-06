@@ -1,6 +1,16 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 const KEY_LEN = 64;
+
+/**
+ * Constant-time comparison for two secrets of unknown length. Hashing first
+ * normalizes the length so `timingSafeEqual` never throws and the comparison
+ * doesn't leak how many leading characters matched.
+ */
+export function safeEqual(a: string, b: string) {
+  const digest = (value: string) => createHash("sha256").update(value, "utf8").digest();
+  return timingSafeEqual(digest(a), digest(b));
+}
 
 export function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
