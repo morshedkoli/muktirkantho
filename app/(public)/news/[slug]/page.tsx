@@ -206,9 +206,12 @@ export default async function NewsDetailPage({ params }: Props) {
         <span className="text-[var(--np-muted)] line-clamp-1 max-w-[200px]">{post.title}</span>
       </nav>
 
-      <div className="flex gap-8">
+      {/* Same 300px sidebar column as every listing page. CommonSidebar sets no
+          width of its own, so as a bare flex item it sized to its content and
+          grew to rival the article. */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
         {/* ── ARTICLE CONTENT ── */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0">
           <article className="border border-[var(--np-border)] bg-[var(--np-card)]">
             {/* Article Header */}
             <div className="px-5 sm:px-8 pt-6 sm:pt-8">
