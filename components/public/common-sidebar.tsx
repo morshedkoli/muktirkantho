@@ -7,6 +7,8 @@ import { PostImage } from "@/components/public/post-image";
 import { AD_PLACEMENTS } from "@/lib/ads";
 import { getPostPath } from "@/lib/post-url";
 import { formatBanglaDate } from "@/lib/bangla-date";
+import { bnCount } from "@/lib/bn-number";
+import { Eye } from "lucide-react";
 
 /**
  * This sidebar renders on every listing page, all of which are dynamic because
@@ -18,7 +20,11 @@ const getPopularPosts = unstable_cache(
     try {
       const posts = await prisma.post.findMany({
         where: { status: PostStatus.published },
-        orderBy: { publishedAt: "desc" },
+        // Ranked by what readers actually opened. The panel has always been
+        // headed "আলোচিত সংবাদ" while quietly listing the newest articles —
+        // now that reads are counted, the list can mean what it says. The date
+        // tiebreak keeps it sensible while a story has no reads yet.
+        orderBy: [{ viewCount: "desc" }, { publishedAt: "desc" }],
         take: 5,
         select: {
           id: true,
@@ -26,6 +32,7 @@ const getPopularPosts = unstable_cache(
           slug: true,
           imageUrl: true,
           publishedAt: true,
+          viewCount: true,
           category: { select: { slug: true } },
           district: { select: { slug: true } },
         },
@@ -101,9 +108,15 @@ export async function CommonSidebar() {
                   <h4 className="text-xs font-semibold leading-snug text-[var(--np-text-primary)] group-hover:text-[var(--np-primary)] transition-colors line-clamp-2">
                     {post.title}
                   </h4>
-                  {post.publishedAt && (
-                    <p className="np-timestamp mt-0.5">{formatBanglaDate(post.publishedAt)}</p>
-                  )}
+                  <p className="np-timestamp mt-0.5 flex flex-wrap items-center gap-x-2">
+                    {post.publishedAt && <span>{formatBanglaDate(post.publishedAt)}</span>}
+                    {post.viewCount > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" aria-hidden />
+                        {bnCount(post.viewCount)}
+                      </span>
+                    )}
+                  </p>
                 </div>
               </Link>
             );

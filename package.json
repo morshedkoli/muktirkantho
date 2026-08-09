@@ -12,7 +12,9 @@
     "prisma:push": "prisma db push",
     "db:seed": "node prisma/seed.mjs",
     "db:fix-slugs": "node scripts/backfill-post-slugs.mjs",
-    "db:fix-slugs:apply": "node scripts/backfill-post-slugs.mjs --apply"
+    "db:fix-slugs:apply": "node scripts/backfill-post-slugs.mjs --apply",
+    "db:fix-stats": "node scripts/backfill-daily-stats.mjs",
+    "db:fix-stats:apply": "node scripts/backfill-daily-stats.mjs --apply"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { formatBanglaDate } from "@/lib/bangla-date";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, Eye, MapPin } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
+import { bnCount } from "@/lib/bn-number";
 import { ImageWatermark, ImageWatermarkSimple } from "./image-watermark";
 import { PostImage } from "./post-image";
 
@@ -14,11 +15,29 @@ type NewsCardProps = {
     imageUrl: string | null;
     publishedAt: Date | null;
     author?: string | null;
+    /** Lifetime reads. Optional so callers projecting a lighter row still fit. */
+    viewCount?: number | null;
     category?: { name: string; slug: string } | null;
     district?: { name: string; slug: string } | null;
   };
   variant?: "default" | "compact" | "horizontal";
 };
+
+/**
+ * Reads, shown only once a story has any.
+ *
+ * "০ বার পড়া হয়েছে" on a freshly published article reads as a verdict on it
+ * rather than on the clock, so a story with no reads yet simply says nothing.
+ */
+function ReadCount({ count }: { count?: number | null }) {
+  if (!count || count <= 0) return null;
+  return (
+    <span className="flex items-center gap-1" title={`${bnCount(count)} বার পড়া হয়েছে`}>
+      <Eye className="h-3 w-3" aria-hidden />
+      {bnCount(count)}
+    </span>
+  );
+}
 
 export async function NewsCard({ post, variant = "default" }: NewsCardProps) {
   const postPath = getPostPath(post);
@@ -53,8 +72,11 @@ export async function NewsCard({ post, variant = "default" }: NewsCardProps) {
               {post.title}
             </Link>
           </h3>
-          {post.publishedAt && (
-            <p className="np-timestamp mt-1 text-[11px]">{formatBanglaDate(post.publishedAt)}</p>
+          {(post.publishedAt || post.viewCount) && (
+            <p className="np-timestamp mt-1 flex flex-wrap items-center gap-x-2.5 text-[11px]">
+              {post.publishedAt && <span>{formatBanglaDate(post.publishedAt)}</span>}
+              <ReadCount count={post.viewCount} />
+            </p>
           )}
         </div>
       </article>
@@ -96,6 +118,7 @@ export async function NewsCard({ post, variant = "default" }: NewsCardProps) {
                 {post.district.name}
               </Link>
             )}
+            <ReadCount count={post.viewCount} />
           </div>
           <h3 className="np-headline-sm leading-tight text-[var(--np-text-primary)] transition-colors group-hover:text-[var(--np-primary)]">
             <Link href={postPath}>{post.title}</Link>
@@ -173,6 +196,7 @@ export async function NewsCard({ post, variant = "default" }: NewsCardProps) {
               {post.district.name}
             </Link>
           )}
+          <ReadCount count={post.viewCount} />
         </div>
       </div>
     </article>

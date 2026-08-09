@@ -48,6 +48,7 @@ model Post {
   upazila  Upazila? @relation(fields: [upazilaId], references: [id])
 
   socialShares SocialShare[]
+  dailyStats   DailyPostStat[]
 
   @@index([categoryId])
   @@index([districtId])
@@ -107,9 +108,13 @@ model SocialShare {
 ///
 /// A daily aggregate rather than a row per hit: a regional news site takes
 /// enough traffic that per-view rows grow without bound and need pruning, and
-/// nothing on the analytics screen asks a question these three counters cannot
+/// nothing on the analytics screen asks a question these counters cannot
 /// answer. The cost is that individual visits are not replayable — there is no
 /// per-visitor history here, by design.
+///
+/// Every counter here is bucketed by *UTC* day, which is what `dayKey()`
+/// produces. The report reads them back in UTC too, so a day's numbers always
+/// mean the same 24 hours regardless of where the server runs.
 model DailyStat {
   id   String   @id @default(auto()) @map("_id") @db.ObjectId
   /// Midnight UTC of the day being counted.
@@ -121,11 +126,78 @@ model DailyStat {
   postReads Int @default(0)
   /// Distinct visitors, counted once per day by their visitor cookie.
   visitors  Int @default(0)
+  /// Of those, the ones that arrived without a visitor cookie at all — a first
+  /// visit rather than a return. `visitors - newVisitors` is the returning half.
+  newVisitors Int @default(0)
+
+  /// Device split of the day's page views, from the user agent. Three counters
+  /// rather than a related table: the set is closed and never grows.
+  mobileViews  Int @default(0)
+  tabletViews  Int @default(0)
+  desktopViews Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // No @@index([day]) — `@unique` above already builds that index, and
   // declaring it twice is a schema error.
+}
+
+/// Daily reads per article — what `Post.viewCount` cannot tell you.
+///
+/// The lifetime counter on the post answers "most read ever", which after a
+/// year is a list of last year's stories. This answers "most read *this week*",
+/// which is the question a newsroom actually acts on.
+model DailyPostStat {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// Midnight UTC, same key as DailyStat.
+  day    DateTime
+  postId String   @db.ObjectId
+  post   Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reads  Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([day, postId])
+  @@index([day])
+  @@index([postId])
+}
+
+/// Daily views per path — the "top pages" list, articles and listings alike.
+///
+/// Cardinality is bounded by the routes that exist, not by traffic: the beacon
+/// rejects anything that is not a plain public path before it reaches here.
+model DailyPathStat {
+  id    String   @id @default(auto()) @map("_id") @db.ObjectId
+  day   DateTime
+  path  String
+  views Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([day, path])
+  @@index([day])
+}
+
+/// Daily views per acquisition source, derived from the referrer.
+///
+/// Only *off-site* arrivals are recorded, plus `direct` for a view with no
+/// referrer at all. A reader clicking through from one article to the next is
+/// not a new source, and counting it as one would drown the real referrers.
+model DailyReferrerStat {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  day    DateTime
+  /// A known network's display name ("Facebook", "Google") or the bare
+  /// hostname, or the literal `direct`.
+  source String
+  views  Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([day, source])
+  @@index([day])
 }
 
 model Category {

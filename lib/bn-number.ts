@@ -17,6 +17,16 @@ export function bnNumber(value: number): string {
 }
 
 /**
+ * A fixed-point figure in Bangla digits — ২.৪ rather than 2.4.
+ *
+ * For derived ratios (reads per visitor and the like) where rounding to a whole
+ * number would throw away the only interesting part of the answer.
+ */
+export function bnDecimal(value: number, fractionDigits = 1): string {
+  return toBnDigits(value.toFixed(fractionDigits));
+}
+
+/**
  * Grouped figure using the South Asian convention the paper's readers use:
  * three digits, then pairs — ১২,৩৪,৫৬৭ rather than ১,২৩৪,৫৬৭.
  */

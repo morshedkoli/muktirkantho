@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { formatBanglaDateTime } from "@/lib/bangla-date";
-import { Clock, MapPin, ArrowRight } from "lucide-react";
+import { Clock, Eye, MapPin, ArrowRight } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
+import { bnCount } from "@/lib/bn-number";
 import { ImageWatermark } from "./image-watermark";
 import { PostImage } from "./post-image";
 import { cn } from "@/lib/cn";
@@ -14,6 +15,8 @@ type Post = {
   imageUrl: string | null;
   publishedAt: Date | null;
   author?: string | null;
+  /** Lifetime reads, shown only once the story has any. */
+  viewCount?: number | null;
   category?: { name: string; slug: string } | null;
   district?: { name: string; slug: string } | null;
 };
@@ -88,6 +91,12 @@ export async function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) 
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {post.district.name}
+              </span>
+            )}
+            {Boolean(post.viewCount && post.viewCount > 0) && (
+              <span className="flex items-center gap-1" title={`${bnCount(post.viewCount ?? 0)} বার পড়া হয়েছে`}>
+                <Eye className="h-3 w-3" />
+                {bnCount(post.viewCount ?? 0)}
               </span>
             )}
           </div>

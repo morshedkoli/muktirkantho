@@ -45,7 +45,14 @@ export function ViewTracker({ postId }: ViewTrackerProps) {
       // occasional double count beats losing the reader entirely.
     }
 
-    const body = JSON.stringify(postId ? { postId } : {});
+    // The referrer is only meaningful on the first page of a visit — after
+    // that it is the previous article on this same site, which the server
+    // discards as navigation rather than acquisition.
+    const body = JSON.stringify({
+      ...(postId ? { postId } : {}),
+      path: pathname,
+      referrer: typeof document !== "undefined" ? document.referrer : "",
+    });
 
     // `keepalive` so the request survives the reader clicking away immediately,
     // which is exactly when a bounce would otherwise go uncounted.
