@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { formatBanglaDateTime } from "@/lib/bangla-date";
 import { Clock, MapPin, ArrowRight } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
 import { ImageWatermark } from "./image-watermark";
+import { PostImage } from "./post-image";
 import { cn } from "@/lib/cn";
 
 type Post = {
@@ -25,7 +25,7 @@ type HeroNewsCardProps = {
 };
 
 /** Hero card — full-bleed image with bottom-gradient overlay for text */
-export function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) {
+export async function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) {
   const postPath = getPostPath(post);
 
   return (
@@ -39,16 +39,15 @@ export function HeroNewsCard({ post, size = "large" }: HeroNewsCardProps) {
           size === "large" ? "h-[340px] sm:h-[420px] md:h-[500px]" : "h-[240px] sm:h-[300px] md:h-[350px]"
         )}
       >
-        <Image
-          src={post.imageUrl || "/images/placeholder.jpg"}
+        <PostImage
+          src={post.imageUrl}
           alt={post.title}
-          fill
           sizes={
             size === "large"
               ? "(max-width: 640px) 100vw, (max-width: 1280px) 65vw, 800px"
               : "(max-width: 640px) 100vw, (max-width: 1280px) 35vw, 450px"
           }
-          className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+          className="transition-transform duration-700 group-hover:scale-[1.04]"
           // The lead story's photo is the LCP element on every page it appears
           // on, so it gets both the preload hint and a high fetch priority.
           priority={size === "large"}

@@ -4,6 +4,7 @@ import { Pagination } from "@/components/public/pagination";
 import { CommonSidebar } from "@/components/public/common-sidebar";
 import { getPublishedByUpazila } from "@/lib/news";
 import { toInt } from "@/lib/utils";
+import { decodePathSegment } from "@/lib/url-segment";
 
 export const revalidate = 60;
 
@@ -13,8 +14,12 @@ type Props = {
 };
 
 export default async function UpazilaPage({ params, searchParams }: Props) {
-  const { district, upazila } = await params;
+  const { district: rawDistrict, upazila: rawUpazila } = await params;
   const { page } = await searchParams;
+  // Upazila slugs can be Bangla, and Next leaves those percent-encoded in the
+  // param — the lookup compared `%E0%A6%…` against the stored name and 404'd.
+  const district = decodePathSegment(rawDistrict);
+  const upazila = decodePathSegment(rawUpazila);
   const data = await getPublishedByUpazila(district, upazila, toInt(page, 1));
   if (!data) notFound();
 

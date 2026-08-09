@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { formatBanglaDate } from "@/lib/bangla-date";
 import { Clock, MapPin } from "lucide-react";
 import { getPostPath } from "@/lib/post-url";
 import { ImageWatermark, ImageWatermarkSimple } from "./image-watermark";
+import { PostImage } from "./post-image";
 
 type NewsCardProps = {
   post: {
@@ -20,7 +20,7 @@ type NewsCardProps = {
   variant?: "default" | "compact" | "horizontal";
 };
 
-export function NewsCard({ post, variant = "default" }: NewsCardProps) {
+export async function NewsCard({ post, variant = "default" }: NewsCardProps) {
   const postPath = getPostPath(post);
 
   if (variant === "compact") {
@@ -32,12 +32,11 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
           aria-hidden="true"
           tabIndex={-1}
         >
-          <Image
-            src={post.imageUrl || "/images/placeholder.jpg"}
+          <PostImage
+            src={post.imageUrl}
             alt=""
-            fill
             sizes="92px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute right-1 bottom-1 z-10">
             <ImageWatermarkSimple size={16} />
@@ -66,12 +65,11 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
     return (
       <article className="group flex flex-col gap-4 sm:flex-row sm:gap-6">
         <Link href={postPath} className="relative aspect-video sm:aspect-[4/3] sm:w-1/3 overflow-hidden bg-[var(--np-background)]" aria-hidden="true" tabIndex={-1}>
-          <Image
-            src={post.imageUrl || "/images/placeholder.jpg"}
+          <PostImage
+            src={post.imageUrl}
             alt={post.title}
-            fill
             sizes="(max-width: 640px) 100vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="transition-transform duration-300 group-hover:scale-105"
           />
           {post.category && (
             <div className="absolute left-3 top-3">
@@ -122,12 +120,11 @@ export function NewsCard({ post, variant = "default" }: NewsCardProps) {
         aria-hidden="true"
         className="relative aspect-video overflow-hidden bg-[var(--np-newsprint-2)]"
       >
-        <Image
-          src={post.imageUrl || "/images/placeholder.jpg"}
+        <PostImage
+          src={post.imageUrl}
           alt=""
-          fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          className="transition-transform duration-500 group-hover:scale-[1.04]"
         />
         {/* Logo watermark */}
         <div className="absolute right-2 bottom-2 z-10">

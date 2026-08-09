@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ShareStatus, SocialPlatform } from "@prisma/client";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PostEditor } from "@/components/admin/post-editor";
 import { updatePostAction } from "@/app/(admin)/admin/actions";
@@ -19,21 +20,32 @@ export default async function AdminEditPostPage({ params }: Props) {
     notFound();
   }
 
-  const [post, categories, divisions, districts, upazilas, settings] = await Promise.all([
-    prisma.post.findUnique({ where: { id } }),
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
-    prisma.division.findMany({ orderBy: { name: "asc" } }),
-    prisma.district.findMany({ orderBy: { name: "asc" } }),
-    prisma.upazila.findMany({ orderBy: { name: "asc" } }),
-    getSiteSettings(),
-  ]);
+  const [post, categories, divisions, districts, upazilas, settings, facebookShare] =
+    await Promise.all([
+      prisma.post.findUnique({ where: { id } }),
+      prisma.category.findMany({ orderBy: { name: "asc" } }),
+      prisma.division.findMany({ orderBy: { name: "asc" } }),
+      prisma.district.findMany({ orderBy: { name: "asc" } }),
+      prisma.upazila.findMany({ orderBy: { name: "asc" } }),
+      getSiteSettings(),
+      prisma.socialShare.findUnique({
+        where: { postId_platform: { postId: id, platform: SocialPlatform.facebook } },
+        select: { status: true },
+      }),
+    ]);
 
   const socialPlatforms = [];
   if (settings?.facebookConnected) {
+    // The switch is an override in both directions, so a hardcoded `false` here
+    // suppressed the global auto-post setting — publishing a draft from this
+    // screen never reached Facebook. Follow the global setting instead, and
+    // only force it off for a post that already went out, where the honest
+    // state of the control is "nothing left to share".
+    const alreadyShared = facebookShare?.status === ShareStatus.shared;
     socialPlatforms.push({
       id: "facebook",
       label: settings.facebookPageName ? `Facebook · ${settings.facebookPageName}` : "Facebook",
-      defaultEnabled: false, // default to off on re-edit to avoid accidental re-share
+      defaultEnabled: alreadyShared ? false : (settings.facebookAutoPost ?? false),
     });
   }
 

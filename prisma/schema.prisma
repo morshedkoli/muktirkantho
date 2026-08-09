@@ -16,6 +16,14 @@ model Post {
   id              String     @id @default(auto()) @map("_id") @db.ObjectId
   title           String
   slug            String     @unique
+  /// Slugs this post used to live at.
+  ///
+  /// The slug is derived from the title, so editing a headline moves the
+  /// article's URL. Without this, every link already published to that URL —
+  /// Facebook posts, search results, someone's bookmark — would start 404ing.
+  /// The article route looks here and answers an old slug with a 308 to the
+  /// current one.
+  slugHistory     String[]   @default([])
   excerpt         String
   content         String
   imageUrl        String?
@@ -46,6 +54,8 @@ model Post {
   @@index([tags])
   @@index([publishedAt])
   @@index([status, publishedAt])
+  /// Old-slug lookups happen on every request that arrives at a stale URL.
+  @@index([slugHistory])
 }
 
 enum SocialPlatform {
@@ -91,6 +101,31 @@ model SocialShare {
   @@unique([postId, platform])
   @@index([status])
   @@index([createdAt])
+}
+
+/// One row per calendar day of site traffic.
+///
+/// A daily aggregate rather than a row per hit: a regional news site takes
+/// enough traffic that per-view rows grow without bound and need pruning, and
+/// nothing on the analytics screen asks a question these three counters cannot
+/// answer. The cost is that individual visits are not replayable — there is no
+/// per-visitor history here, by design.
+model DailyStat {
+  id   String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// Midnight UTC of the day being counted.
+  day  DateTime @unique
+
+  /// Any tracked page view, article or not.
+  pageViews Int @default(0)
+  /// Views that were an article being read.
+  postReads Int @default(0)
+  /// Distinct visitors, counted once per day by their visitor cookie.
+  visitors  Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // No @@index([day]) — `@unique` above already builds that index, and
+  // declaring it twice is a schema error.
 }
 
 model Category {

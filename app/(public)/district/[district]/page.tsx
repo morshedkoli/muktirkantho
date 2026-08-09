@@ -6,6 +6,7 @@ import { Pagination } from "@/components/public/pagination";
 import { CommonSidebar } from "@/components/public/common-sidebar";
 import { getPublishedByDistrict } from "@/lib/news";
 import { toInt } from "@/lib/utils";
+import { decodePathSegment } from "@/lib/url-segment";
 
 export const revalidate = 60;
 
@@ -15,8 +16,11 @@ type Props = {
 };
 
 export default async function DistrictPage({ params, searchParams }: Props) {
-  const { district } = await params;
+  const { district: rawDistrict } = await params;
   const { page } = await searchParams;
+  // Latin today, but a district added from the admin takes its slug from a
+  // Bangla name — decoded here so that one does not 404 the day it is created.
+  const district = decodePathSegment(rawDistrict);
   const data = await getPublishedByDistrict(district, toInt(page, 1));
   if (!data) notFound();
 

@@ -1,23 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Facebook, Twitter, Youtube, Instagram, Linkedin } from "lucide-react";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getBranding, SITE_NAME } from "@/lib/branding";
 import { getSocialMenuItems } from "@/lib/menus";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SiteLogo } from "./site-logo";
-
-function isValidLogoUrl(url: string | null | undefined): url is string {
-  if (!url || typeof url !== "string") return false;
-  const trimmed = url.trim();
-  if (!trimmed) return false;
-  if (trimmed.startsWith("/")) return true;
-  try {
-    const u = new URL(trimmed);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 type SocialIconComponent = React.ComponentType<{ className?: string }>;
 
@@ -47,7 +33,7 @@ function LogoImage({
   return (
     <Image
       src={src}
-      alt="মুক্তির কণ্ঠ"
+      alt={SITE_NAME}
       height={height}
       // Logos are wordmarks: width follows the aspect ratio, so we give next/image
       // a generous intrinsic width and let `h-full w-auto` do the real sizing.
@@ -67,18 +53,17 @@ function LogoImage({
 }
 
 export async function Masthead() {
-  let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
   let socialItems: Awaited<ReturnType<typeof getSocialMenuItems>> = [];
 
   try {
-    [settings, socialItems] = await Promise.all([
-      getSiteSettings(),
-      getSocialMenuItems(),
-    ]);
+    socialItems = await getSocialMenuItems();
   } catch {
-    settings = null;
     socialItems = [];
   }
+
+  // getBranding() swallows its own settings failure, so the masthead still
+  // renders (as type) when the database is unreachable.
+  const branding = await getBranding();
 
   const today = new Date();
 
@@ -96,12 +81,10 @@ export async function Masthead() {
     day: "numeric",
   }).format(today);
 
-  const lightLogo = isValidLogoUrl(settings?.logoUrl) ? settings!.logoUrl : null;
-  const darkLogo = isValidLogoUrl(settings?.iconUrl) ? settings!.iconUrl : null;
-  const hasBoth = Boolean(lightLogo && darkLogo);
-  const hasAny = Boolean(lightLogo || darkLogo);
-  const fallbackLogo = lightLogo ?? darkLogo;
-  const logoH = settings?.logoHeight ?? 52;
+  const { logoUrl, darkLogoUrl, hasDistinctDarkLogo, logoHeight: logoH } = branding;
+  // Either mark alone is enough to show one image; only a dedicated dark upload
+  // justifies shipping two and toggling them by theme.
+  const singleLogo = logoUrl ?? darkLogoUrl;
 
   return (
     <div className="bg-[var(--np-card)] border-b-2 border-[var(--np-primary)]">
@@ -126,15 +109,22 @@ export async function Masthead() {
             className="flex justify-center shrink-0"
             aria-label="মুক্তির কণ্ঠ — হোম"
           >
-            {hasBoth ? (
+            {hasDistinctDarkLogo && logoUrl && darkLogoUrl ? (
               <>
-                <LogoImage src={lightLogo!} height={logoH} className="block dark:hidden" />
-                <LogoImage src={darkLogo!} height={logoH} className="hidden dark:block" />
+                <LogoImage src={logoUrl} height={logoH} className="block dark:hidden" />
+                <LogoImage src={darkLogoUrl} height={logoH} className="hidden dark:block" />
               </>
-            ) : hasAny ? (
-              <LogoImage src={fallbackLogo!} height={logoH} />
+            ) : singleLogo ? (
+              <LogoImage src={singleLogo} height={logoH} />
             ) : (
-              <SiteLogo width={Math.round(logoH * 4)} height={logoH} />
+              // Nothing uploaded yet: set the name rather than draw a stand-in
+              // mark, so the masthead never claims a logo the site doesn't have.
+              <span
+                className="font-bold leading-none tracking-tight text-[var(--np-text-primary)]"
+                style={{ fontSize: `${Math.round(logoH * 0.62)}px` }}
+              >
+                {SITE_NAME}
+              </span>
             )}
           </Link>
 

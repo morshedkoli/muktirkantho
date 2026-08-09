@@ -1,21 +1,26 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { PostStatus, type Prisma } from "@prisma/client";
+import { notFound, permanentRedirect } from "next/navigation";
+import { PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { renderContent } from "@/lib/content";
-import { isObjectId } from "@/lib/object-id";
-import { getPostPath } from "@/lib/post-url";
+import { getPostPath, getEncodedPostPath } from "@/lib/post-url";
+import { pickCanonical, postPathFilters } from "@/lib/post-lookup";
+import { decodePathSegment } from "@/lib/url-segment";
 import { AD_PLACEMENTS } from "@/lib/ads";
 import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import { toInlineJsonLd } from "@/lib/seo";
+import { getBranding } from "@/lib/branding";
 import { AdSlot } from "@/components/public/ad-slot";
 import { CopyLinkButton } from "@/components/public/copy-link-button";
 import { ImageWatermark } from "@/components/public/image-watermark";
 import { CommonSidebar } from "@/components/public/common-sidebar";
+import { PostImage } from "@/components/public/post-image";
 import { PrintButton } from "@/components/public/print-button";
-import { Facebook, Twitter, MessageCircle } from "lucide-react";
+import { Facebook, Twitter, MessageCircle, Eye } from "lucide-react";
+import { bnCount } from "@/lib/bn-number";
+import { ViewTracker } from "@/components/public/view-tracker";
 
 export const revalidate = 60;
 
@@ -49,17 +54,30 @@ function getBanglaRelativeTime(date: Date): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const filters: Prisma.PostWhereInput[] = [{ slug }];
-  if (isObjectId(slug)) filters.push({ id: slug });
+  const { slug: rawSlug } = await params;
+  const slug = decodePathSegment(rawSlug);
 
-  const post = await prisma.post.findFirst({
-    where: { status: PostStatus.published, OR: filters },
-    include: { category: true },
-  });
-  if (!post || post.status !== PostStatus.published) return {};
+  const match = pickCanonical(
+    await prisma.post.findMany({
+      where: { status: PostStatus.published, OR: postPathFilters(slug) },
+      include: { category: true },
+      take: 2,
+    }),
+    slug,
+  );
+  if (!match) return {};
 
-  const canonical = getPostPath(post);
+  const { post } = match;
+  // Always the current slug, never the one that was requested — an old URL
+  // must point search engines at the address the article actually lives at.
+  const canonical = getEncodedPostPath(post);
+
+  // A post with no featured image used to be shared as a bare text link. The
+  // uploaded logo fills the preview card instead, which is what every other
+  // publication does with an imageless story.
+  const { postFallbackUrl } = await getBranding();
+  const shareImage = post.imageUrl || postFallbackUrl;
+
   return {
     title: post.metaTitle || post.title,
     description: post.metaDescription || post.excerpt,
@@ -68,7 +86,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.metaTitle || post.title,
       description: post.metaDescription || post.excerpt,
       url: canonical, type: "article",
-      ...(post.imageUrl ? { images: [post.imageUrl] } : {}),
+      ...(shareImage ? { images: [shareImage] } : {}),
       section: post.category?.name,
       publishedTime: post.publishedAt?.toISOString(),
     },
@@ -76,21 +94,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: post.metaTitle || post.title,
       description: post.metaDescription || post.excerpt,
-      ...(post.imageUrl ? { images: [post.imageUrl] } : {}),
+      ...(shareImage ? { images: [shareImage] } : {}),
     },
   };
 }
 
 export default async function NewsDetailPage({ params }: Props) {
-  const { slug } = await params;
-  const filters: Prisma.PostWhereInput[] = [{ slug }];
-  if (isObjectId(slug)) filters.push({ id: slug });
+  const { slug: rawSlug } = await params;
+  const slug = decodePathSegment(rawSlug);
 
-  const post = await prisma.post.findFirst({
-    where: { status: PostStatus.published, OR: filters },
-    include: { category: true, district: true, upazila: true },
-  });
-  if (!post) notFound();
+  const match = pickCanonical(
+    await prisma.post.findMany({
+      where: { status: PostStatus.published, OR: postPathFilters(slug) },
+      include: { category: true, district: true, upazila: true },
+      take: 2,
+    }),
+    slug,
+  );
+
+  if (!match) notFound();
+
+  // Reached by an old slug or a bare id. 308 rather than render, so the two
+  // addresses never compete in the index and shared links keep working.
+  if (!match.isCanonical) {
+    permanentRedirect(getEncodedPostPath(match.post));
+  }
+
+  const post = match.post;
 
   const related = await prisma.post.findMany({
     where: { id: { not: post.id }, status: PostStatus.published, OR: [{ categoryId: post.categoryId }, { tags: { hasSome: post.tags } }] },
@@ -113,7 +143,14 @@ export default async function NewsDetailPage({ params }: Props) {
   // Single split used for both video embed and inline ad positioning
   const { before: htmlBeforeEmbed, after: htmlAfterEmbed } = splitHtmlAtMiddleParagraph(html);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const postUrl = `${siteUrl}${getPostPath(post)}`;
+  // Encoded: this feeds the share buttons and the JSON-LD, both of which need
+  // a valid absolute URL rather than one with raw Bangla in the path.
+  const postUrl = `${siteUrl}${getEncodedPostPath(post)}`;
+
+  // `image` stays the article's own photo — structured data describes the
+  // story, and passing the masthead off as its illustration would be a lie to
+  // the crawler. The logo belongs on the publisher, where Google asks for it.
+  const { logoUrl: publisherLogo } = await getBranding();
 
   const jsonLd = {
     "@context": "https://schema.org", "@type": "NewsArticle",
@@ -121,7 +158,13 @@ export default async function NewsDetailPage({ params }: Props) {
     ...(post.imageUrl ? { image: [post.imageUrl] } : {}),
     datePublished: post.publishedAt?.toISOString(), dateModified: post.updatedAt.toISOString(),
     author: [{ "@type": "Person", name: post.author }],
-    publisher: { "@type": "Organization", name: "Muktir Kantho" },
+    publisher: {
+      "@type": "Organization",
+      name: "Muktir Kantho",
+      ...(publisherLogo
+        ? { logo: { "@type": "ImageObject", url: publisherLogo } }
+        : {}),
+    },
     description: post.metaDescription || post.excerpt, mainEntityOfPage: postUrl,
   };
 
@@ -130,6 +173,11 @@ export default async function NewsDetailPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-7xl px-3 sm:px-4 py-6 sm:py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toInlineJsonLd(jsonLd) }} />
+
+      {/* Records the read. Carries the post id, so this one beacon counts both
+          the article read and the page view — the layout's tracker stands down
+          on article routes. */}
+      <ViewTracker postId={post.id} />
 
       {/* Breadcrumb */}
       <nav className="mb-4 flex flex-wrap items-center gap-1 np-category text-[var(--np-text-secondary)]">
@@ -196,6 +244,18 @@ export default async function NewsDetailPage({ params }: Props) {
                     <div className="np-timestamp">{relativeTime}</div>
                   </div>
                 </div>
+
+                {/* Read count. Rendered from the stored counter, so it does not
+                    include the read being recorded right now — the beacon lands
+                    after this HTML is built, and on a cached page it may be a
+                    minute behind. Hidden until an article has actually been
+                    read: "০ জন পড়েছেন" makes a new story look ignored. */}
+                {post.viewCount > 0 && (
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--np-muted)]">
+                    <Eye className="h-3.5 w-3.5" aria-hidden />
+                    {bnCount(post.viewCount)} বার পড়া হয়েছে
+                  </span>
+                )}
 
                 {/* District label */}
                 {post.district && (
@@ -307,11 +367,9 @@ export default async function NewsDetailPage({ params }: Props) {
                   {related.map((item) => (
                     <Link key={item.id} href={getPostPath(item)}
                       className="group border border-[var(--np-border)] bg-[var(--np-card)] hover:border-[var(--np-primary)] transition-colors">
-                      {item.imageUrl && (
-                        <div className="relative aspect-[16/10] overflow-hidden bg-[var(--np-newsprint)]">
-                          <Image src={item.imageUrl} alt={item.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                        </div>
-                      )}
+                      <div className="relative aspect-[16/10] overflow-hidden bg-[var(--np-newsprint)]">
+                        <PostImage src={item.imageUrl} alt={item.title} sizes="(max-width: 640px) 100vw, 33vw" className="transition-transform duration-300 group-hover:scale-105" />
+                      </div>
                       <div className="p-3">
                         {item.category && (
                           <span className="inline-block mb-1 rounded-full bg-[var(--np-primary)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--np-on-primary)]">

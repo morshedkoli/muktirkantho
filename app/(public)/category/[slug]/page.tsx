@@ -8,6 +8,7 @@ import { Pagination } from "@/components/public/pagination";
 import { CommonSidebar } from "@/components/public/common-sidebar";
 import { getPublishedByCategory as _getPublishedByCategory } from "@/lib/news";
 import { toInt } from "@/lib/utils";
+import { decodePathSegment } from "@/lib/url-segment";
 
 const getPublishedByCategory = cache(_getPublishedByCategory);
 
@@ -19,7 +20,8 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodePathSegment(rawSlug);
   const data = await getPublishedByCategory(slug, 1);
   if (!data) return {};
   return {
@@ -30,9 +32,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
   const { page } = await searchParams;
 
+  // Same reason as districts: category slugs are Latin today, but nothing
+  // stops an editor creating one from a Bangla name.
+  const slug = decodePathSegment(rawSlug);
   const data = await getPublishedByCategory(slug, toInt(page, 1));
   if (!data) notFound();
 

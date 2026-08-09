@@ -17,6 +17,7 @@ import { hashPassword, safeEqual, verifyPassword } from "@/lib/password";
 import { generatePostSeo } from "@/lib/seo";
 import { deriveExcerpt, resolveCurrentAuthor } from "@/lib/post-payload";
 import { makeSlug } from "@/lib/utils";
+import { fallbackSlug } from "@/lib/slug";
 import { loginSchema, postSchema, taxonomySchema } from "@/lib/validators";
 import { verifyCsrf } from "@/lib/csrf";
 import {
@@ -181,8 +182,20 @@ async function maybeAutoShare(postId: string, status: PostStatus, formData: Form
   await autoShareOnPublish(postId);
 }
 
+/**
+ * A slug derived from the title, unique across posts.
+ *
+ * The fallback used to be the literal "post", which every Bangla title hit
+ * because the old generator could not represent them — that is where
+ * `post-2` … `post-37` came from. A title that still yields nothing (emoji or
+ * punctuation only) now gets a dated slug of its own rather than joining a
+ * numbered queue behind every other such post.
+ *
+ * Uniqueness also has to dodge other posts' *history*: handing out a slug that
+ * an older article redirects from would make the two fight over one URL.
+ */
 async function resolveUniquePostSlug(title: string, excludePostId?: string) {
-  const baseSlug = makeSlug(title) || "post";
+  const baseSlug = makeSlug(title) || fallbackSlug();
 
   let candidate = baseSlug;
   let suffix = 2;
@@ -190,7 +203,7 @@ async function resolveUniquePostSlug(title: string, excludePostId?: string) {
   while (true) {
     const existing = await prisma.post.findFirst({
       where: {
-        slug: candidate,
+        OR: [{ slug: candidate }, { slugHistory: { has: candidate } }],
         ...(excludePostId ? { id: { not: excludePostId } } : {}),
       },
       select: { id: true },
@@ -203,6 +216,19 @@ async function resolveUniquePostSlug(title: string, excludePostId?: string) {
     candidate = `${baseSlug}-${suffix}`;
     suffix += 1;
   }
+}
+
+/**
+ * The slug history to store when a save moves the article's URL.
+ *
+ * The previous slug is appended so the old address keeps resolving. If the
+ * title was edited back to something it used before, that slug is dropped from
+ * the history — it is the live URL again, and leaving it in both places would
+ * make the page redirect to itself.
+ */
+function nextSlugHistory(previousSlug: string, nextSlug: string, history: string[]): string[] {
+  if (previousSlug === nextSlug) return history;
+  return [...new Set([...history, previousSlug])].filter((entry) => entry !== nextSlug);
 }
 
 export async function loginAdminAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
@@ -326,13 +352,19 @@ export async function updatePostAction(
   }
 
   const safe = parsed.data;
-  const existing = await prisma.post.findUnique({ where: { id: postId }, select: { publishedAt: true } });
+  const existing = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { publishedAt: true, slug: true, slugHistory: true },
+  });
   const slug = await resolveUniquePostSlug(safe.title, postId);
   const updated = await prisma.post.update({
     where: { id: postId },
     data: {
       ...safe,
       slug,
+      ...(existing
+        ? { slugHistory: nextSlugHistory(existing.slug, slug, existing.slugHistory) }
+        : {}),
       excerpt: safe.excerpt ?? safe.metaDescription,
       imageUrl: safe.imageUrl || null,
       imagePublicId: safe.imagePublicId || null,
@@ -348,6 +380,11 @@ export async function updatePostAction(
   revalidateTag("posts", {});
   revalidatePath("/");
   revalidatePath(`/news/${slug}`);
+  // The old URL now serves a redirect, so its cached copy of the article has
+  // to go too — otherwise the stale page keeps rendering at the stale address.
+  if (existing && existing.slug !== slug) {
+    revalidatePath(`/news/${existing.slug}`);
+  }
   revalidatePath("/admin/posts");
   revalidatePath("/admin/social/queue");
   redirect("/admin/posts?notice=Post%20updated&type=success");
@@ -421,10 +458,31 @@ export async function createDistrictAction(
   });
   if (!parsed.success) return { status: "error", message: "District name is not valid." };
 
+  const name = parsed.data.name.trim();
+  const slug = parsed.data.slug ? makeSlug(parsed.data.slug) : makeSlug(parsed.data.name);
+
+  // Checked on name as well as slug. Only `slug` is unique in the schema, so
+  // two districts called চট্টগ্রাম under different slugs inserted happily and
+  // then appeared twice in the location filter — that is exactly how the
+  // duplicates this guard prevents came to exist.
+  const clash = await prisma.district.findFirst({
+    where: { OR: [{ name }, { slug }] },
+    select: { name: true, slug: true },
+  });
+  if (clash) {
+    return {
+      status: "error",
+      message:
+        clash.name === name
+          ? `A district named "${name}" already exists.`
+          : `The address "${slug}" is already used by "${clash.name}".`,
+    };
+  }
+
   await prisma.district.create({
     data: {
-      name: parsed.data.name,
-      slug: parsed.data.slug ? makeSlug(parsed.data.slug) : makeSlug(parsed.data.name),
+      name,
+      slug,
       divisionId: formData.get("divisionId")?.toString() || null,
     },
   });
@@ -446,12 +504,26 @@ export async function createDivisionAction(
   });
   if (!parsed.success) return { status: "error", message: "Division name is not valid." };
 
-  await prisma.division.create({
-    data: {
-      name: parsed.data.name,
-      slug: parsed.data.slug ? makeSlug(parsed.data.slug) : makeSlug(parsed.data.name)
-    },
+  const name = parsed.data.name.trim();
+  const slug = parsed.data.slug ? makeSlug(parsed.data.slug) : makeSlug(parsed.data.name);
+
+  // Same guard as districts: a second চট্টগ্রাম division under the slug
+  // `chattogram` is what split the districts across two parents.
+  const clash = await prisma.division.findFirst({
+    where: { OR: [{ name }, { slug }] },
+    select: { name: true, slug: true },
   });
+  if (clash) {
+    return {
+      status: "error",
+      message:
+        clash.name === name
+          ? `A division named "${name}" already exists.`
+          : `The address "${slug}" is already used by "${clash.name}".`,
+    };
+  }
+
+  await prisma.division.create({ data: { name, slug } });
 
   revalidatePath("/");
   revalidatePath("/admin/divisions");

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PostStatus } from "@prisma/client";
 import { subDays, format, startOfDay } from "date-fns";
-import { Eye, BookOpen, TrendingUp, FileText, MapPin, Trophy } from "lucide-react";
+import { Eye, BookOpen, TrendingUp, FileText, MapPin, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { bnNumber, bnCount } from "@/lib/bn-number";
 import { getPostPath } from "@/lib/post-url";
@@ -27,10 +27,11 @@ export default async function AnalyticsPage() {
     districts,
     categoryViews,
     districtViews,
+    dailyStats,
   ] = await Promise.all([
     prisma.post.count(),
     prisma.post.count({ where: { status: PostStatus.published } }),
-    prisma.post.aggregate({ _sum: { viewCount: true }, _max: { viewCount: true } }),
+    prisma.post.aggregate({ _sum: { viewCount: true } }),
     prisma.post.findMany({
       where: { status: PostStatus.published },
       orderBy: { viewCount: "desc" },
@@ -62,31 +63,48 @@ export default async function AnalyticsPage() {
       _sum: { viewCount: true },
       _count: true,
     }),
+    prisma.dailyStat.findMany({
+      where: { day: { gte: rangeStart } },
+      orderBy: { day: "asc" },
+    }),
   ]);
 
   const totalViews = viewAggregate._sum.viewCount ?? 0;
-  const maxPostViews = viewAggregate._max.viewCount ?? 0;
   const avgViews = postsCount > 0 ? Math.round(totalViews / postsCount) : 0;
 
-  /* Daily bins — publishing volume and the views those posts have since earned.
-     Not a visits-per-day timeline: the schema stores a lifetime counter per
-     post, so anything labelled "views on this day" would be a fabrication. */
+  /* Daily bins. `posts` is publishing volume; `reads` and `visitors` are real
+     per-day traffic from DailyStat, which the beacon writes on every view.
+     This used to carry a lifetime per-post counter under a per-day label —
+     honest only because the comment admitted it. Days before tracking existed
+     simply read zero, which is the truth about them. */
+  const statByDay = new Map(
+    dailyStats.map((row) => [startOfDay(new Date(row.day)).getTime(), row]),
+  );
+
   const dayBins = Array.from({ length: RANGE_DAYS }, (_, i) => {
     const date = startOfDay(subDays(today, RANGE_DAYS - 1 - i));
-    return { date, posts: 0, views: 0 };
+    const stat = statByDay.get(date.getTime());
+    return {
+      date,
+      posts: 0,
+      reads: stat?.postReads ?? 0,
+      visitors: stat?.visitors ?? 0,
+      pageViews: stat?.pageViews ?? 0,
+    };
   });
 
   for (const post of rangePosts) {
     const day = startOfDay(new Date(post.createdAt)).getTime();
     const bin = dayBins.find((b) => b.date.getTime() === day);
-    if (bin) {
-      bin.posts += 1;
-      bin.views += post.viewCount ?? 0;
-    }
+    if (bin) bin.posts += 1;
   }
 
   const maxDayPosts = Math.max(...dayBins.map((b) => b.posts), 1);
+  const maxDayReads = Math.max(...dayBins.map((b) => b.reads), 1);
   const rangeTotalPosts = dayBins.reduce((sum, b) => sum + b.posts, 0);
+  const rangeReads = dayBins.reduce((sum, b) => sum + b.reads, 0);
+  const rangeVisitors = dayBins.reduce((sum, b) => sum + b.visitors, 0);
+  const hasTraffic = dayBins.some((b) => b.pageViews > 0);
 
   const categoryRows = categoryViews
     .map((row) => ({
@@ -130,11 +148,11 @@ export default async function AnalyticsPage() {
           icon={BookOpen}
         />
         <StatTile
-          label="সর্বোচ্চ পাঠ"
-          value={bnCount(maxPostViews)}
-          hint="একটি পোস্টে"
+          label={`পাঠক (${bnNumber(RANGE_DAYS)} দিন)`}
+          value={bnCount(rangeVisitors)}
+          hint={`${bnCount(rangeReads)} বার সংবাদ পড়া হয়েছে`}
           tone="accent"
-          icon={Trophy}
+          icon={Users}
         />
         <StatTile
           label="প্রকাশিত পোস্ট"
@@ -144,6 +162,42 @@ export default async function AnalyticsPage() {
           icon={FileText}
         />
       </div>
+
+      {/* Real per-day traffic. */}
+      <Panel
+        kicker={`গত ${bnNumber(RANGE_DAYS)} দিন`}
+        title="দৈনিক পাঠ ও পাঠক"
+        description={
+          hasTraffic
+            ? `${bnCount(rangeReads)} পাঠ, ${bnCount(rangeVisitors)} জন পাঠক`
+            : "এখনো কোনো ট্র্যাফিক রেকর্ড হয়নি — সাইট ভিজিট হলে এখানে দেখা যাবে"
+        }
+      >
+        <div className="flex h-40 items-end gap-1.5">
+          {dayBins.map((bin) => (
+            <div
+              key={bin.date.toISOString()}
+              className="group flex h-full flex-1 flex-col justify-end"
+              title={`${format(bin.date, "d MMM")} — ${bin.reads} পাঠ, ${bin.visitors} পাঠক`}
+            >
+              <div
+                style={{ height: `${Math.max(3, (bin.reads / maxDayReads) * 100)}%` }}
+                className={cn(
+                  "w-full rounded-t-[3px] transition-colors",
+                  bin.reads > 0
+                    ? "bg-[var(--ad-accent)] group-hover:bg-[var(--ad-text-primary)]"
+                    : "bg-[var(--ad-inset)]",
+                )}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="adm-label mt-3 flex justify-between border-t border-[var(--ad-border)] pt-2.5">
+          <span>{format(rangeStart, "d MMM")}</span>
+          <span>{format(subDays(today, 6), "d MMM")}</span>
+          <span>{format(today, "d MMM")}</span>
+        </div>
+      </Panel>
 
       {/* Publishing cadence */}
       <Panel
@@ -156,7 +210,7 @@ export default async function AnalyticsPage() {
             <div
               key={bin.date.toISOString()}
               className="group flex h-full flex-1 flex-col justify-end"
-              title={`${format(bin.date, "d MMM")} — ${bin.posts}টি পোস্ট, ${bin.views} পাঠ`}
+              title={`${format(bin.date, "d MMM")} — ${bin.posts}টি পোস্ট`}
             >
               <div
                 style={{ height: `${Math.max(3, (bin.posts / maxDayPosts) * 100)}%` }}

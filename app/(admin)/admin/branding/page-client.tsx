@@ -2,8 +2,8 @@
 
 import { useActionState, useState, useRef } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { SiteLogo, SiteLogoDark, SiteIcon, SiteFavicon } from "@/components/public/site-logo";
 import { saveBrandingSettingsAction } from "@/app/(admin)/admin/actions";
+import { SITE_NAME } from "@/lib/site-name";
 import type { AdminActionState } from "@/app/(admin)/admin/actions";
 import { AlertCircle, Upload, X, Loader2 } from "lucide-react";
 
@@ -132,7 +132,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
     previewSize,
     currentUrl,
     currentPublicId,
-    defaultComponent,
+    usedFor,
   }: {
     type: "logo" | "icon" | "favicon";
     title: string;
@@ -141,7 +141,8 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
     previewSize: { width: number; height: number };
     currentUrl: string;
     currentPublicId: string;
-    defaultComponent: React.ReactNode;
+    /** Where this asset shows up once uploaded — and what goes missing if it isn't. */
+    usedFor: string;
   }) => {
     const status = uploadStatus[type];
     const inputRef = type === "logo" ? logoInputRef : type === "icon" ? iconInputRef : faviconInputRef;
@@ -198,35 +199,35 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           )}
         </div>
 
-        {/* Preview Area */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-          {currentUrl ? (
-            <div className="relative p-4 rounded-lg bg-[var(--ad-background)] border border-[var(--ad-border)]">
-              <button
-                type="button"
-                onClick={() => handleRemoveImage(type)}
-                className="absolute -top-2 -right-2 p-1 rounded-full bg-[var(--ad-error)] text-[var(--ad-on-error)] hover:bg-[var(--ad-error)]/80 transition-colors shadow-md"
-                title="Remove image"
-              >
-                <X className="h-3 w-3" />
-              </button>
-              <p className="text-xs text-[var(--ad-text-secondary)] mb-2">Current {title}:</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentUrl}
-                alt={`Current ${title}`}
-                width={previewSize.width}
-                height={previewSize.height}
-                className="rounded"
-              />
-            </div>
-          ) : null}
-
-          <div className="p-4 rounded-lg bg-[var(--ad-background)] border border-[var(--ad-border)]">
-            <p className="text-xs text-[var(--ad-text-secondary)] mb-2">Default:</p>
-            {defaultComponent}
+        {/* Preview Area — the upload itself, or an honest empty state. There is
+            no bundled default to fall back on any more, so "nothing uploaded"
+            has to look like nothing uploaded. */}
+        {currentUrl ? (
+          <div className="relative inline-block p-4 rounded-lg bg-[var(--ad-background)] border border-[var(--ad-border)]">
+            <button
+              type="button"
+              onClick={() => handleRemoveImage(type)}
+              className="absolute -top-2 -right-2 p-1 rounded-full bg-[var(--ad-error)] text-[var(--ad-on-error)] hover:bg-[var(--ad-error)]/80 transition-colors shadow-md"
+              title="Remove image"
+            >
+              <X className="h-3 w-3" />
+            </button>
+            <p className="text-xs text-[var(--ad-text-secondary)] mb-2">In use:</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={currentUrl}
+              alt={`Current ${title}`}
+              width={previewSize.width}
+              height={previewSize.height}
+              className="rounded"
+            />
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-[var(--ad-border-strong)] bg-[var(--ad-background)] px-4 py-3">
+            <p className="text-sm font-medium text-[var(--ad-text-primary)]">Not set</p>
+            <p className="mt-0.5 text-xs text-[var(--ad-text-secondary)]">{usedFor}</p>
+          </div>
+        )}
 
         {/* Hidden inputs for form submission */}
         <input type="hidden" name={`${type}Url`} value={currentUrl} />
@@ -317,7 +318,13 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
                     style={{ height: `${form.logoHeight}px`, width: "auto" }}
                   />
                 ) : (
-                  <SiteLogo width={200} height={form.logoHeight} />
+                  // Exactly what the live site renders with no logo uploaded.
+                  <span
+                    className="font-bold leading-none tracking-tight text-[#17171a]"
+                    style={{ fontSize: `${Math.round(form.logoHeight * 0.62)}px` }}
+                  >
+                    {SITE_NAME}
+                  </span>
                 )}
               </div>
             </div>
@@ -346,7 +353,12 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
                     style={{ height: `${form.logoHeight}px`, width: "auto", opacity: 0.8 }}
                   />
                 ) : (
-                  <SiteLogoDark width={200} height={form.logoHeight} />
+                  <span
+                    className="font-bold leading-none tracking-tight text-white"
+                    style={{ fontSize: `${Math.round(form.logoHeight * 0.62)}px` }}
+                  >
+                    {SITE_NAME}
+                  </span>
                 )}
               </div>
             </div>
@@ -362,7 +374,7 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           previewSize={{ width: 200, height: 50 }}
           currentUrl={form.logoUrl}
           currentPublicId={form.logoPublicId}
-          defaultComponent={<SiteLogo width={160} height={40} />}
+          usedFor="Until you upload one, the masthead and footer set the site name as text instead."
         />
 
         {/* Dark-mode logo (stored in iconUrl) */}
@@ -374,40 +386,50 @@ export default function BrandingPageClient({ settings }: { settings: SiteSetting
           previewSize={{ width: 200, height: 50 }}
           currentUrl={form.iconUrl}
           currentPublicId={form.iconPublicId}
-          defaultComponent={<SiteIcon size={48} />}
+          usedFor="Without it the light-mode logo is used in dark mode, flattened to white."
         />
 
         {/* Favicon Upload */}
         <UploadSection
           type="favicon"
           title="Favicon"
-          description="Browser tab icon and bookmark icon."
+          description="Browser tab icon, bookmark icon, and the credit stamp on article photos."
           recommendedSize="32x32px"
           previewSize={{ width: 32, height: 32 }}
           currentUrl={form.faviconUrl}
           currentPublicId={form.faviconPublicId}
-          defaultComponent={<SiteFavicon size={32} />}
+          usedFor="Falls back to the dark then light logo. With none of the three, the tab shows the browser's own icon and photos carry a text-only credit."
         />
 
-        {/* Default Logos Section */}
+        {/* Where these land beyond the header — the post fallback in particular
+            is easy to miss, and it is the one an editor notices first. */}
         <section className="rounded-xl border border-[var(--ad-border)] bg-[var(--ad-card)] p-6 shadow-[var(--ad-shadow)]">
-          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)] mb-4">
-            Default SVG Logos (Auto Dark Mode)
+          <h2 className="text-lg font-semibold text-[var(--ad-text-primary)]">
+            Posts without a featured image
           </h2>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Light Mode</h3>
-              <div className="bg-[var(--ad-card)] rounded-lg p-4 border border-[var(--ad-border)] inline-block">
-                <SiteLogo width={160} height={44} />
-              </div>
+          <p className="mt-1 max-w-prose text-sm text-[var(--ad-text-secondary)]">
+            Your logo stands in for the photo on news cards and hero blocks —
+            centred on a newsprint panel, not cropped to fill. The light-mode
+            logo is used first, then the dark logo, then the favicon.
+          </p>
+          <div className="mt-4 flex items-center gap-4">
+            <div className="relative flex aspect-video w-56 items-center justify-center overflow-hidden rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] p-[10%]">
+              {form.logoUrl || form.iconUrl || form.faviconUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.logoUrl || form.iconUrl || form.faviconUrl}
+                  alt="Post fallback preview"
+                  className="max-h-full max-w-full object-contain opacity-45"
+                />
+              ) : (
+                <span className="text-sm font-bold text-[var(--ad-text-secondary)]/60">
+                  {SITE_NAME}
+                </span>
+              )}
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-[var(--ad-text-secondary)] mb-3">Dark Mode</h3>
-              <div className="bg-[var(--ad-ink)] rounded-lg p-4 border border-[var(--ad-border)] inline-block">
-                <SiteLogoDark width={160} height={44} />
-              </div>
-            </div>
+            <p className="text-xs text-[var(--ad-text-secondary)]">
+              Preview at card size.
+            </p>
           </div>
         </section>
 

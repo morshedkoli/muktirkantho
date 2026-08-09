@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { PostStatus } from "@prisma/client";
 import { AdSlot } from "@/components/public/ad-slot";
+import { PostImage } from "@/components/public/post-image";
 import { AD_PLACEMENTS } from "@/lib/ads";
 import { getPostPath } from "@/lib/post-url";
 import { formatBanglaDate } from "@/lib/bangla-date";
@@ -93,19 +93,9 @@ export async function CommonSidebar() {
                   {index + 1}
                 </span>
                 {/* Thumbnail */}
-                {post.imageUrl ? (
-                  <div className="relative w-[64px] h-[48px] shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
-                    <Image
-                      src={post.imageUrl}
-                      alt={post.title}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-[64px] h-[48px] shrink-0 bg-[var(--np-newsprint)]" />
-                )}
+                <div className="relative w-[64px] h-[48px] shrink-0 overflow-hidden bg-[var(--np-newsprint)]">
+                  <PostImage src={post.imageUrl} alt={post.title} sizes="64px" />
+                </div>
                 {/* Title + date */}
                 <div className="flex-1 min-w-0">
                   <h4 className="text-xs font-semibold leading-snug text-[var(--np-text-primary)] group-hover:text-[var(--np-primary)] transition-colors line-clamp-2">

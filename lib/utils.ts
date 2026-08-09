@@ -1,12 +1,9 @@
-import slugify from "slugify";
-
-export function makeSlug(value: string) {
-  return slugify(value, {
-    lower: true,
-    strict: true,
-    trim: true,
-  });
-}
+/**
+ * Re-exported so the many existing `makeSlug` callers keep working. The
+ * implementation moved to lib/slug.ts when it had to stop discarding every
+ * non-Latin title.
+ */
+export { makeSlug } from "@/lib/slug";
 
 export function toInt(value: string | null | undefined, fallback = 1) {
   const parsed = Number.parseInt(value ?? "", 10);

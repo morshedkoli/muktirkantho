@@ -10,7 +10,7 @@ import {
   Linkedin,
 } from "lucide-react";
 import { getSiteSettings } from "@/lib/site-settings";
-import { SiteLogo } from "./site-logo";
+import { getBranding, SITE_NAME } from "@/lib/branding";
 import {
   getFooterMenuItems,
   getFooterBottomMenuItems,
@@ -75,6 +75,10 @@ export async function Footer() {
   const contactPhone = settings?.contactPhone ?? "+880 1234-567890";
   const contactEmail = settings?.contactEmail ?? "editor@muktirkantho.com";
 
+  // The footer sits on the dark surface, so it wants the dark mark first.
+  const { darkLogoUrl, logoUrl, hasDistinctDarkLogo } = await getBranding();
+  const footerLogo = darkLogoUrl ?? logoUrl;
+
   const displayFooterLinks =
     footerItems.length > 0 ? footerItems : DEFAULT_FOOTER_LINKS;
   const displayBottomLinks =
@@ -89,22 +93,27 @@ export async function Footer() {
           {/* Column 1: About */}
           <div className="space-y-4">
             <div>
-              {settings?.logoUrl ? (
+              {footerLogo ? (
                 // Was a raw <img> of the full-size Cloudinary PNG. React hoists
                 // a preload for those during SSR, so every page pulled the
                 // unoptimized original in addition to the masthead's optimized
                 // copy — for a 40px-tall mark below the fold.
                 <Image
-                  src={settings.logoUrl}
-                  alt="মুক্তির কণ্ঠ"
+                  src={footerLogo}
+                  alt={SITE_NAME}
                   width={200}
                   height={40}
                   sizes="200px"
                   loading="lazy"
-                  className="h-10 w-auto brightness-0 invert"
+                  // The footer is always dark. A dedicated dark mark was drawn
+                  // for that and is used as uploaded; only the light mark needs
+                  // flattening to white, which costs it its colours.
+                  className={`h-10 w-auto${hasDistinctDarkLogo ? "" : " brightness-0 invert"}`}
                 />
               ) : (
-                <SiteLogo width={140} height={40} className="brightness-0 invert" />
+                <span className="text-2xl font-bold leading-none tracking-tight text-[var(--np-footer-text)]">
+                  {SITE_NAME}
+                </span>
               )}
             </div>
             <p className="text-sm leading-relaxed text-[var(--np-footer-muted)]">

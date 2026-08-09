@@ -11,7 +11,8 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "db:seed": "node prisma/seed.mjs",
-    "db:fix-slugs": "node prisma/fix-post-slugs.mjs"
+    "db:fix-slugs": "node scripts/backfill-post-slugs.mjs",
+    "db:fix-slugs:apply": "node scripts/backfill-post-slugs.mjs --apply"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getEncodedPostPath } from "@/lib/post-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const [posts, categories, districts] = await Promise.all([
-    prisma.post.findMany({ where: { status: PostStatus.published }, select: { slug: true, updatedAt: true } }),
+    prisma.post.findMany({ where: { status: PostStatus.published }, select: { id: true, slug: true, updatedAt: true } }),
     prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
     prisma.district.findMany({ select: { slug: true, updatedAt: true } }),
   ]);
@@ -14,7 +15,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/`, changeFrequency: "hourly", priority: 1 },
     { url: `${base}/search`, changeFrequency: "daily", priority: 0.6 },
     ...posts.map((post) => ({
-      url: `${base}/news/${post.slug}`,
+      // Percent-encoded: a sitemap carries raw URL strings, and Bangla slugs
+      // have to be escaped to be valid ones.
+      url: `${base}${getEncodedPostPath(post)}`,
       lastModified: post.updatedAt,
       changeFrequency: "daily" as const,
       priority: 0.9,

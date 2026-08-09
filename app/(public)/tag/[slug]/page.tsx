@@ -5,6 +5,7 @@ import { Pagination } from "@/components/public/pagination";
 import { CommonSidebar } from "@/components/public/common-sidebar";
 import { getPublishedByTag } from "@/lib/news";
 import { toInt } from "@/lib/utils";
+import { decodePathSegment } from "@/lib/url-segment";
 
 export const revalidate = 60;
 
@@ -13,24 +14,14 @@ type Props = {
   searchParams: Promise<{ page?: string }>;
 };
 
-/**
- * Tags are stored as free text (`পদ্মা সেতু`), not slugs, so they arrive
- * percent-encoded in the path. Without decoding, the DB lookup compares against
- * `%E0%A6%AA…` and every multi-byte or spaced tag returns nothing — and the
- * heading rendered the raw escape sequence.
- */
-function decodeTag(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
 export default async function TagPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const { page } = await searchParams;
-  const tag = decodeTag(slug);
+  // Tags are stored as free text (`পদ্মা সেতু`), not slugs, so they arrive
+  // percent-encoded. This used to be a local decoder here; it is shared now
+  // because every route with a non-Latin segment needs the same treatment,
+  // including the NFC pass this one was missing.
+  const tag = decodePathSegment(slug);
   const data = await getPublishedByTag(tag, toInt(page, 1));
 
   return (

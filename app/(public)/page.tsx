@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { formatBanglaTime } from "@/lib/bangla-date";
 import { AdSlot } from "@/components/public/ad-slot";
 import { HeroNewsCard } from "@/components/public/hero-news-card";
+import { PostImage } from "@/components/public/post-image";
 import { LocationFilter } from "@/components/public/location-filter";
 import { NewsCard } from "@/components/public/news-card";
 import { SectionHeading } from "@/components/public/section-heading";
@@ -158,11 +158,9 @@ export default async function HomePage() {
                           {index + 1}
                         </span>
 
-                        {post.imageUrl && (
-                          <div className="relative h-12 w-16 shrink-0 overflow-hidden bg-[var(--np-newsprint-2)]">
-                            <Image src={post.imageUrl} alt="" fill sizes="64px" className="object-cover" />
-                          </div>
-                        )}
+                        <div className="relative h-12 w-16 shrink-0 overflow-hidden bg-[var(--np-newsprint-2)]">
+                          <PostImage src={post.imageUrl} alt="" sizes="64px" />
+                        </div>
 
                         <div className="min-w-0 flex-1">
                           {post.publishedAt && (

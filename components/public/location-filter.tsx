@@ -50,8 +50,13 @@ export function LocationFilter({ divisions }: LocationFilterProps) {
 
   return (
     <div className="rounded-xl border border-[var(--np-border)] bg-[var(--np-card)] p-5 shadow-[var(--np-shadow)]">
-      <h3 className="np-headline-sm text-[var(--np-text-primary)]">Filter by Location</h3>
-      <p className="mt-1 text-xs text-[var(--np-text-secondary)]">Browse news by division, district and upazila.</p>
+      {/* "এলাকা" rather than "বিভাগ" in the heading: the categories panel
+          directly below already uses বিভাগসমূহ, and repeating the word for two
+          unrelated things in one rail reads as a mistake. */}
+      <h3 className="np-headline-sm text-[var(--np-text-primary)]">এলাকা অনুযায়ী খবর</h3>
+      <p className="mt-1 text-xs text-[var(--np-text-secondary)]">
+        বিভাগ, জেলা ও উপজেলা অনুযায়ী সংবাদ দেখুন।
+      </p>
 
       <div className="mt-4 space-y-3">
         <select
@@ -64,7 +69,7 @@ export function LocationFilter({ divisions }: LocationFilterProps) {
           className="w-full rounded-md border border-[var(--np-border)] bg-[var(--np-background)] px-3 py-2.5 text-sm text-[var(--np-text-primary)] focus:border-[var(--np-primary)] focus:outline-none"
           style={{ colorScheme: "dark light" }}
         >
-          <option value="">Select Division</option>
+          <option value="">বিভাগ নির্বাচন করুন</option>
           {divisions.map((division) => (
             <option key={division.id} value={division.slug} className="bg-[var(--np-card)] text-[var(--np-text-primary)]">
               {division.name}
@@ -82,7 +87,7 @@ export function LocationFilter({ divisions }: LocationFilterProps) {
           className="w-full rounded-md border border-[var(--np-border)] bg-[var(--np-background)] px-3 py-2.5 text-sm text-[var(--np-text-primary)] disabled:cursor-not-allowed disabled:opacity-60 focus:border-[var(--np-primary)] focus:outline-none"
           style={{ colorScheme: "dark light" }}
         >
-          <option value="">Select District</option>
+          <option value="">জেলা নির্বাচন করুন</option>
           {(selectedDivision?.districts ?? []).map((district) => (
             <option key={district.id} value={district.slug} className="bg-[var(--np-card)] text-[var(--np-text-primary)]">
               {district.name}
@@ -97,7 +102,7 @@ export function LocationFilter({ divisions }: LocationFilterProps) {
           className="w-full rounded-md border border-[var(--np-border)] bg-[var(--np-background)] px-3 py-2.5 text-sm text-[var(--np-text-primary)] disabled:cursor-not-allowed disabled:opacity-60 focus:border-[var(--np-primary)] focus:outline-none"
           style={{ colorScheme: "dark light" }}
         >
-          <option value="">Select Upazila</option>
+          <option value="">উপজেলা নির্বাচন করুন</option>
           {(selectedDistrict?.upazilas ?? []).map((upazila) => (
             <option key={upazila.id} value={upazila.slug} className="bg-[var(--np-card)] text-[var(--np-text-primary)]">
               {upazila.name}
@@ -111,21 +116,21 @@ export function LocationFilter({ divisions }: LocationFilterProps) {
             aria-disabled={!divisionPath}
             className="rounded-md bg-[var(--np-primary)] px-2 py-2 text-center text-xs font-semibold text-[var(--np-on-primary)] transition-colors hover:bg-[var(--np-primary-hover)] aria-disabled:pointer-events-none aria-disabled:opacity-50"
           >
-            Division
+            বিভাগ
           </Link>
           <Link
             href={districtPath || "#"}
             aria-disabled={!districtPath}
             className="rounded-md border border-[var(--np-border)] bg-[var(--np-background)] px-2 py-2 text-center text-xs font-semibold text-[var(--np-text-primary)] transition-colors hover:border-[var(--np-primary)] hover:text-[var(--np-primary)] aria-disabled:pointer-events-none aria-disabled:opacity-50"
           >
-            District
+            জেলা
           </Link>
           <Link
             href={upazilaPath || "#"}
             aria-disabled={!upazilaPath}
             className="rounded-md border border-[var(--np-border)] bg-[var(--np-background)] px-2 py-2 text-center text-xs font-semibold text-[var(--np-text-primary)] transition-colors hover:border-[var(--np-primary)] hover:text-[var(--np-primary)] aria-disabled:pointer-events-none aria-disabled:opacity-50"
           >
-            Upazila
+            উপজেলা
           </Link>
         </div>
       </div>

@@ -104,7 +104,10 @@ const GEO = [
         { name: "কচুয়া", slug: "kachua-chandpur" }, { name: "মতলব উত্তর", slug: "matlab-uttar" },
         { name: "মতলব দক্ষিণ", slug: "matlab-dakshin" }, { name: "শাহরাস্তি", slug: "shahrasti" },
       ]},
-      { name: "চট্টগ্রাম", slug: "chittagong-district", upazilas: [
+      // Slug is `chattogram`, not `chittagong-district`: that is the URL the
+      // live district row already uses. Re-seeding under the old slug is what
+      // created a second চট্টগ্রাম district in the first place.
+      { name: "চট্টগ্রাম", slug: "chattogram", upazilas: [
         { name: "আনোয়ারা", slug: "anowara" }, { name: "বাঁশখালী", slug: "banshkhali" },
         { name: "বোয়ালখালী", slug: "boalkhali" }, { name: "চন্দনাইশ", slug: "chandanaish" },
         { name: "ফটিকছড়ি", slug: "fatikchhari" }, { name: "হাটহাজারী", slug: "hathazari" },
@@ -206,7 +209,10 @@ const GEO = [
         { name: "পাবনা সদর", slug: "pabna-sadar" }, { name: "সাঁথিয়া", slug: "santhia" },
         { name: "সুজানগর", slug: "sujanagar" },
       ]},
-      { name: "রাজশাহী", slug: "rajshahi-district", upazilas: [
+      // Same as চট্টগ্রাম above. A district may share a slug with a division —
+      // they are separate collections on separate routes — so the `-district`
+      // suffix bought nothing and cost a duplicate row.
+      { name: "রাজশাহী", slug: "rajshahi", upazilas: [
         { name: "বাঘা", slug: "bagha" }, { name: "বাগমারা", slug: "bagmara" },
         { name: "চারঘাট", slug: "charghat" }, { name: "দুর্গাপুর", slug: "durgapur-rajshahi" },
         { name: "গোদাগাড়ী", slug: "godagari" }, { name: "মোহনপুর", slug: "mohanpur" },

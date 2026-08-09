@@ -11,6 +11,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isClaimStale } from "@/lib/social-share";
 import { bnNumber } from "@/lib/bn-number";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { Panel, StatTile, EmptyState, Alert } from "@/components/admin/ui";
@@ -174,6 +175,13 @@ export default async function SocialQueuePage() {
                 const share = post.socialShares[0];
                 const status = share?.status;
 
+                // A claim older than the in-flight window belongs to a request
+                // that died mid-share. The pipeline will let it be reclaimed,
+                // so the row gets a retry button instead of a spinner that
+                // would otherwise never resolve.
+                const isStuck =
+                  status === ShareStatus.pending && isClaimStale(share.lastAttemptAt);
+
                 return (
                   <TableRow key={post.id}>
                     <TableCell className="pl-5">
@@ -222,6 +230,10 @@ export default async function SocialQueuePage() {
                         <Badge dot variant="destructive">
                           ব্যর্থ
                         </Badge>
+                      ) : isStuck ? (
+                        <Badge dot variant="warning">
+                          আটকে আছে
+                        </Badge>
                       ) : status === ShareStatus.pending ? (
                         <Badge dot variant="info">
                           চলছে
@@ -238,7 +250,7 @@ export default async function SocialQueuePage() {
                         <span className="adm-mono text-[10.5px] text-[var(--ad-text-muted)]">
                           {share?.trigger === "auto" ? "স্বয়ংক্রিয়" : "ম্যানুয়াল"}
                         </span>
-                      ) : status === ShareStatus.failed && share ? (
+                      ) : (status === ShareStatus.failed || isStuck) && share ? (
                         <ShareButton mode="retry" shareId={share.id} disabled={!connected} />
                       ) : status === ShareStatus.pending ? (
                         <span className="adm-mono text-[10.5px] text-[var(--ad-text-muted)]">
