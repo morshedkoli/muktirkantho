@@ -21,11 +21,26 @@ import { saveSiteSettings } from "@/lib/site-settings";
  */
 export const dynamic = "force-dynamic";
 
-/** Origin as the browser sees it, so redirects survive a reverse proxy. */
+/** Origin as the browser sees it, matching the OAuth initiation logic. */
 function publicOrigin(request: NextRequest): string {
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+
   if (!host) return request.nextUrl.origin;
-  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+
+  const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  if (!isLocal && process.env.NEXT_PUBLIC_SITE_URL && !forwardedProto) {
+    try {
+      const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL);
+      if (siteUrl.host === host) {
+        return siteUrl.origin;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  const proto = forwardedProto || (isLocal ? "http" : "https");
   return `${proto}://${host}`;
 }
 
@@ -36,12 +51,16 @@ function publicOrigin(request: NextRequest): string {
  */
 function leave(request: NextRequest, path: string): NextResponse {
   const response = NextResponse.redirect(new URL(path, publicOrigin(request)));
+  response.cookies.delete({ name: FACEBOOK_OAUTH_STATE_COOKIE, path: "/" });
   response.cookies.delete({ name: FACEBOOK_OAUTH_STATE_COOKIE, path: "/admin/facebook" });
   return response;
 }
 
 function failure(request: NextRequest, message: string): NextResponse {
-  return leave(request, `/admin/facebook?error=${encodeURIComponent(message)}`);
+  return leave(
+    request,
+    `/admin/facebook?notice=${encodeURIComponent(message)}&type=error&error=${encodeURIComponent(message)}`,
+  );
 }
 
 export async function GET(request: NextRequest) {
@@ -66,8 +85,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Must match the redirect_uri used to start the flow — derived from the
-    // request host, never from a query parameter.
+    // Must match the redirect_uri used to start the flow — derived identically
+    // to beginFacebookConnectAction.
     const shortLivedToken = await exchangeCodeForToken(
       code,
       `${publicOrigin(request)}/admin/facebook/callback`,
@@ -80,12 +99,16 @@ export async function GET(request: NextRequest) {
     const pages = await getUserPages(userAccessToken);
 
     if (pages.length === 0) {
-      return failure(request, "No Facebook pages found. Please create a page first.");
+      return failure(request, "No Facebook pages found for your account. Please create a page first.");
     }
 
     // Use the first page. A page selector would go here if an admin manages more
     // than one.
     const page = pages[0];
+
+    if (!page.access_token) {
+      return failure(request, `Could not obtain access token for page "${page.name}". Make sure your app has pages_manage_posts permission.`);
+    }
 
     await saveSiteSettings({
       facebookPageId: page.id,
@@ -99,8 +122,12 @@ export async function GET(request: NextRequest) {
     revalidatePath("/admin/facebook");
   } catch (err) {
     console.error("[facebook/callback] Connect failed:", err);
-    return failure(request, "Failed to connect Facebook");
+    const message = err instanceof Error ? err.message : "Failed to connect Facebook";
+    return failure(request, message);
   }
 
-  return leave(request, "/admin/facebook?success=connected");
+  return leave(
+    request,
+    "/admin/facebook?notice=Facebook%20page%20connected%20successfully&type=success&success=connected",
+  );
 }

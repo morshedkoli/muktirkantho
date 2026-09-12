@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   beginFacebookConnectAction,
+  connectFacebookDirectAction,
   disconnectFacebookAction,
   toggleFacebookAutoPostAction,
   saveFacebookCredentialsAction,
@@ -65,6 +67,10 @@ interface FacebookConnectClientProps {
 }
 
 export function FacebookConnectClient({ settings, isConfigured }: FacebookConnectClientProps) {
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get("error");
+  const { showToast } = useToast();
+
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [credentialsState, setCredentialsState] = useState({
@@ -72,6 +78,12 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
     appSecret: "",
   });
   const [credentialsMessage, setCredentialsMessage] = useState<AdminActionState>({ status: "idle" });
+
+  const [showDirectConnect, setShowDirectConnect] = useState(false);
+  const [directForm, setDirectForm] = useState({ pageId: "", pageAccessToken: "" });
+  const [directPending, setDirectPending] = useState(false);
+  const [directMessage, setDirectMessage] = useState<AdminActionState>({ status: "idle" });
+  const [showDirectToken, setShowDirectToken] = useState(false);
 
   const handleConnect = async () => {
     // The OAuth URL is built server-side so the CSRF `state` can be random and
@@ -98,6 +110,34 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
     if (result.status === "success") {
       // Reload page to reflect changes
       window.location.reload();
+    }
+  };
+
+  const handleDirectConnect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDirectMessage({ status: "idle" });
+    setDirectPending(true);
+
+    const formData = new FormData();
+    formData.append("pageId", directForm.pageId);
+    formData.append("pageAccessToken", directForm.pageAccessToken);
+
+    try {
+      const result = await connectFacebookDirectAction({ status: "idle" }, formData);
+      setDirectMessage(result);
+      if (result.status === "success") {
+        showToast(result.message ?? "Connected successfully", "success");
+        window.location.reload();
+      } else {
+        showToast(result.message ?? "Connection failed", "error");
+      }
+    } catch (err) {
+      setDirectMessage({
+        status: "error",
+        message: err instanceof Error ? err.message : "Failed to connect",
+      });
+    } finally {
+      setDirectPending(false);
     }
   };
 
@@ -218,6 +258,20 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
         )}
       </div>
 
+      {/* URL Callback Error Banner */}
+      {urlError && (
+        <div className="rounded-xl border border-[var(--ad-error)]/30 bg-[var(--ad-error)]/10 p-4 text-sm text-[var(--ad-error)] flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-semibold">Facebook Connection Error</p>
+            <p>{urlError}</p>
+            <p className="text-xs opacity-90 mt-1">
+              Tip: If you are encountering permissions or domain restrictions, you can use the <strong>Direct Page Token</strong> connection below.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Connection Status */}
       {isConfigured && (
         <>
@@ -226,7 +280,7 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
               ? "border-[var(--ad-success)]/20 bg-[var(--ad-success)]/10" 
               : "border-[var(--ad-border)] bg-[var(--ad-paper)]"
           }`}>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-full ${
                   settings.connected ? "bg-[var(--ad-success)]/10" : "bg-[var(--ad-border)]"
@@ -252,17 +306,123 @@ export function FacebookConnectClient({ settings, isConfigured }: FacebookConnec
                   <CheckCircle2 className="h-6 w-6 text-[var(--ad-success)]" />
                 </div>
               ) : (
-                <button
-                  onClick={handleConnect}
-                  /* Facebook brand blue is fixed in both themes, so its
-                     foreground stays literal white rather than a theme token. */
-                  className="flex items-center gap-2 rounded-lg bg-[#1877F2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#166fe5] transition-colors"
-                >
-                  <Facebook className="h-4 w-4" />
-                  Connect Facebook Page
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={handleConnect}
+                    className="flex items-center gap-2 rounded-lg bg-[#1877F2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#166fe5] transition-colors"
+                  >
+                    <Facebook className="h-4 w-4" />
+                    Connect via Facebook Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDirectConnect(!showDirectConnect)}
+                    className="flex items-center gap-1.5 rounded-lg border border-[var(--ad-border-strong)] bg-[var(--ad-card)] px-3.5 py-2 text-xs font-semibold text-[var(--ad-text-primary)] hover:bg-[var(--ad-inset)] transition-colors"
+                  >
+                    <Key className="h-3.5 w-3.5 text-[var(--ad-primary)]" />
+                    {showDirectConnect ? "Close Token Form" : "Connect via Page Token (Direct)"}
+                  </button>
+                </div>
               )}
             </div>
+
+            {/* Direct Page Connection Form */}
+            {!settings.connected && showDirectConnect && (
+              <div className="mt-6 pt-5 border-t border-[var(--ad-border)] space-y-4">
+                <div className="flex items-center gap-2">
+                  <Key className="h-4 w-4 text-[var(--ad-primary)]" />
+                  <h4 className="text-sm font-semibold text-[var(--ad-text-primary)]">
+                    Connect Directly with Page Access Token
+                  </h4>
+                </div>
+                <p className="text-xs text-[var(--ad-text-secondary)]">
+                  Use this option to connect your Facebook Page directly using a Page Access Token (Permanent Token). This bypasses OAuth redirects and development-mode restrictions.
+                </p>
+
+                {directMessage.status === "error" && directMessage.message && (
+                  <div className="rounded-lg border border-[var(--ad-error)]/20 bg-[var(--ad-error)]/10 px-4 py-3 text-xs text-[var(--ad-error)] flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{directMessage.message}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleDirectConnect} className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--ad-text-primary)] mb-1">
+                        Facebook Page ID
+                      </label>
+                      <input
+                        type="text"
+                        value={directForm.pageId}
+                        onChange={(e) => setDirectForm({ ...directForm, pageId: e.target.value })}
+                        placeholder="e.g. 104829104829104"
+                        className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2 text-sm text-[var(--ad-text-primary)] focus:border-[var(--ad-primary)] outline-none"
+                        required
+                      />
+                      <p className="mt-1 text-[11px] text-[var(--ad-text-secondary)]">
+                        Your Facebook Page ID (numeric)
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--ad-text-primary)] mb-1">
+                        Page Access Token
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showDirectToken ? "text" : "password"}
+                          value={directForm.pageAccessToken}
+                          onChange={(e) => setDirectForm({ ...directForm, pageAccessToken: e.target.value })}
+                          placeholder="EAA..."
+                          className="w-full rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] px-3 py-2 text-sm text-[var(--ad-text-primary)] focus:border-[var(--ad-primary)] outline-none pr-10"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowDirectToken(!showDirectToken)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ad-text-secondary)] hover:text-[var(--ad-text-primary)]"
+                        >
+                          {showDirectToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <p className="mt-1 text-[11px] text-[var(--ad-text-secondary)]">
+                        Generated with pages_manage_posts and pages_read_engagement permissions
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+                    <p className="text-[11px] text-[var(--ad-text-secondary)]">
+                      The token will be verified against Facebook Graph API before connecting.
+                    </p>
+                    <button
+                      type="submit"
+                      disabled={directPending}
+                      className="flex items-center gap-2 rounded-lg bg-[var(--ad-primary)] px-4 py-2 text-sm font-semibold text-[var(--ad-on-primary)] hover:bg-[var(--ad-primary-hover)] transition-colors disabled:opacity-60 shrink-0"
+                    >
+                      {directPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4" />
+                      )}
+                      {directPending ? "Verifying with Facebook…" : "Connect Page"}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="rounded-lg border border-[var(--ad-border)] bg-[var(--ad-background)] p-3 text-xs text-[var(--ad-text-secondary)] space-y-1">
+                  <p className="font-semibold text-[var(--ad-text-primary)]">How to get a Page Access Token:</p>
+                  <ol className="list-decimal list-inside space-y-0.5">
+                    <li>Go to <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="text-[var(--ad-primary)] underline">Meta Graph API Explorer</a>.</li>
+                    <li>Select your Meta App (<strong>Muktirkantho</strong>).</li>
+                    <li>Under &quot;User or Page&quot;, choose &quot;Get Page Access Token&quot; and pick your page.</li>
+                    <li>Ensure permissions include <code>pages_manage_posts</code> and <code>pages_read_engagement</code>.</li>
+                    <li>Generate Access Token, copy the Token and Page ID, and paste them above.</li>
+                  </ol>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Connected Page Details */}

@@ -24,6 +24,7 @@ import {
   FACEBOOK_OAUTH_DIALOG_URL,
   FACEBOOK_OAUTH_SCOPE,
   FACEBOOK_OAUTH_STATE_COOKIE,
+  validateAndFetchPageDetails,
 } from "@/lib/facebook";
 import { autoShareOnPublish, sharePostToFacebook, shouldAutoShare } from "@/lib/social-share";
 import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
@@ -820,6 +821,32 @@ export async function deleteAdAction(adId: string) {
 
 const FACEBOOK_OAUTH_STATE_TTL_SECONDS = 10 * 60;
 
+/** Resolve the canonical origin for OAuth redirects */
+async function getAdminOrigin(): Promise<string> {
+  const hdrs = await headers();
+  const host = hdrs.get("x-forwarded-host") || hdrs.get("host");
+  const forwardedProto = hdrs.get("x-forwarded-proto");
+
+  if (!host) {
+    return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  }
+
+  const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  if (!isLocal && process.env.NEXT_PUBLIC_SITE_URL && !forwardedProto) {
+    try {
+      const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL);
+      if (siteUrl.host === host) {
+        return siteUrl.origin;
+      }
+    } catch {
+      // fallback to header-derived
+    }
+  }
+
+  const proto = forwardedProto || (isLocal ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
 /**
  * Build the Facebook OAuth URL and arm the CSRF `state` parameter.
  *
@@ -837,31 +864,67 @@ export async function beginFacebookConnectAction(): Promise<{ url: string } | Ad
     return { status: "error", message: "Save your Facebook App ID first." };
   }
 
-  const hdrs = await headers();
-  const host = hdrs.get("x-forwarded-host") || hdrs.get("host");
-  const proto = hdrs.get("x-forwarded-proto") ?? "https";
-  if (!host) {
-    return { status: "error", message: "Could not determine the site URL." };
-  }
-
+  const origin = await getAdminOrigin();
   const state = randomUUID();
+  const isHttps = origin.startsWith("https://");
+
   (await cookies()).set(FACEBOOK_OAUTH_STATE_COOKIE, state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isHttps,
     sameSite: "lax",
-    path: "/admin/facebook",
+    path: "/",
     maxAge: FACEBOOK_OAUTH_STATE_TTL_SECONDS,
   });
 
   const params = new URLSearchParams({
     client_id: appId,
-    redirect_uri: `${proto}://${host}/admin/facebook/callback`,
+    redirect_uri: `${origin}/admin/facebook/callback`,
     scope: FACEBOOK_OAUTH_SCOPE,
     response_type: "code",
     state,
   });
 
   return { url: `${FACEBOOK_OAUTH_DIALOG_URL}?${params.toString()}` };
+}
+
+/**
+ * Direct connection using a Page ID and Page Access Token.
+ * Allows connecting without undergoing OAuth redirects, ideal for permanent page tokens.
+ */
+export async function connectFacebookDirectAction(
+  _: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  await requireActionAdmin();
+
+  const pageId = formData.get("pageId")?.toString().trim() ?? "";
+  const pageAccessToken = formData.get("pageAccessToken")?.toString().trim() ?? "";
+
+  if (!pageId || !pageAccessToken) {
+    return { status: "error", message: "Both Page ID and Page Access Token are required" };
+  }
+
+  const validation = await validateAndFetchPageDetails(pageId, pageAccessToken);
+  if (!validation.ok) {
+    return {
+      status: "error",
+      message: `Failed to connect page: ${validation.reason}`,
+    };
+  }
+
+  await saveSiteSettings({
+    facebookPageId: pageId,
+    facebookPageAccessToken: pageAccessToken,
+    facebookPageName: validation.pageName,
+    facebookConnected: true,
+    facebookConnectedAt: new Date(),
+  });
+
+  revalidatePath("/admin/facebook");
+  return {
+    status: "success",
+    message: `Connected successfully to Facebook page "${validation.pageName}"!`,
+  };
 }
 
 export async function saveFacebookCredentialsAction(

@@ -123,7 +123,7 @@ export async function exchangeForLongLivedUserToken(shortLivedToken: string): Pr
 
 export async function getUserPages(accessToken: string): Promise<FacebookPage[]> {
   const response = await fetch(
-    `${FACEBOOK_BASE_URL}/me/accounts?access_token=${encodeURIComponent(accessToken)}&fields=id,name,category,picture{url}`
+    `${FACEBOOK_BASE_URL}/me/accounts?access_token=${encodeURIComponent(accessToken)}&fields=id,name,access_token,category,picture{url}`
   );
 
   if (!response.ok) {
@@ -132,6 +132,32 @@ export async function getUserPages(accessToken: string): Promise<FacebookPage[]>
 
   const data = await response.json();
   return data.data || [];
+}
+
+/**
+ * Validate a page ID and access token directly against Facebook Graph API
+ * and retrieve the page name.
+ */
+export async function validateAndFetchPageDetails(
+  pageId: string,
+  pageAccessToken: string,
+): Promise<{ ok: true; pageName: string } | { ok: false; reason: string }> {
+  try {
+    const response = await fetch(
+      `${FACEBOOK_BASE_URL}/${pageId}?fields=id,name&access_token=${encodeURIComponent(pageAccessToken)}`,
+    );
+    if (response.ok) {
+      const data = await response.json();
+      return { ok: true, pageName: data.name || "Facebook Page" };
+    }
+    const error = await toApiError(response, "Invalid Page ID or Access Token");
+    return { ok: false, reason: error.message };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "Failed to verify page with Facebook",
+    };
+  }
 }
 
 /**
